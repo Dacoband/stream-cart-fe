@@ -22,6 +22,7 @@ export default function LoginForm() {
     const fakeUsers = [
       { username: "shopUser", password: "password123", role: "shop" },
       { username: "normalUser", password: "password456", role: "user" },
+      { username: "admin", password: "password456", role: "admin" },
     ];
 
     const user = fakeUsers.find(
@@ -33,7 +34,10 @@ export default function LoginForm() {
       localStorage.setItem("user", JSON.stringify({ username, role }));
 
       if (role === "shop") {
-        router.push("/shop/dashboard");
+        router.push("/shop");
+      }
+      if (role === "admin") {
+        router.push("/admin/dashboard");
       } else {
         router.push("/");
       }
@@ -76,8 +80,12 @@ export default function LoginForm() {
         )}
       </div>
 
-      <Button type="submit" variant="default" className="cursor-pointer">
-        Đăng nhập
+      <Button
+        type="submit"
+        variant="default"
+        className="cursor-pointer w-full mt-6 font-semibold py-5 tetx-base"
+      >
+        Đăng Nhập
       </Button>
     </form>
   );

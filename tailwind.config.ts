@@ -1,26 +1,28 @@
-import type { Config } from "tailwindcss";
-import tailwindcssAnimate from "tailwindcss-animate";
-export default {
-	darkMode: ["class", "dark"],
-    content: [
-    "./pages/**/*.{js,ts,jsx,tsx,mdx}",
-    "./components/**/*.{js,ts,jsx,tsx,mdx}",
-    "./app/**/*.{js,ts,jsx,tsx,mdx}",
+import typography from "@tailwindcss/typography";
+
+const config = {
+  content: [
+    "./index.html",
+    "./src/**/*.{js,jsx,ts,tsx}",
+    "./src/components/**/*.{js,jsx,ts,tsx}",
+    "./src/pages/**/*.{js,jsx,ts,tsx}",
+    "./src/layouts/**/*.{js,jsx,ts,tsx}",
   ],
   theme: {
-  	extend: {
-		colors: {
-        primary: {
-		   neon: '#CDFC7C', 
-          light: '#60a5fa', 
-          dark: '#3b82f6',  
-        },
+    extend: {
+      fontFamily: {
+        outfit: ['Outfit', 'sans-serif'],
+      },
+      keyframes: {
       
-      
-    }
-  	}
-
+   
+      },
+      animation: {
+       
+      },
+    },
   },
-  
-plugins: [tailwindcssAnimate],
-} satisfies Config;
+  plugins: [typography],
+};
+
+export default config;

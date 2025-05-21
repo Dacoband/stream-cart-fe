@@ -1,5 +1,50 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+@keyframes zoom {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+}
+
+.animate-zoom-custom {
+  animation: zoom 1.5s ease-in-out infinite;
+}
+@keyframes typing {
+  0% {
+    width: 0;
+  }
+  70% {
+    width: 100%;
+  }
+  90% {
+    width: 100%;
+  }
+  100% {
+    width: 0;
+  }
+}
+
+@keyframes blink {
+  0%, 100% {
+    border-color: transparent;
+  }
+  50% {
+    border-color: black;
+  }
+}
+
+
+.typing-effect {
+  white-space: nowrap;
+  overflow: hidden;
+  border-right: 2px solid black;
+  width: 0;
+  animation: typing 4s steps(30, end) infinite, blink 0.7s step-end infinite;
+}
+
 
 @custom-variant dark (&:is(.dark *));
 

@@ -4,7 +4,8 @@ import clsx from "clsx";
 import LoginForm from "./components/LoginForm";
 import RegisterForm from "./components/RegisterForm";
 import { BiSolidShoppingBags } from "react-icons/bi";
-
+import { FaAsterisk } from "react-icons/fa";
+import Image from "next/image";
 export default function LoginRegisterPage() {
   const [isSignUp, setIsSignUp] = useState(false);
 
@@ -20,6 +21,7 @@ export default function LoginRegisterPage() {
               : "opacity-0 pointer-events-none z-0"
           )}
         >
+          <Image src="/logo.png" alt="Logo" width={100} height={50} />
           <RegisterForm />
         </div>
 
@@ -32,8 +34,8 @@ export default function LoginRegisterPage() {
               : "opacity-100 pointer-events-auto"
           )}
         >
-          <div className="text-5xl font-medium">LOGIN</div>
-          <div className="w-[70%]">
+          <Image src="/logo.png" alt="Logo" width={180} height={100} />
+          <div className="w-[70%] mt-6 pb-20">
             <LoginForm />
           </div>
         </div>
@@ -43,42 +45,65 @@ export default function LoginRegisterPage() {
         <div
           className={clsx(
             // Ẩn trên mobile, chỉ hiện trên lg trở lên
-            "hidden lg:flex absolute top-0 left-1/2 w-1/2 h-full transition-all duration-500 ease-in-out z-40 rounded-l-[150px] bg-gradient-to-r from-white from-10% via-[#EAFFCD] via-20% to-[#CDFC7C] to-50%   text-blck flex-col items-center justify-center px-10 text-center",
-            isSignUp ? "-translate-x-full rounded-r-[150px] rounded-l-none" : ""
+            "hidden lg:flex absolute  left-1/2 w-1/2 h-full transition-all duration-700 ease-in-out z-40  bg-[#b5f546] text-black flex-col items-center justify-center px-10 text-center overflow-hidden",
+            isSignUp ? "-translate-x-full " : ""
           )}
         >
           {isSignUp ? (
             <>
-              <h2 className="text-2xl font-bold">Chào bạn mới!</h2>
-              <p className="text-sm mt-2">
-                Đăng ký để trải nghiệm đầy đủ chức năng
+              <h2 className="text-4xl font-bold flex gap-4">
+                <BiSolidShoppingBags />
+                <div className="typing-effect">
+                  STREAM CARD, xin chào bạn mới!
+                </div>
+              </h2>
+              <p className="text-base mt-4 mb-8 font-medium">
+                Nhấn đăng nhập nếu bạn đã có tài khoản
               </p>
               <button
                 onClick={() => setIsSignUp(false)}
-                className="mt-4 border  text-black shadow-lg shadow-gray-800 px-6 py-2 bg-[#CDFC7C] rounded-full text-sm uppercase"
+                className="mt-4 border  text-white font-semibold shadow-lg cursor-pointer shadow-gray-800 px-10 py-2.5  bg-black rounded-full text-base uppercase  animate-zoom-custom"
               >
                 Đăng nhập
               </button>
             </>
           ) : (
             <>
-              <h2 className="text-5xl font-bold flex gap-4">
+              <h2 className="text-4xl font-bold flex gap-4">
                 <BiSolidShoppingBags />
-                Chào mừng bạn trở lại!
+                <div className="typing-effect">
+                  Chào mừng bạn trở lại STREAM CARD!
+                </div>
               </h2>
-              <p className="text-sm mt-2">Đăng nhập để tiếp tục sử dụng</p>
+              <p className="text-base mt-4 mb-8 font-medium">
+                Nhấn đăng ký nếu bạn chưa có tài khoản
+              </p>
               <button
                 onClick={() => setIsSignUp(true)}
-                className="mt-4 border  text-white font-semibold shadow-lg shadow-gray-800 px-10 py-2.5 bg-black rounded-full text-base uppercase"
+                className="mt-4 border  text-white font-semibold shadow-lg cursor-pointer shadow-gray-800 px-10 py-2.5  bg-black rounded-full text-base uppercase  animate-zoom-custom"
               >
                 Đăng ký
               </button>
-              <div className="absolute top-0 right-[70%] text-[240px]">*</div>
-
-              <div className="absolute top-5 right-[65%] text-[110px]">*</div>
-              <div className="absolute bottom-0 right-14 text-[180px]">*</div>
             </>
           )}
+          <div
+            className="absolute top-10 right-[82%] text-[100px] leading-none animate-spin "
+            style={{ animationDuration: "8s" }}
+          >
+            <FaAsterisk />
+          </div>
+          <div
+            className="absolute top-24 right-[75%] text-[60px] leading-none transform animate-spin"
+            style={{ animationDuration: "8s" }}
+          >
+            <FaAsterisk />
+          </div>
+          <div
+            className="absolute bottom-10 right-12 text-[80px] animate-spin"
+            style={{ animationDuration: "8s" }}
+          >
+            <FaAsterisk />
+          </div>
         </div>
       </div>
     </div>
