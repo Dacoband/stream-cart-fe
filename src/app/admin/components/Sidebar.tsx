@@ -13,14 +13,11 @@ import {
 import {
   Sidebar,
   SidebarContent,
-  SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarTrigger,
-  useSidebar,
 } from "@/components/ui/sidebar";
 
 const items = [
@@ -63,7 +60,6 @@ const items = [
 
 export function AppSidebar() {
   const pathname = usePathname();
-  const { toggleSidebar } = useSidebar();
 
   return (
     <Sidebar collapsible="icon" className="bg-[#202328] text-white pt-20">
@@ -97,14 +93,6 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
-      <SidebarFooter className="bg-[#202328] w-full border-none cursor-pointer rounded-none text-2xl">
-        <SidebarMenu className="">
-          <SidebarTrigger
-            className="bg-[#202328] w-full border-none cursor-pointer rounded-lg text-2xl"
-            onClick={toggleSidebar}
-          />
-        </SidebarMenu>
-      </SidebarFooter>
     </Sidebar>
   );
 }
