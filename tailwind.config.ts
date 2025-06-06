@@ -1,28 +1,21 @@
+
 import typography from "@tailwindcss/typography";
 
-const config = {
+/** @type {import('tailwindcss').Config} */
+module.exports = {
   content: [
     "./index.html",
     "./src/**/*.{js,jsx,ts,tsx}",
-    "./src/components/**/*.{js,jsx,ts,tsx}",
-    "./src/pages/**/*.{js,jsx,ts,tsx}",
-    "./src/layouts/**/*.{js,jsx,ts,tsx}",
   ],
   theme: {
     extend: {
-      fontFamily: {
-        outfit: ['Outfit', 'sans-serif'],
-      },
-      keyframes: {
-      
-   
-      },
-      animation: {
-       
+      colors: {
+        base: 'var(--color-base)',
+        'base-light': 'var(--color-base-light)',
+        'base-dark': 'var(--color-base-dark)',
       },
     },
   },
   plugins: [typography],
 };
 
-export default config;

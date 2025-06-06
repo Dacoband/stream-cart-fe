@@ -45,7 +45,7 @@ export default function LoginRegisterPage() {
         <div
           className={clsx(
             // Ẩn trên mobile, chỉ hiện trên lg trở lên
-            "hidden lg:flex absolute  left-1/2 w-1/2 h-full transition-all duration-700 ease-in-out z-40  bg-[#b5f546] text-black flex-col items-center justify-center px-10 text-center overflow-hidden",
+            "hidden lg:flex absolute  left-1/2 w-1/2 h-full transition-all duration-700 ease-in-out z-40   bg-gradient-to-r from-white from-10% via-[#EAFFCD] via-20% to-[#a1f118] to-50%  text-black flex-col items-center justify-center px-10 text-center overflow-hidden",
             isSignUp ? "-translate-x-full " : ""
           )}
         >
