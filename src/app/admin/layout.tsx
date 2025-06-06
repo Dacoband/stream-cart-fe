@@ -44,7 +44,7 @@ export default async function Layout({
       </div>
       <div className="flex flex-1 w-full pt-16">
         <AppSidebar />
-        <div className="flex-1 px-8 py-8 bg-[#EBECEA]">{children}</div>
+        <div className="flex-1 px-10 py-8 bg-[#EBECEA]">{children}</div>
       </div>
     </SidebarProvider>
   );

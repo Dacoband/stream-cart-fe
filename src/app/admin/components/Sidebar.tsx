@@ -62,7 +62,10 @@ export function AppSidebar() {
   const pathname = usePathname();
 
   return (
-    <Sidebar collapsible="icon" className="bg-[#202328] text-white pt-20">
+    <Sidebar
+      collapsible="icon"
+      className="bg-[#202328] text-white pt-20 transition-all duration-300 w-64 data-[collapsible=icon]:w-16"
+    >
       <SidebarContent className="bg-[#202328] text-white">
         <SidebarGroup>
           <SidebarGroupContent>
