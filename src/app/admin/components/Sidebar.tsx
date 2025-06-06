@@ -16,11 +16,11 @@ import {
   SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
-  SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarTrigger,
+  useSidebar,
 } from "@/components/ui/sidebar";
 
 const items = [
@@ -36,38 +36,38 @@ const items = [
   },
   {
     title: "Quản lý cửa hàng",
-    url: "#",
+    url: "/admin/store",
     icon: Store,
   },
   {
     title: "Danh mục",
-    url: "#",
+    url: "/admin/categories",
     icon: LayoutDashboard,
   },
   {
     title: "Voucher",
-    url: "#",
+    url: "/admin/vouchers",
     icon: TicketPercent,
   },
   {
     title: "Đơn hoàn trả",
-    url: "#",
+    url: "/admin/refunds",
     icon: Package,
   },
   {
     title: "Giao dịch",
-    url: "#",
+    url: "/admin/transactions",
     icon: Wallet,
   },
 ];
 
 export function AppSidebar() {
   const pathname = usePathname();
+  const { toggleSidebar } = useSidebar();
 
   return (
-    <Sidebar collapsible="icon" className="bg-[#202328] text-white pt-12">
-      <SidebarHeader className="bg-[#202328] py-5 flex items-center justify-center w-full mx-auto"></SidebarHeader>
-      <SidebarContent className="bg-[#202328] text-white ">
+    <Sidebar collapsible="icon" className="bg-[#202328] text-white pt-20">
+      <SidebarContent className="bg-[#202328] text-white">
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
@@ -97,9 +97,12 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
-      <SidebarFooter className=" bg-[#202328] w-full border-none cursor-pointer rounded-none text-2xl">
+      <SidebarFooter className="bg-[#202328] w-full border-none cursor-pointer rounded-none text-2xl">
         <SidebarMenu className="">
-          <SidebarTrigger className=" bg-[#202328] w-full border-none cursor-pointer rounded-lg text-2xl " />
+          <SidebarTrigger
+            className="bg-[#202328] w-full border-none cursor-pointer rounded-lg text-2xl"
+            onClick={toggleSidebar}
+          />
         </SidebarMenu>
       </SidebarFooter>
     </Sidebar>
