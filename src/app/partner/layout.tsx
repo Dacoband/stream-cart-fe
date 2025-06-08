@@ -4,7 +4,7 @@ import { cookies } from "next/headers";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "./components/Sidebar";
 
-export default async function Layout({
+export default async function LayoutPartner({
   children,
 }: {
   children: React.ReactNode;

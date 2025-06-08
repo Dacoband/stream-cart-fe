@@ -58,7 +58,7 @@ function Header() {
                 height={44}
                 className="w-10 h-10 object-cover rounded-full"
               />
-              <div>Quản lý:</div>
+              <div>Nhân viên cửa hàng:</div>
               <span className="text-slate-200"> TAT TAT TAT</span>
 
               <div className="text-white mx-1.5">
