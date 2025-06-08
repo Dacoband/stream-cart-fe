@@ -4,10 +4,24 @@ import Link from "next/link";
 import { NavigationMenu } from "@/components/ui/navigation-menu";
 import Image from "next/image";
 import { Input } from "@/components/ui/input";
-import { Search } from "lucide-react";
+import {
+  Bell,
+  ChevronDown,
+  MessageCircleMore,
+  Search,
+  ShoppingCart,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
 import { User } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@radix-ui/react-dropdown-menu";
+import { useRouter } from "next/navigation";
 
 export function Navigation() {
   const [user, setUser] = useState<{ username: string; role: string } | null>(
@@ -21,7 +35,12 @@ export function Navigation() {
       if (parsed.role) setUser(parsed);
     }
   }, []);
-
+  const router = useRouter();
+  const handleLogout = (e: React.MouseEvent) => {
+    e.preventDefault();
+    localStorage.removeItem("token");
+    router.push("/");
+  };
   return (
     <NavigationMenu className="w-full max-w-none h-full px-32 flex items-center justify-between">
       <div className="flex gap-2 items-center">
@@ -61,9 +80,59 @@ export function Navigation() {
       </div>
       <div className="flex items-center justify-end h-full px-8">
         {user ? (
-          <div className="flex items-center gap-2">
-            <User className="w-7 h-7 text-[#B0F847]" />
-            <span className="text-white">{user.username}</span>
+          <div className="flex ">
+            <div className=" pr-5 flex gap-5 ">
+              <Button className="w-10 h-10 flex items-center text-2xl cursor-pointer text-[#B0F847] justify-center rounded-full bg-[#34373b] hover:bg-[#B0F847] hover:text-black pr-4">
+                <ShoppingCart className="min-w-[25px] min-h-[25px] " />
+              </Button>
+              <Button className="w-10 h-10 flex items-center text-2xl cursor-pointer justify-center text-[#B0F847] rounded-full bg-[#34373b] hover:bg-[#B0F847] hover:text-black">
+                <Bell className="min-w-[25px] min-h-[25px] " />
+              </Button>
+              <Button className="w-10 h-10 flex items-center text-2xl cursor-pointer text-[#B0F847] justify-center rounded-full bg-[#34373b] hover:bg-[#B0F847] hover:text-black pr-4">
+                <MessageCircleMore className="min-w-[25px] min-h-[25px] " />
+              </Button>
+
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button className="bg-black cursor-pointer rounded-none p-0 flex pl-5 border-white border-l-1">
+                    <Image
+                      src="https://i.pinimg.com/736x/8b/8a/ed/8b8aed24d96cefbf7b339b3e5e23bf7e.jpg"
+                      alt="Stream Card AvatarAvatar"
+                      width={44}
+                      height={44}
+                      className="w-10 h-10 object-cover rounded-full"
+                    />
+
+                    <span className="text-slate-200"> TAT TAT TAT</span>
+
+                    <div className="text-white mx-1.5">
+                      <ChevronDown />
+                    </div>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent
+                  style={{
+                    boxShadow: "0 0 20px rgba(148, 163, 184, 0.4)",
+                  }}
+                  className="w-52 mt-5 text-white px-4 py-2.5 rounded-2xl bg-black "
+                  align="start"
+                >
+                  {/* <DropdownMenuLabel>My Account</DropdownMenuLabel> */}
+                  <DropdownMenuGroup>
+                    <DropdownMenuItem className="cursor-pointer py-1.5 border-b-[1px] border-slate-300 flex gap-2">
+                      <User /> Hồ sơ cá nhân
+                    </DropdownMenuItem>
+                  </DropdownMenuGroup>
+
+                  <DropdownMenuItem
+                    onClick={handleLogout}
+                    className="cursor-pointer  py-1.5"
+                  >
+                    Đăng xuất
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           </div>
         ) : (
           <Link href="/authentication">

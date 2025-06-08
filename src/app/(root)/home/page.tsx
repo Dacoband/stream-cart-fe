@@ -1,5 +1,9 @@
 import React from "react";
-
-export default function page() {
-  return <div>page</div>;
+import Advertisement from "./components/advertisement";
+export default function Home() {
+  return (
+    <div>
+      <Advertisement />
+    </div>
+  );
 }
