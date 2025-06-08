@@ -39,7 +39,7 @@ export default function LoginForm() {
       if (role === "admin") {
         router.push("/admin/dashboard");
       } else {
-        router.push("/");
+        router.push("/home");
       }
     } else {
       alert("Tên đăng nhập hoặc mật khẩu không đúng!");
