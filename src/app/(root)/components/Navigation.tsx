@@ -22,6 +22,7 @@ import {
   DropdownMenuTrigger,
 } from "@radix-ui/react-dropdown-menu";
 import { useRouter } from "next/navigation";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export function Navigation() {
   const [user, setUser] = useState<{ username: string; role: string } | null>(
@@ -79,7 +80,15 @@ export function Navigation() {
         </div>
       </div>
       <div className="flex items-center justify-end h-full px-8">
-        {user ? (
+        {user === null ? (
+          <div className="flex items-center space-x-4">
+            <Skeleton className="h-12 w-12 rounded-full" />
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-[250px]" />
+              <Skeleton className="h-4 w-[200px]" />
+            </div>
+          </div>
+        ) : user ? (
           <div className="flex ">
             <div className=" pr-5 flex gap-5 ">
               <Button className="w-10 h-10 flex items-center text-2xl cursor-pointer text-[#B0F847] justify-center rounded-full bg-[#34373b] hover:bg-[#B0F847] hover:text-black pr-4">
