@@ -1,9 +1,11 @@
 import React from "react";
-import Advertisement from "./components/advertisement";
+import Advertisement from "./components/Advertisement";
+import Category from "./components/Category";
 export default function Home() {
   return (
-    <div className="flex w-full">
+    <div className="flex flex-col w-full">
       <Advertisement />
+      <Category />
     </div>
   );
 }

@@ -36,7 +36,7 @@ function Advertisement() {
 
   return (
     <div
-      className="flex justify-center my-5 py-10 w-full bg-white rounded-md"
+      className="flex justify-center my-5 py-10 w-full bg-white rounded-xl"
       style={{
         boxShadow: "0 0 20px rgba(148, 163, 184, 0.3)",
       }}

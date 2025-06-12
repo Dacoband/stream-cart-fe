@@ -186,3 +186,19 @@
     @apply bg-background text-foreground;
   }
 }
+@keyframes float {
+  0%, 100% { transform: translateY(0) rotate(0deg) scale(1); }
+  50% { transform: translateY(-20px) rotate(10deg) scale(1.1); }
+}
+@keyframes glow {
+  0%, 100% { opacity: 0.3; filter: brightness(1); }
+  50% { opacity: 0.8; filter: brightness(1.5); }
+}
+@keyframes wave {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+.floating-items { position: absolute; width: 100%; height: 100%; overflow: hidden; }
+.floating-item { position: absolute; will-change: transform; animation-timing-function: ease-in-out; animation-name: float; }
+.glow-effect { animation: glow 3s infinite; }
+.wave { position: absolute; width: 200%; height: 100%; background: linear-gradient(90deg, transparent, rgba(51,255,0,0.1), transparent); animation: wave 8s linear infinite; }

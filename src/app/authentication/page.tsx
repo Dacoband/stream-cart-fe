@@ -3,15 +3,23 @@ import { useState } from "react";
 import clsx from "clsx";
 import LoginForm from "./components/LoginForm";
 import RegisterForm from "./components/RegisterForm";
-import { BiSolidShoppingBags } from "react-icons/bi";
-import { FaAsterisk } from "react-icons/fa";
 import Image from "next/image";
+import {
+  Store,
+  ShoppingCart,
+  Car,
+  CreditCard,
+  TicketPercent,
+} from "lucide-react";
+
 export default function LoginRegisterPage() {
   const [isSignUp, setIsSignUp] = useState(false);
 
   return (
     <div className="flex items-center justify-center h-screen font-sans">
       <div className="w-full h-screen bg-white   overflow-hidden">
+        {/* Toggle Button */}
+
         {/* Register Form */}
         <div
           className={clsx(
@@ -21,7 +29,6 @@ export default function LoginRegisterPage() {
               : "opacity-0 pointer-events-none z-0"
           )}
         >
-          <Image src="/logo.png" alt="Logo" width={100} height={50} />
           <RegisterForm />
         </div>
 
@@ -34,7 +41,6 @@ export default function LoginRegisterPage() {
               : "opacity-100 pointer-events-auto"
           )}
         >
-          <Image src="/logo.png" alt="Logo" width={180} height={100} />
           <div className="w-[70%] mt-6 pb-20">
             <LoginForm />
           </div>
@@ -45,64 +51,172 @@ export default function LoginRegisterPage() {
         <div
           className={clsx(
             // Ẩn trên mobile, chỉ hiện trên lg trở lên
-            "hidden lg:flex absolute  left-1/2 w-1/2 h-full transition-all duration-700 ease-in-out z-40   bg-gradient-to-r from-white from-10% via-[#EAFFCD] via-20% to-[#a1f118] to-50%  text-black flex-col items-center justify-center px-10 text-center overflow-hidden",
-            isSignUp ? "-translate-x-full " : ""
+            "hidden lg:flex absolute left-1/2 w-1/2 h-full transition-all duration-700 ease-in-out z-40 overflow-hidden",
+            isSignUp ? "-translate-x-full" : ""
           )}
         >
-          {isSignUp ? (
-            <>
-              <h2 className="text-4xl font-bold flex gap-4">
-                <BiSolidShoppingBags />
-                <div className="typing-effect">
-                  STREAM CARD, xin chào bạn mới!
-                </div>
-              </h2>
-              <p className="text-base mt-4 mb-8 font-medium">
-                Nhấn đăng nhập nếu bạn đã có tài khoản
+          {/* Panel Animation & Branding */}
+          <div className="w-full h-full bg-black flex flex-col items-center justify-center relative overflow-hidden">
+            <div className="z-10 flex flex-col items-center">
+              {/* Logo */}
+              <div className="w-36 h-36 mb-6">
+                <Image src="/logo2 .png" alt="Logo" width={250} height={250} />
+              </div>
+              {/* Brand Name */}
+              <h1 className="text-white text-4xl font-bold mb-8">StreamCart</h1>
+              {/* Tagline */}
+              <p className="text-gray-300 text-xl mb-12 text-center px-12">
+                Bạn đã có tài khoản? Hãy đăng nhập để trãi nghiệm mua sắm
               </p>
+              {/* Toggle Button */}
+
               <button
-                onClick={() => setIsSignUp(false)}
-                className="mt-4 border  text-white font-semibold shadow-lg cursor-pointer shadow-gray-800 px-10 py-2.5  bg-black rounded-full text-base uppercase  animate-zoom-custom"
+                onClick={() => setIsSignUp((prev) => !prev)}
+                className="mt-4 border text-black font-semibold shadow-lg cursor-pointer shadow-gray-800 px-10 py-2.5 bg-gradient-to-r from-[#B0F847]  via-[#c6ef88]  to-[#B0F847] rounded-full text-base uppercase animate-zoom-custom"
               >
-                Đăng nhập
+                {isSignUp ? "Đăng nhập" : "Đăng ký"}
               </button>
-            </>
-          ) : (
-            <>
-              <h2 className="text-4xl font-bold flex gap-4">
-                <BiSolidShoppingBags />
-                <div className="typing-effect">
-                  Chào mừng bạn trở lại STREAM CARD!
+              {/* Enhanced Animation Elements */}
+              <div className="mt-8 w-3/4 h-64 relative">
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <i className="fas fa-shopping-cart"></i>
                 </div>
-              </h2>
-              <p className="text-base mt-4 mb-8 font-medium">
-                Nhấn đăng ký nếu bạn chưa có tài khoản
-              </p>
-              <button
-                onClick={() => setIsSignUp(true)}
-                className="mt-4 border  text-white font-semibold shadow-lg cursor-pointer shadow-gray-800 px-10 py-2.5  bg-black rounded-full text-base uppercase  animate-zoom-custom"
-              >
-                Đăng ký
-              </button>
-            </>
-          )}
-          <div
-            className="absolute top-10 right-[82%] text-[100px] leading-none animate-spin "
-            style={{ animationDuration: "8s" }}
-          >
-            <FaAsterisk />
+              </div>
+            </div>
           </div>
-          <div
-            className="absolute top-24 right-[75%] text-[60px] leading-none transform animate-spin"
-            style={{ animationDuration: "8s" }}
-          >
-            <FaAsterisk />
-          </div>
-          <div
-            className="absolute bottom-10 right-12 text-[80px] animate-spin"
-            style={{ animationDuration: "8s" }}
-          >
-            <FaAsterisk />
+          {/* Background Effect */}
+          <div className="absolute inset-0">
+            <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-green-400/20 to-transparent"></div>
+            <div className="wave"></div>
+            <div className="wave" style={{ animationDelay: "-4s" }}></div>
+            <div className="floating-items">
+              {(
+                [
+                  {
+                    Icon: Store,
+                    left: "32%",
+                    top: "5%",
+                    size: 42,
+                    delay: "0s",
+                  },
+                  {
+                    Icon: TicketPercent,
+                    left: "6%",
+                    top: "12%",
+                    size: 50,
+                    delay: "0s",
+                  },
+                  {
+                    Icon: Car,
+                    left: "72%",
+                    top: "1%",
+                    size: 52,
+                    delay: "0.5s",
+                  },
+                  {
+                    Icon: Car,
+                    left: "60%",
+                    top: "94%",
+                    size: 52,
+                    delay: "0.5s",
+                  },
+                  {
+                    Icon: ShoppingCart,
+                    left: "92%",
+                    top: "12%",
+                    size: 56,
+                    delay: "1.5s",
+                  },
+                  {
+                    Icon: ShoppingCart,
+                    left: "90%",
+                    top: "88%",
+                    size: 56,
+                    delay: "1.5s",
+                  },
+                  { Icon: Car, left: "14%", top: "75%", size: 52, delay: "1s" },
+
+                  {
+                    Icon: CreditCard,
+                    left: "75%",
+                    top: "75%",
+                    size: 44,
+                    delay: "1.5s",
+                  },
+                  {
+                    Icon: Store,
+                    left: "0%",
+                    top: "50%",
+                    size: 60,
+                    delay: "2s",
+                  },
+                  {
+                    Icon: ShoppingCart,
+                    left: "18%",
+                    top: "30%",
+                    size: 42,
+                    delay: "2.5s",
+                  },
+                  {
+                    Icon: CreditCard,
+                    left: "25%",
+                    top: "60%",
+                    size: 40,
+                    delay: "2.5s",
+                  },
+                  { Icon: Car, left: "77%", top: "52%", size: 54, delay: "3s" },
+                  {
+                    Icon: CreditCard,
+                    left: "68%",
+                    top: "22%",
+                    size: 38,
+                    delay: "3.5s",
+                  },
+                  {
+                    Icon: TicketPercent,
+                    left: "88%",
+                    top: "35%",
+                    size: 55,
+                    delay: "4s",
+                  },
+                  {
+                    Icon: Store,
+                    left: "40%",
+                    top: "80%",
+                    size: 50,
+                    delay: "4s",
+                  },
+                  {
+                    Icon: TicketPercent,
+                    left: "55%",
+                    top: "65%",
+                    size: 50,
+                    delay: "s",
+                  },
+                  {
+                    Icon: ShoppingCart,
+                    left: "5%",
+                    top: "92%",
+                    size: 46,
+                    delay: "2.5s",
+                  },
+                ] as const
+              ).map(({ Icon, left, top, size, delay }, idx) => (
+                <div
+                  key={idx}
+                  className="floating-item text-green-400/20 glow-effect"
+                  style={{
+                    left,
+                    top,
+                    fontSize: size,
+                    animation: `float 10s ease-in-out infinite`,
+                    animationDelay: delay,
+                  }}
+                >
+                  <Icon size={size} />
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </div>

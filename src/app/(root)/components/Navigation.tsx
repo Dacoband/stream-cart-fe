@@ -39,7 +39,7 @@ export function Navigation() {
   const router = useRouter();
   const handleLogout = (e: React.MouseEvent) => {
     e.preventDefault();
-    localStorage.removeItem("token");
+    localStorage.clear();
     router.push("/");
   };
   return (
@@ -72,7 +72,7 @@ export function Navigation() {
               placeholder="Tìm kiếm sản phẩm, cửa hàng..."
               className=" pr-4 py-5 w-2xl rounded-md bg-white text-slate-500 text-lg font-medium placeholder:text-gray-400"
             />
-            <div className="absolute bg-gradient-to-r from-[#B0F847]  via-[#c6ef88]  to-[#B0F847] py-1.5 rounded-sm px-2.5 right-1.5 top-1/2 -translate-y-1/2 cursor-pointer">
+            <div className="absolute bg-gradient-to-r from-[#B0F847]  via-[#c6ef88]  to-[#B0F847] py-1.5 rounded-sm px-3.5 right-1.5 top-1/2 -translate-y-1/2 cursor-pointer">
               <Search className="text-white " />
             </div>
             {/* <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" /> */}
