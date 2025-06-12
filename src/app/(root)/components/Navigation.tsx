@@ -22,7 +22,7 @@ import {
   DropdownMenuTrigger,
 } from "@radix-ui/react-dropdown-menu";
 import { useRouter } from "next/navigation";
-import { Skeleton } from "@/components/ui/skeleton";
+// import { Skeleton } from "@/components/ui/skeleton";
 
 export function Navigation() {
   const [user, setUser] = useState<{ username: string; role: string } | null>(
@@ -40,7 +40,8 @@ export function Navigation() {
   const handleLogout = (e: React.MouseEvent) => {
     e.preventDefault();
     localStorage.clear();
-    router.push("/");
+    router.push("/home");
+    window.location.reload();
   };
   return (
     <NavigationMenu className="w-full max-w-none h-full px-32 flex items-center justify-between">
@@ -73,7 +74,7 @@ export function Navigation() {
               className=" pr-4 py-5 w-2xl rounded-md bg-white text-slate-500 text-lg font-medium placeholder:text-gray-400"
             />
             <div className="absolute bg-gradient-to-r from-[#B0F847]  via-[#c6ef88]  to-[#B0F847] py-1.5 rounded-sm px-3.5 right-1.5 top-1/2 -translate-y-1/2 cursor-pointer">
-              <Search className="text-white " />
+              <Search className="text-black " />
             </div>
             {/* <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" /> */}
           </div>
@@ -81,14 +82,19 @@ export function Navigation() {
       </div>
       <div className="flex items-center justify-end h-full px-8">
         {user === null ? (
-          <div className="flex items-center space-x-4">
-            <Skeleton className="h-12 w-12 rounded-full" />
-            <div className="space-y-2">
-              <Skeleton className="h-4 w-[250px]" />
-              <Skeleton className="h-4 w-[200px]" />
-            </div>
-          </div>
-        ) : user ? (
+          <Link href="/authentication">
+            <Button className="bg-gradient-to-r from-[#B0F847]  via-[#c6ef88]  to-[#B0F847] cursor-pointer text-black">
+              Đăng nhập
+            </Button>
+          </Link>
+        ) : // <div className="flex items-center space-x-4">
+        //   <Skeleton className="h-12 w-12 rounded-full" />
+        //   <div className="space-y-2">
+        //     <Skeleton className="h-4 w-[250px]" />
+        //     <Skeleton className="h-4 w-[200px]" />
+        //   </div>
+        // </div>
+        user ? (
           <div className="flex ">
             <div className=" pr-5 flex gap-5 ">
               <Button className="w-10 h-10 flex items-center text-2xl cursor-pointer text-[#B0F847] justify-center rounded-full bg-[#34373b] hover:bg-[#B0F847] hover:text-black pr-4">

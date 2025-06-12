@@ -84,8 +84,8 @@ export default function LoginRegisterPage() {
               },
               {
                 Icon: TicketPercent,
-                left: "88%",
-                top: "35%",
+                left: "90%",
+                top: "45%",
                 size: 55,
                 delay: "4s",
               },
