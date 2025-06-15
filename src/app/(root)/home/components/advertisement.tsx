@@ -36,7 +36,7 @@ function Advertisement() {
 
   return (
     <div
-      className="flex justify-center my-5 py-10 w-full bg-white rounded-xl"
+      className="flex justify-center my-2 mb-5 py-5 w-full bg-white rounded-xl"
       style={{
         boxShadow: "0 0 20px rgba(148, 163, 184, 0.3)",
       }}
@@ -51,32 +51,32 @@ function Advertisement() {
         <CarouselContent>
           <CarouselItem className="cursor-pointer">
             <Image
-              src="/qc11.jpg"
+              src="/2.png"
               alt="Stream Card Logo"
               width={900}
               height={304}
               quality={100}
-              className="w-full h-[380px] object-cover rounded-md"
+              className="w-full h-[380px] object-center rounded-md"
             />
           </CarouselItem>
           <CarouselItem className="cursor-pointer">
             <Image
-              src="/qc22.jpg"
+              src="/3.png"
               alt="Stream Card Logo"
               width={900}
               height={304}
               quality={100}
-              className="w-full h-[380px] object-cover rounded-md"
+              className="w-full h-[380px] object-center rounded-md"
             />
           </CarouselItem>
           <CarouselItem className="cursor-pointer">
             <Image
-              src="/qc11.jpg"
+              src="/4.png"
               alt="Stream Card Logo"
               width={900}
               height={304}
               quality={100}
-              className="w-full h-[380px] object-cover rounded-md"
+              className="w-full h-[380px] object-center rounded-md"
             />
           </CarouselItem>
         </CarouselContent>
@@ -100,7 +100,17 @@ function Advertisement() {
       </Carousel>
 
       <div className="w-[25%] flex flex-col gap-4 mr-5">
-        <div className="bg-black h-[182px] w-full rounded-md"></div>
+        <div className="bg-black h-[182px] w-full rounded-md cursor-pointer">
+          {" "}
+          <Image
+            src="/qc1.jfif"
+            alt="Stream Card Logo"
+            width={900}
+            height={304}
+            quality={100}
+            className="w-full h-full object-center rounded-md"
+          />
+        </div>
         <div className="bg-[#B0F847] h-[182px] w-full rounded-md"></div>
       </div>
     </div>

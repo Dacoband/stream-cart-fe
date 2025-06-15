@@ -8,6 +8,7 @@ import { loginSchema, LoginSchema } from "./schema";
 import { useRouter } from "next/navigation";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { TriangleAlert } from "lucide-react";
 export default function LoginForm() {
   const router = useRouter();
 
@@ -58,32 +59,59 @@ export default function LoginForm() {
       </div>
       <form onSubmit={handleSubmit(onSubmit)} className="w-full mx-auto">
         <div className="grid gap-6">
-          <div className="grid gap-3">
-            <Label htmlFor="email" className="text-white">
-              Tên người dùng:
-            </Label>
-            <Input id="username" {...register("username")} />
-            {errors.username && (
-              <p className="text-red-500 text-sm">{errors.username.message}</p>
-            )}
-          </div>
-          <div className="grid gap-3">
-            <div className="flex items-center">
-              <Label htmlFor="password" className="text-white">
-                Mật Khẩu:
-              </Label>
-            </div>
-            <Input type="password" id="password" {...register("password")} />
-            {errors.password && (
-              <p className="text-red-500 text-sm">{errors.password.message}</p>
-            )}
-            <a
-              href="#"
-              className="ml-auto text-sm underline-offset-4 hover:underline text-white"
+          {/* Tên người dùng */}
+          <div className="grid gap-1.5">
+            <Label
+              htmlFor="username"
+              className="text-white text-sm font-medium"
             >
-              Quên mật khẩu?
-            </a>
+              Tên người dùng
+            </Label>
+            <Input
+              id="username"
+              {...register("username")}
+              className="bg-white text-black"
+              placeholder="Nhập tên người dùng"
+            />
+            {errors.username && (
+              <p className="text-gray-300 text-xs mt-1 flex gap-2">
+                <TriangleAlert size={14} />
+                {errors.username.message}
+              </p>
+            )}
           </div>
+
+          {/* Mật khẩu */}
+          <div className="grid gap-1.5">
+            <div className="flex justify-between items-center">
+              <Label
+                htmlFor="password"
+                className="text-white text-sm font-medium"
+              >
+                Mật khẩu
+              </Label>
+              <a
+                href="#"
+                className="text-sm text-white underline-offset-4 hover:underline"
+              >
+                Quên mật khẩu?
+              </a>
+            </div>
+            <Input
+              type="password"
+              id="password"
+              {...register("password")}
+              className="bg-white text-black"
+              placeholder="Nhập mật khẩu"
+            />
+            {errors.password && (
+              <p className="text-gray-300 text-xs mt-1 flex gap-2">
+                <TriangleAlert size={14} />
+                {errors.password.message}
+              </p>
+            )}
+          </div>
+
           <Button
             type="submit"
             className="w-full bg-gradient-to-r bg-[#B0F847]  text-black hover:text-white cursor-pointer"

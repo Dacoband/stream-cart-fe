@@ -11,7 +11,7 @@ export default async function LayoutCustomer({
         <Navigation />
       </div>
       <div className="flex flex-1 w-full pt-16 justify-center">
-        <div className="w-[85%]  py-8 ">{children}</div>
+        <div className="w-[80%]  py-8 ">{children}</div>
       </div>
     </div>
   );
