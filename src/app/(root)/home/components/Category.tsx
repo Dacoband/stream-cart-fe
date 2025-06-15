@@ -32,7 +32,6 @@ function Category() {
       <Carousel className="w-full pt-2">
         <CarouselContent>
           {chunked.map((group, idx) => {
-            // Chia mỗi group 16 item thành 2 hàng x 8
             const firstRow = group.slice(0, 8);
             const secondRow = group.slice(8, 16);
 

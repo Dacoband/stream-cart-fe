@@ -86,5 +86,10 @@ export const categories = [
     name: "Đồ gia dụng",
     image: "/assets/17.png",
   },
+      {
+    id: 18,
+    name: "Đồ gia dụng",
+    image: "/assets/17.png",
+  },
   
 ];

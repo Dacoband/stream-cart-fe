@@ -36,10 +36,10 @@ function Advertisement() {
 
   return (
     <div
-      className="flex justify-center my-2 py-5 mx-auto bg-white rounded-xl w-[80%]"
-      // style={{
-      //   boxShadow: "0 0 20px rgba(148, 163, 184, 0.3)",
-      // }}
+      className="flex justify-center my-2 py-5 mx-auto bg-white rounded-xl w-full"
+      style={{
+        boxShadow: "0 0 20px rgba(148, 163, 184, 0.3)",
+      }}
     >
       <Carousel
         setApi={setApi}
