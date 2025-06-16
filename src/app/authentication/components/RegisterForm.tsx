@@ -180,7 +180,8 @@ function RegisterForm() {
                   className="text-white"
                 />
                 {errors.username && (
-                  <p className="text-red-500 text-sm">
+                  <p className="text-gray-300 text-xs flex gap-2">
+                    <TriangleAlert size={14} />
                     {errors.username.message}
                   </p>
                 )}
@@ -195,8 +196,8 @@ function RegisterForm() {
                   {...register("password")}
                 />
                 {errors.password && (
-                  <p className="text-red-500 text-sm">
-                    <TriangleAlert className="inline mr-1" size={16} />
+                  <p className="text-gray-300 text-xs flex gap-2">
+                    <TriangleAlert size={14} />
                     {errors.password.message}
                   </p>
                 )}
@@ -211,7 +212,8 @@ function RegisterForm() {
                   {...register("confirmPassword")}
                 />
                 {errors.confirmPassword && (
-                  <p className="text-red-500 text-sm">
+                  <p className="text-gray-300 text-xs flex gap-2">
+                    <TriangleAlert size={14} />
                     {errors.confirmPassword.message}
                   </p>
                 )}
@@ -225,18 +227,19 @@ function RegisterForm() {
                 </Label>
                 <Input id="avatarUrl" {...register("avatarUrl")} />
                 {errors.avatarUrl && (
-                  <p className="text-red-500 text-sm">
+                  <p className="text-gray-300 text-xs flex gap-2">
+                    <TriangleAlert size={14} />
                     {errors.avatarUrl.message}
                   </p>
                 )}
               </div>
-              <div className="flex gap-2">
+              <div className="grid grid-cols-2 gap-4 w-full">
                 <Button type="button" onClick={() => setStep(1)}>
                   Quay lại
                 </Button>
                 <Button
                   type="submit"
-                  className="w-full bg-gradient-to-r bg-[#B0F847] text-black hover:text-white cursor-pointer"
+                  className="bg-gradient-to-r bg-[#B0F847] text-black hover:text-white cursor-pointer"
                 >
                   Đăng ký
                 </Button>

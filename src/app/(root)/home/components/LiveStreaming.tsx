@@ -57,14 +57,14 @@ function LiveStreaming() {
             </CardHeader>
             <CardContent className="px-4 pt-1 pb-5 my-0 flex gap-2.5 items-center">
               <div className="relative w-18 h-18 flex justify-center items-center">
-                <div className="absolute inset-0 w-full h-full  bg-[#d8f3b0] rounded-full animate-pulse z-0"></div>
+                <div className="absolute inset-0 w-full h-full  bg-[#e2f8c2] rounded-full animate-pulse z-0"></div>
 
                 <Image
                   src={live.shopImage}
                   alt={live.shopName}
                   width={64}
                   height={64}
-                  className="w-16 h-16 object-cover rounded-full z-10 relative border-[3px] border-[#aef445]"
+                  className="w-16 h-16 object-cover rounded-full z-10 relative border-[3px] border-[#aafa32]"
                 />
               </div>
               <div>

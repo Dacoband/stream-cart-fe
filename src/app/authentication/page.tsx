@@ -2,8 +2,8 @@
 "use client";
 import { useState } from "react";
 import clsx from "clsx";
-import LoginForm from "./components/LoginForm";
-import RegisterForm from "./components/RegisterForm";
+import LoginForm from "../authentication/components/LoginForm";
+import RegisterForm from "../authentication/components/RegisterForm";
 import Image from "next/image";
 import {
   Store,
@@ -20,8 +20,8 @@ export default function LoginRegisterPage() {
     <div className="relative flex items-center justify-center h-screen font-sans">
       {/* BG hiệu ứng phủ full screen */}
       <div className="fixed inset-0 w-full h-full z-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 left-0 w-full h-full bg-green-950" />
-        <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-green-400/20 to-transparent" />
+        <div className="absolute top-0 left-0 w-full h-full bg-gray-800" />
+        <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-green-300/40 to-transparent" />
         <div className="wave"></div>
         <div className="wave" style={{ animationDelay: "-4s" }}></div>
         <div className="floating-items">

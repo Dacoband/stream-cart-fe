@@ -7,13 +7,15 @@ import { Input } from "@/components/ui/input";
 import {
   Bell,
   ChevronDown,
+  CircleArrowOutDownRight,
+  CircleUser,
   MessageCircleMore,
+  ScrollText,
   Search,
   ShoppingCart,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
-import { User } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -96,20 +98,21 @@ export function Navigation() {
         // </div>
         user ? (
           <div className="flex ">
-            <div className=" pr-5 flex gap-5 ">
-              <Button className="w-10 h-10 flex items-center text-2xl cursor-pointer text-[#B0F847] justify-center rounded-full bg-[#34373b] hover:bg-[#B0F847] hover:text-black pr-4">
-                <ShoppingCart className="min-w-[25px] min-h-[25px] " />
-              </Button>
-              <Button className="w-10 h-10 flex items-center text-2xl cursor-pointer justify-center text-[#B0F847] rounded-full bg-[#34373b] hover:bg-[#B0F847] hover:text-black">
-                <Bell className="min-w-[25px] min-h-[25px] " />
-              </Button>
-              <Button className="w-10 h-10 flex items-center text-2xl cursor-pointer text-[#B0F847] justify-center rounded-full bg-[#34373b] hover:bg-[#B0F847] hover:text-black pr-4">
-                <MessageCircleMore className="min-w-[25px] min-h-[25px] " />
-              </Button>
-
+            <div className=" flex">
+              <div className=" pr-5 gap-5 flex border-white border-r-1 ">
+                <Button className="w-10 h-10 flex items-center text-2xl cursor-pointer text-[#B0F847] justify-center rounded-full bg-[#34373b] hover:bg-[#B0F847] hover:text-black pr-4">
+                  <ShoppingCart className="min-w-[25px] min-h-[25px] " />
+                </Button>
+                <Button className="w-10 h-10 flex items-center text-2xl cursor-pointer justify-center text-[#B0F847] rounded-full bg-[#34373b] hover:bg-[#B0F847] hover:text-black">
+                  <Bell className="min-w-[25px] min-h-[25px] " />
+                </Button>
+                <Button className="w-10 h-10  flex items-center text-2xl cursor-pointer text-[#B0F847] justify-center rounded-full bg-[#34373b] hover:bg-[#B0F847] hover:text-black pr-4">
+                  <MessageCircleMore className="min-w-[25px] min-h-[25px] " />
+                </Button>
+              </div>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button className="bg-black cursor-pointer rounded-none p-0 flex pl-5 border-white border-l-1">
+                  <Button className="bg-black cursor-pointer rounded-none p-0 flex pl-5 border-none">
                     <Image
                       src="https://i.pinimg.com/736x/8b/8a/ed/8b8aed24d96cefbf7b339b3e5e23bf7e.jpg"
                       alt="Stream Card AvatarAvatar"
@@ -129,20 +132,26 @@ export function Navigation() {
                   style={{
                     boxShadow: "0 0 20px rgba(148, 163, 184, 0.4)",
                   }}
-                  className="w-52 mt-5 text-white px-4 py-2.5 rounded-2xl bg-black "
+                  className="w-fit mt-6 text-white px-4 py-2.5 rounded-2xl  bg-black "
                   align="start"
                 >
                   {/* <DropdownMenuLabel>My Account</DropdownMenuLabel> */}
                   <DropdownMenuGroup>
-                    <DropdownMenuItem className="cursor-pointer py-1.5 border-b-[1px] border-slate-300 flex gap-2">
-                      <User /> Hồ sơ cá nhân
+                    <DropdownMenuItem className="cursor-pointer py-1.5 px-2.5 border-none flex gap-2 my-2 items-center">
+                      <CircleUser size="20" /> Hồ sơ cá nhân
+                    </DropdownMenuItem>
+                  </DropdownMenuGroup>
+                  <DropdownMenuGroup>
+                    <DropdownMenuItem className="cursor-pointer py-1.5 px-2.5 border-none flex gap-2 my-2 items-center">
+                      <ScrollText size="20" /> Đơn hàng
                     </DropdownMenuItem>
                   </DropdownMenuGroup>
 
                   <DropdownMenuItem
                     onClick={handleLogout}
-                    className="cursor-pointer  py-1.5"
+                    className="cursor-pointer py-1.5 px-2.5 border-none flex gap-2 my-2 items-center"
                   >
+                    <CircleArrowOutDownRight size="19" />
                     Đăng xuất
                   </DropdownMenuItem>
                 </DropdownMenuContent>
