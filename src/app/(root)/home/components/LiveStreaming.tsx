@@ -30,7 +30,7 @@ function LiveStreaming() {
           </svg>
           XEM LIVE SIÊU HỜI:
         </div>
-        <Button className="cursor-pointer rounded-full px-5 font-normal">
+        <Button className="cursor-pointer rounded-md px-5 font-normal">
           Xem thêm
         </Button>
       </div>

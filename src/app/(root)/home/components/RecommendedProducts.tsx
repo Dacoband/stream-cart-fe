@@ -27,13 +27,13 @@ function RecommendedProducts() {
             key={index}
             className="p-0 rounded-sm border-2 border-transparent hover:border-[#98b869] gap-1 transition-all duration-300 cursor-pointer hover:scale-102"
           >
-            <CardHeader className="p-0 m-0 relative">
+            <CardHeader className="p-0 h-56 m-0 relative">
               <Image
                 src={item.image}
                 alt={item.name}
                 width={400}
                 height={200}
-                className="w-full h-56 object-cover "
+                className="h-56  object-center  rounded-t-sm"
               />
             </CardHeader>
             <CardContent className="px-4 pb-4 my-0 flex flex-col ">

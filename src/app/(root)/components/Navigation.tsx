@@ -1,12 +1,17 @@
 "use client";
 import * as React from "react";
 import Link from "next/link";
-import { NavigationMenu } from "@/components/ui/navigation-menu";
+import {
+  NavigationMenuItem,
+  NavigationMenuTrigger,
+  NavigationMenuContent,
+  NavigationMenuLink,
+  NavigationMenuList,
+} from "@/components/ui/navigation-menu";
 import Image from "next/image";
 import { Input } from "@/components/ui/input";
 import {
   Bell,
-  ChevronDown,
   CircleArrowOutDownRight,
   CircleUser,
   MessageCircleMore,
@@ -16,14 +21,9 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@radix-ui/react-dropdown-menu";
+
 import { useRouter } from "next/navigation";
+import { NavigationMenu } from "@radix-ui/react-navigation-menu";
 // import { Skeleton } from "@/components/ui/skeleton";
 
 export function Navigation() {
@@ -46,14 +46,14 @@ export function Navigation() {
     window.location.reload();
   };
   return (
-    <NavigationMenu className="w-full max-w-none h-full px-32 flex items-center justify-between">
+    <NavigationMenu className="w-full bg-[#202328] max-w-none h-full px-32 flex items-center justify-between">
       <div className="flex gap-2 items-center">
         <Link
           href="/home"
           className="flex items-center justify-center flex-row 
-             hover:text-[#B0F847] hover:bg-black 
-             active:bg-black active:text-[#B0F847] 
-             focus:bg-black focus:text-[#B0F847] 
+             hover:text-[#B0F847] hover:bg-[#202328]
+             active:bg-[#202328] active:text-[#B0F847] 
+             focus:bg-[#202328] focus:text-[#B0F847] 
               px-2 py-1 rounded-md"
         >
           <Image
@@ -82,10 +82,21 @@ export function Navigation() {
           </div>
         </div>
       </div>
-      <div className="flex items-center justify-end h-full px-8">
+      <div className="flex items-center justify-end h-full">
+        <div className=" pr-5 gap-5 flex ">
+          <Button className="w-10 h-10 flex items-center text-2xl cursor-pointer text-[#B0F847] justify-center rounded-full bg-[#34373b] hover:bg-[#B0F847] hover:text-black pr-4">
+            <ShoppingCart className="min-w-[25px] min-h-[25px] " />
+          </Button>
+          <Button className="w-10 h-10 flex items-center text-2xl cursor-pointer justify-center text-[#B0F847] rounded-full bg-[#34373b] hover:bg-[#B0F847] hover:text-black">
+            <Bell className="min-w-[25px] min-h-[25px] " />
+          </Button>
+          <Button className="w-10 h-10  flex items-center text-2xl cursor-pointer text-[#B0F847] justify-center rounded-full bg-[#34373b] hover:bg-[#B0F847] hover:text-black pr-4">
+            <MessageCircleMore className="min-w-[25px] min-h-[25px] " />
+          </Button>
+        </div>
         {user === null ? (
           <Link href="/authentication">
-            <Button className="bg-gradient-to-r from-[#B0F847]  via-[#c6ef88]  to-[#B0F847] cursor-pointer text-black">
+            <Button className="bg-gradient-to-r ml-10 from-[#B0F847]  via-[#c6ef88]  to-[#B0F847] cursor-pointer text-black">
               Đăng nhập
             </Button>
           </Link>
@@ -97,67 +108,58 @@ export function Navigation() {
         //   </div>
         // </div>
         user ? (
-          <div className="flex ">
-            <div className=" flex">
-              <div className=" pr-5 gap-5 flex border-white border-r-1 ">
-                <Button className="w-10 h-10 flex items-center text-2xl cursor-pointer text-[#B0F847] justify-center rounded-full bg-[#34373b] hover:bg-[#B0F847] hover:text-black pr-4">
-                  <ShoppingCart className="min-w-[25px] min-h-[25px] " />
-                </Button>
-                <Button className="w-10 h-10 flex items-center text-2xl cursor-pointer justify-center text-[#B0F847] rounded-full bg-[#34373b] hover:bg-[#B0F847] hover:text-black">
-                  <Bell className="min-w-[25px] min-h-[25px] " />
-                </Button>
-                <Button className="w-10 h-10  flex items-center text-2xl cursor-pointer text-[#B0F847] justify-center rounded-full bg-[#34373b] hover:bg-[#B0F847] hover:text-black pr-4">
-                  <MessageCircleMore className="min-w-[25px] min-h-[25px] " />
-                </Button>
-              </div>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button className="bg-black cursor-pointer rounded-none p-0 flex pl-5 border-none">
-                    <Image
-                      src="https://i.pinimg.com/736x/8b/8a/ed/8b8aed24d96cefbf7b339b3e5e23bf7e.jpg"
-                      alt="Stream Card AvatarAvatar"
-                      width={44}
-                      height={44}
-                      className="w-10 h-10 object-cover rounded-full"
-                    />
+          <NavigationMenuList>
+            <NavigationMenuItem>
+              <NavigationMenuTrigger
+                className="bg-[#202328] text-slate-200 
+  hover:bg-[#202328] focus:bg-[#202328] active:bg-[#202328] 
+  focus:text-slate-200 active:text-slate-200 
+  ring-0 shadow-none border-none cursor-pointer
+  flex items-center gap-2 max-w-[200px] h-fit"
+              >
+                <Image
+                  src="https://i.pinimg.com/736x/8b/8a/ed/8b8aed24d96cefbf7b339b3e5e23bf7e.jpg"
+                  alt="Stream Card AvatarAvatar"
+                  width={44}
+                  height={44}
+                  className="w-10 h-10 object-cover rounded-full shrink-0"
+                />
+                <span className="text-slate-200 truncate">TAT TAT TAT</span>
+              </NavigationMenuTrigger>
 
-                    <span className="text-slate-200"> TAT TAT TAT</span>
-
-                    <div className="text-white mx-1.5">
-                      <ChevronDown />
-                    </div>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent
-                  style={{
-                    boxShadow: "0 0 20px rgba(148, 163, 184, 0.4)",
-                  }}
-                  className="w-fit mt-6 text-white px-4 py-2.5 rounded-2xl  bg-black "
-                  align="start"
-                >
-                  {/* <DropdownMenuLabel>My Account</DropdownMenuLabel> */}
-                  <DropdownMenuGroup>
-                    <DropdownMenuItem className="cursor-pointer py-1.5 px-2.5 border-none flex gap-2 my-2 items-center">
-                      <CircleUser size="20" /> Hồ sơ cá nhân
-                    </DropdownMenuItem>
-                  </DropdownMenuGroup>
-                  <DropdownMenuGroup>
-                    <DropdownMenuItem className="cursor-pointer py-1.5 px-2.5 border-none flex gap-2 my-2 items-center">
-                      <ScrollText size="20" /> Đơn hàng
-                    </DropdownMenuItem>
-                  </DropdownMenuGroup>
-
-                  <DropdownMenuItem
-                    onClick={handleLogout}
-                    className="cursor-pointer py-1.5 px-2.5 border-none flex gap-2 my-2 items-center"
-                  >
-                    <CircleArrowOutDownRight size="19" />
-                    Đăng xuất
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-          </div>
+              <NavigationMenuContent className="mt-16 py-2 rounded-md bg-white text-black shadow-xl">
+                <ul className="grid w-[200px] gap-4">
+                  <li>
+                    <NavigationMenuLink asChild>
+                      <Link
+                        href="/customer/profile/1"
+                        className="flex-row items-center gap-2"
+                      >
+                        <CircleUser />
+                        Hồ sơ cá nhân
+                      </Link>
+                    </NavigationMenuLink>
+                    <NavigationMenuLink asChild>
+                      <Link href="#" className="flex-row items-center gap-2">
+                        <ScrollText />
+                        Đơn hàng
+                      </Link>
+                    </NavigationMenuLink>
+                    <NavigationMenuLink asChild>
+                      <Link
+                        href="/home"
+                        className="flex-row items-center gap-2"
+                        onClick={handleLogout}
+                      >
+                        <CircleArrowOutDownRight />
+                        Đăng xuất
+                      </Link>
+                    </NavigationMenuLink>
+                  </li>
+                </ul>
+              </NavigationMenuContent>
+            </NavigationMenuItem>
+          </NavigationMenuList>
         ) : (
           <Link href="/authentication">
             <Button className="bg-gradient-to-r from-[#B0F847]  via-[#c6ef88]  to-[#B0F847] cursor-pointer text-black">
