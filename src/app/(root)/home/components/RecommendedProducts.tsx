@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import Image from "next/image";
 import { products } from "@/fake data/product";
 import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 function RecommendedProducts() {
   return (
@@ -22,27 +23,26 @@ function RecommendedProducts() {
         ĐỀ XUẤT CHO BẠN:
       </div>
       <div className="grid grid-cols-6 gap-x-8 gap-y-10 pt-2 mb-5">
-        {products.map((item, index) => (
-          <Card
-            key={index}
-            className="p-0 rounded-sm border-2 border-transparent hover:border-[#98b869] gap-1 transition-all duration-300 cursor-pointer hover:scale-102"
-          >
-            <CardHeader className="p-0 h-56 m-0 relative">
-              <Image
-                src={item.image}
-                alt={item.name}
-                width={400}
-                height={200}
-                className="h-56  object-center  rounded-t-sm"
-              />
-            </CardHeader>
-            <CardContent className="px-4 pb-4 my-0 flex flex-col ">
-              <div>{item.name}</div>
-              <div className="mt-2 font-semibold text-orange-600">
-                {item.price}đ
-              </div>
-            </CardContent>
-          </Card>
+        {products.map((item) => (
+          <Link href={`/product/${item.id}`} key={item.id}>
+            <Card className="p-0 rounded-sm border-2 border-transparent hover:border-[#98b869] gap-1 transition-all duration-300 cursor-pointer hover:scale-102">
+              <CardHeader className="p-0 h-56 m-0 relative">
+                <Image
+                  src={item.image}
+                  alt={item.name}
+                  width={400}
+                  height={200}
+                  className="h-56  object-center  rounded-t-sm"
+                />
+              </CardHeader>
+              <CardContent className="px-4 pb-4 my-0 flex flex-col ">
+                <div>{item.name}</div>
+                <div className="mt-2 font-semibold text-orange-600">
+                  {item.price}đ
+                </div>
+              </CardContent>
+            </Card>
+          </Link>
         ))}
       </div>
       <Button className="bg-[#a4ee35] text-black my-8 text-base py-2 hover:text-white cursor-pointer">
