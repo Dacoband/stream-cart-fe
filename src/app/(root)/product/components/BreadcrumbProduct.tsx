@@ -20,13 +20,13 @@ function BreadcrumbProduct() {
         <BreadcrumbSeparator />
         <BreadcrumbItem className="font-medium text-base cursor-pointer">
           <BreadcrumbLink asChild>
-            <Link href="/components">Category</Link>
+            <Link href="/components">Đồ chơi</Link>
           </BreadcrumbLink>
         </BreadcrumbItem>
         <BreadcrumbSeparator />
         <BreadcrumbItem>
           <BreadcrumbPage className="font-medium text-base  ">
-            Sách trẻ em
+            Gấu bông Bonnie lông mềm Quãng Châu
           </BreadcrumbPage>
         </BreadcrumbItem>
       </BreadcrumbList>

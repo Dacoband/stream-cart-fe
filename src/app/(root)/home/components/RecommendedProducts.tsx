@@ -25,7 +25,7 @@ function RecommendedProducts() {
       <div className="grid grid-cols-6 gap-x-8 gap-y-10 pt-2 mb-5">
         {products.map((item) => (
           <Link href={`/product/${item.id}`} key={item.id}>
-            <Card className="p-0 rounded-sm border-2 border-transparent hover:border-[#98b869] gap-1 transition-all duration-300 cursor-pointer hover:scale-102">
+            <Card className="p-0 h-full rounded-sm border-2 border-transparent hover:border-[#98b869] gap-1 transition-all duration-300 cursor-pointer hover:scale-102">
               <CardHeader className="p-0 h-56 m-0 relative">
                 <Image
                   src={item.image}
@@ -35,10 +35,13 @@ function RecommendedProducts() {
                   className="h-56  object-center  rounded-t-sm"
                 />
               </CardHeader>
-              <CardContent className="px-4 pb-4 my-0 flex flex-col ">
-                <div>{item.name}</div>
-                <div className="mt-2 font-semibold text-orange-600">
-                  {item.price}đ
+              <CardContent className="px-2 pb-2 my-0 flex flex-col ">
+                <div className="line-clamp-2 min-h-[3em]">{item.name}</div>
+                <div className="flex justify-between items-center">
+                  <div className="mt-2 font-semibold text-orange-600">
+                    {item.price}đ
+                  </div>
+                  <div className="mt-2 text-sm text-gray-600 ">Đã bán 150</div>
                 </div>
               </CardContent>
             </Card>
