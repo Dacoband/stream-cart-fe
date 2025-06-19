@@ -1,6 +1,5 @@
-// app/login/page.tsx
 "use client";
-import React from "react";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -9,8 +8,13 @@ import { useRouter } from "next/navigation";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { TriangleAlert } from "lucide-react";
+import { loginApi } from "@/services/api/authentication";
+import { toast } from "sonner";
+import { AxiosError } from "axios";
+
 export default function LoginForm() {
   const router = useRouter();
+  const [loading, setLoading] = useState(false);
 
   const {
     register,
@@ -20,32 +24,40 @@ export default function LoginForm() {
     resolver: zodResolver(loginSchema),
   });
 
-  const onSubmit = (data: LoginSchema) => {
-    // Dữ liệu giả
-    const fakeUsers = [
-      { username: "shopUser", password: "password123", role: "shop" },
-      { username: "normalUser", password: "password456", role: "user" },
-      { username: "admin", password: "password456", role: "admin" },
-    ];
+  const onSubmit = async (data: LoginSchema) => {
+    setLoading(true);
+    try {
+      const response = await loginApi(data);
 
-    const user = fakeUsers.find(
-      (u) => u.username === data.username && u.password === data.password
-    );
+      const userData = JSON.parse(localStorage.getItem("userData") || "{}");
 
-    if (user) {
-      const { username, role } = user;
-      localStorage.setItem("user", JSON.stringify({ username, role }));
+      console.log("Login success:", response.data);
 
-      if (role === "shop") {
-        router.push("/shop");
+      toast.success(response.data.data.message);
+
+      switch (userData.role) {
+        case 0:
+        case 4:
+          router.push("/admin/dashboard");
+          break;
+        case 1:
+          router.push("/home");
+          break;
+        case 2:
+          router.push("/shop/dashboard");
+          break;
+        case 3:
+          router.push("/partner/manageproduct");
+          break;
+        default:
+          router.push("/");
       }
-      if (role === "admin") {
-        router.push("/admin/dashboard");
-      } else {
-        router.push("/home");
-      }
-    } else {
-      alert("Tên đăng nhập hoặc mật khẩu không đúng!");
+    } catch (error: unknown) {
+      const err = error as AxiosError<{ message: string }>;
+      const message = err?.response?.data?.message || "Đăng nhập thất bại";
+      toast.error(message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -72,6 +84,7 @@ export default function LoginForm() {
               {...register("username")}
               className="bg-white text-black"
               placeholder="Nhập tên người dùng"
+              autoComplete="username"
             />
             {errors.username && (
               <p className="text-gray-300 text-xs mt-1 flex gap-2">
@@ -100,6 +113,7 @@ export default function LoginForm() {
             <Input
               type="password"
               id="password"
+              autoComplete="current-password"
               {...register("password")}
               className="bg-white text-black"
               placeholder="Nhập mật khẩu"
@@ -114,9 +128,10 @@ export default function LoginForm() {
 
           <Button
             type="submit"
-            className="w-full bg-gradient-to-r bg-[#B0F847]  text-black hover:text-white cursor-pointer"
+            className="w-full  bg-gradient-to-r from-[#B0F847] via-[#c6ef88] to-[#B0F847]  text-black hover:text-black/50 cursor-pointer"
+            disabled={loading}
           >
-            Đăng nhập
+            {loading ? "Đang đăng nhập..." : "Đăng nhập"}
           </Button>
           <div className="flex items-center gap-2 text-center text-sm my-4">
             <span className="flex-1 border-t border-white/30"></span>
@@ -135,12 +150,6 @@ export default function LoginForm() {
             Login with Google
           </Button>
         </div>
-        {/* <div className="text-center text-sm">
-          Don&apos;t have an account?{" "}
-          <a href="#" className="underline underline-offset-4">
-            Sign up
-          </a>
-        </div> */}
       </form>
     </div>
   );

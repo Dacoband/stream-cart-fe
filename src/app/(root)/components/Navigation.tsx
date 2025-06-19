@@ -27,7 +27,7 @@ import { NavigationMenu } from "@radix-ui/react-navigation-menu";
 // import { Skeleton } from "@/components/ui/skeleton";
 
 export function Navigation() {
-  const [user, setUser] = useState<{ username: string; role: string } | null>(
+  const [user, setUser] = useState<{ username: string; role: number } | null>(
     null
   );
 
@@ -95,7 +95,7 @@ export function Navigation() {
           </Button>
         </div>
         {user === null ? (
-          <Link href="/authentication">
+          <Link href="/authentication/login">
             <Button className="bg-gradient-to-r ml-10 from-[#B0F847]  via-[#c6ef88]  to-[#B0F847] cursor-pointer text-black">
               Đăng nhập
             </Button>

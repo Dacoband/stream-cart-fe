@@ -1,3 +1,4 @@
+"use client";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { registerSchema, RegisterSchema } from "./schema";
 import { useForm } from "react-hook-form";
@@ -148,7 +149,7 @@ function RegisterForm() {
               </div>
               <Button
                 type="button"
-                className="mt-6 cursor-pointer bg-[#B0F847] text-black  hover:text-white  {
+                className="mt-6 cursor-pointer  bg-gradient-to-r from-[#B0F847] via-[#c6ef88] to-[#B0F847] text-black  hover:text-white  {
                   
                 }"
                 onClick={() => setStep(2)}
@@ -239,7 +240,7 @@ function RegisterForm() {
                 </Button>
                 <Button
                   type="submit"
-                  className="bg-gradient-to-r bg-[#B0F847] text-black hover:text-white cursor-pointer"
+                  className=" bg-gradient-to-r from-[#B0F847] via-[#c6ef88] to-[#B0F847] text-black hover:text-white cursor-pointer"
                 >
                   Đăng ký
                 </Button>
