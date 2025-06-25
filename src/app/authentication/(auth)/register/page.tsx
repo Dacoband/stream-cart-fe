@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import RegisterForm from "../components/RegisterForm";
+import RegisterForm from "../../components/RegisterForm";
 import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";

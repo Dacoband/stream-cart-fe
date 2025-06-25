@@ -11,15 +11,18 @@ export interface User {
     role:number;
     isActive:boolean;
     isVerified:boolean;
-    completeRate:boolean;
+    completeRate:number;
     shopId:string;
     createdAt:string;
     lastModifiedAt:string;
     lastModifiedBy:string;
+avatarURL:string;
+registrationDate:Date;
+lastLoginDate:Date;
 
 
 }
-export type UserLocal = {
+export interface UserLocal{
   token: string;
   userId: string;
   username: string;
@@ -27,4 +30,14 @@ export type UserLocal = {
   isActive: boolean;
   isVerified: boolean;
 };
+
+export interface RegisterUser{
+  username:string;
+  email:string;
+  password:string;
+  phoneNumber:string;
+  fullname:string;
+  avatarURL:string;
+  role:number;
+}
 

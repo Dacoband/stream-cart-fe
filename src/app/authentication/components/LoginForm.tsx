@@ -28,13 +28,22 @@ export default function LoginForm() {
     setLoading(true);
     try {
       const response = await loginApi(data);
+      const responseData = response.data?.data;
+      const message = response.data?.message;
+
+      if (responseData?.requiresVerification) {
+        toast.info(message);
+
+        localStorage.setItem("accountId", responseData.accountId);
+
+        router.push("/authentication/verify");
+        return;
+      }
 
       const userData = JSON.parse(localStorage.getItem("userData") || "{}");
-
-      console.log("Login success:", response.data);
+      console.log("Login success:", responseData);
 
       toast.success(response.data.data.message);
-
       switch (userData.role) {
         case 0:
         case 4:
@@ -54,7 +63,7 @@ export default function LoginForm() {
       }
     } catch (error: unknown) {
       const err = error as AxiosError<{ message: string }>;
-      const message = err?.response?.data?.message || "Đăng nhập thất bại";
+      const message = err?.response?.data?.message;
       toast.error(message);
     } finally {
       setLoading(false);

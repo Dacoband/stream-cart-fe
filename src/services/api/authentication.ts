@@ -1,4 +1,4 @@
-import { LoginRequest,UserLocal } from "@/types/user";
+import { LoginRequest,UserLocal,RegisterUser } from "@/types/user";
 import rootApi from "../rootApi";
 
 // Login
@@ -28,5 +28,58 @@ export const loginApi = async (request: LoginRequest) => {
   } catch (error) {
     console.error(`Error fetching`, error);
     throw error; 
+  }
+};
+export const getMe = async (token: string) => {
+  try {
+    const response = await rootApi.get("auth/me", {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching:", error);
+    throw error;
+  }
+};
+export const verifyOtps = async (otpCode: string,accountId:string) => {
+  try {
+    const response = await rootApi.post("auth/verify-otp", {
+      accountId:accountId,
+      otp: otpCode,
+    });
+
+    console.log("Fetching OTP succsess:", response.data);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching:", error);
+    throw error;
+  }
+};
+export const ReSendOtp = async (accountId:string) => {
+  try {
+    const response = await rootApi.post("auth/resend-otp", {
+      accountId:accountId,
+    
+    });
+
+    console.log("Fetching  ReSend OTP succsess:", response.data);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching:", error);
+    throw error;
+  }
+};
+
+export const register = async (request: RegisterUser) => {
+  try {
+    const response = await rootApi.post("auth/register", request);
+    console.log("Register succses:", response.data);
+    return response.data;
+  } catch (error) {
+    console.error("Fairl fetching :", error);
+    throw error;
   }
 };

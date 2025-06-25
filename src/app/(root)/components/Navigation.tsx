@@ -21,29 +21,49 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
-
+import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { NavigationMenu } from "@radix-ui/react-navigation-menu";
-// import { Skeleton } from "@/components/ui/skeleton";
-
+import { Skeleton } from "@/components/ui/skeleton";
+import { getMe } from "@/services/api/authentication";
+import { User } from "@/types/user";
 export function Navigation() {
-  const [user, setUser] = useState<{ username: string; role: number } | null>(
-    null
-  );
-
-  useEffect(() => {
-    const stored = localStorage.getItem("user");
-    if (stored) {
-      const parsed = JSON.parse(stored);
-      if (parsed.role) setUser(parsed);
-    }
-  }, []);
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
   const router = useRouter();
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const data = localStorage.getItem("userData");
+        if (!data) return;
+        const parsed = JSON.parse(data);
+        if (!parsed.token) return;
+
+        const response = await getMe(parsed.token);
+        if (response) {
+          setUser(response.data);
+        }
+      } catch (err) {
+        console.error("Error loading user info:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUser();
+  }, []);
   const handleLogout = (e: React.MouseEvent) => {
     e.preventDefault();
     localStorage.clear();
     router.push("/home");
     window.location.reload();
+  };
+
+  const handleClick = () => {
+    if (user?.role !== 1) {
+      toast.error("Vui lòng đăng nhập.");
+      router.push("/authentication/login");
+    }
   };
   return (
     <NavigationMenu className="w-full bg-[#202328] max-w-none h-full px-32 flex items-center justify-between">
@@ -78,36 +98,45 @@ export function Navigation() {
             <div className="absolute bg-gradient-to-r from-[#B0F847]  via-[#c6ef88]  to-[#B0F847] py-1.5 rounded-sm px-3.5 right-1.5 top-1/2 -translate-y-1/2 cursor-pointer">
               <Search className="text-black " />
             </div>
-            {/* <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" /> */}
           </div>
         </div>
       </div>
       <div className="flex items-center justify-end h-full">
         <div className=" pr-5 gap-5 flex ">
-          <Button className="w-10 h-10 flex items-center text-2xl cursor-pointer text-[#B0F847] justify-center rounded-full bg-[#34373b] hover:bg-[#B0F847] hover:text-black pr-4">
+          <Button
+            onClick={handleClick}
+            className="w-10 h-10 flex items-center text-2xl cursor-pointer text-[#B0F847] justify-center rounded-full bg-[#34373b] hover:bg-[#B0F847] hover:text-black pr-4"
+          >
             <ShoppingCart className="min-w-[25px] min-h-[25px] " />
           </Button>
-          <Button className="w-10 h-10 flex items-center text-2xl cursor-pointer justify-center text-[#B0F847] rounded-full bg-[#34373b] hover:bg-[#B0F847] hover:text-black">
+          <Button
+            onClick={handleClick}
+            className="w-10 h-10 flex items-center text-2xl cursor-pointer justify-center text-[#B0F847] rounded-full bg-[#34373b] hover:bg-[#B0F847] hover:text-black"
+          >
             <Bell className="min-w-[25px] min-h-[25px] " />
           </Button>
-          <Button className="w-10 h-10  flex items-center text-2xl cursor-pointer text-[#B0F847] justify-center rounded-full bg-[#34373b] hover:bg-[#B0F847] hover:text-black pr-4">
+          <Button
+            onClick={handleClick}
+            className="w-10 h-10  flex items-center text-2xl cursor-pointer text-[#B0F847] justify-center rounded-full bg-[#34373b] hover:bg-[#B0F847] hover:text-black pr-4"
+          >
             <MessageCircleMore className="min-w-[25px] min-h-[25px] " />
           </Button>
         </div>
-        {user === null ? (
+        {loading ? (
+          <div className="flex items-center space-x-4">
+            <Skeleton className="h-12 w-12 rounded-full" />
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-[120px]" />
+              <Skeleton className="h-4 w-[120px]" />
+            </div>
+          </div>
+        ) : !user ? (
           <Link href="/authentication/login">
             <Button className="bg-gradient-to-r ml-10 from-[#B0F847]  via-[#c6ef88]  to-[#B0F847] cursor-pointer text-black">
               Đăng nhập
             </Button>
           </Link>
-        ) : // <div className="flex items-center space-x-4">
-        //   <Skeleton className="h-12 w-12 rounded-full" />
-        //   <div className="space-y-2">
-        //     <Skeleton className="h-4 w-[250px]" />
-        //     <Skeleton className="h-4 w-[200px]" />
-        //   </div>
-        // </div>
-        user ? (
+        ) : (
           <NavigationMenuList>
             <NavigationMenuItem>
               <NavigationMenuTrigger
@@ -118,13 +147,16 @@ export function Navigation() {
   flex items-center gap-2 max-w-[200px] h-fit"
               >
                 <Image
-                  src="https://i.pinimg.com/736x/8b/8a/ed/8b8aed24d96cefbf7b339b3e5e23bf7e.jpg"
-                  alt="Stream Card AvatarAvatar"
+                  src={
+                    user.avatarURL ||
+                    "https://i.pinimg.com/736x/22/7b/cf/227bcf6f33a61d149764bb6ad90e19eb.jpg"
+                  }
+                  alt="Avatar"
                   width={44}
                   height={44}
                   className="w-10 h-10 object-cover rounded-full shrink-0"
                 />
-                <span className="text-slate-200 truncate">TAT TAT TAT</span>
+                <span className="text-slate-200 truncate">{user.username}</span>
               </NavigationMenuTrigger>
 
               <NavigationMenuContent className="mt-16 py-2 rounded-md bg-white text-black shadow-xl">
@@ -160,12 +192,6 @@ export function Navigation() {
               </NavigationMenuContent>
             </NavigationMenuItem>
           </NavigationMenuList>
-        ) : (
-          <Link href="/authentication">
-            <Button className="bg-gradient-to-r from-[#B0F847]  via-[#c6ef88]  to-[#B0F847] cursor-pointer text-black">
-              Đăng nhập
-            </Button>
-          </Link>
         )}
       </div>
     </NavigationMenu>
