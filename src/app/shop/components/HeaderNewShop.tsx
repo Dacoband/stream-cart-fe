@@ -1,24 +1,22 @@
 "use client";
-import { Button } from "@/components/ui/button";
-
-import { SidebarTrigger } from "@/components/ui/sidebar";
-import { Bell, CircleArrowOutDownRight, MessageCircleMore } from "lucide-react";
+import * as React from "react";
+import Link from "next/link";
+import {
+  NavigationMenuItem,
+  NavigationMenuTrigger,
+  NavigationMenuContent,
+  NavigationMenuLink,
+  NavigationMenuList,
+} from "@/components/ui/navigation-menu";
 import Image from "next/image";
-import React, { useEffect, useState } from "react";
+import { CircleArrowOutDownRight } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { NavigationMenu } from "@radix-ui/react-navigation-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getMe } from "@/services/api/authentication";
 import { User } from "@/types/user";
-import { useRouter } from "next/navigation";
-import {
-  NavigationMenuContent,
-  NavigationMenuLink,
-  NavigationMenuTrigger,
-  NavigationMenuItem,
-  NavigationMenuList,
-} from "@/components/ui/navigation-menu";
-import Link from "next/link";
-import { NavigationMenu } from "@radix-ui/react-navigation-menu";
-function Header() {
+export function HeaderNewShop() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
@@ -50,32 +48,30 @@ function Header() {
     router.push("/home");
     window.location.reload();
   };
+
   return (
-    <NavigationMenu className="py-1.5 bg-[#202328] h-full flex justify-between items-center">
-      <div className="flex w-64 h-full items-center justify-between pl-5">
-        <div className=" flex justify-center items-center ">
+    <NavigationMenu className="w-full bg-[#202328] max-w-none h-full px-32 flex items-center justify-between">
+      <div className="flex gap-2 items-center">
+        <div
+          className="flex items-center justify-center flex-row 
+             hover:text-[#B0F847] hover:bg-[#202328]
+             active:bg-[#202328] active:text-[#B0F847] 
+             focus:bg-[#202328] focus:text-[#B0F847] 
+              px-2 py-1 rounded-md"
+        >
           <Image
             src="/logo2 .png"
             alt="Stream Card Logo"
             width={96}
             height={96}
-            className="w-11 h-11 object-contain"
+            className="w-14 h-14 object-contain"
           />
-          <div className="text-2xl text-[#B0F847] font-semibold font-sans">
+          <div className="text-3xl text-[#B0F847] font-semibold font-sans">
             Stream Cart
           </div>
         </div>
-
-        <SidebarTrigger className="  border-none hover:bg-[#202328] hover:text-white cursor-pointer rounded-lg text-2xl text-white" />
       </div>
-      <div className="text-white pr-5 flex gap-5 ">
-        <Button className="w-10 h-10 flex items-center text-2xl cursor-pointer justify-center rounded-full bg-[#34373b] hover:bg-[#B0F847] hover:text-black">
-          <Bell className="min-w-[25px] min-h-[25px]" />
-        </Button>
-        <Button className="w-10 h-10 flex items-center text-2xl cursor-pointer justify-center rounded-full bg-[#34373b] hover:bg-[#B0F847] hover:text-black pr-4">
-          <MessageCircleMore className="min-w-[25px] min-h-[25px]" />
-        </Button>
-
+      <div className="flex items-center justify-end h-full">
         {loading ? (
           <div className="flex items-center space-x-4">
             <Skeleton className="h-12 w-12 rounded-full" />
@@ -134,4 +130,4 @@ function Header() {
   );
 }
 
-export default Header;
+export default HeaderNewShop;

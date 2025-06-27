@@ -2,13 +2,12 @@
 
 import { usePathname } from "next/navigation";
 import {
-  LayoutDashboard,
   Store,
   TicketPercent,
   PieChart,
-  ShieldCheck,
   Package,
   Wallet,
+  ScanBarcode,
 } from "lucide-react";
 import {
   Sidebar,
@@ -23,34 +22,32 @@ import {
 const items = [
   {
     title: "Thống kê",
-    url: "/admin/dashboard",
+    url: "/shop/dashboard",
     icon: PieChart,
   },
   {
-    title: "Chính sách",
-    url: "/admin/policy",
-    icon: ShieldCheck,
+    title: "Quản lí sản phẩm",
+    url: "/shop/manager-products",
+    icon: ScanBarcode,
   },
   {
-    title: "Quản lý cửa hàng",
-    url: "/admin/store",
+    title: "Quản lí đơn hàng",
+    url: "/shop/order",
+    icon: Package,
+  },
+
+  {
+    title: "Quản lý kho",
+    url: "/shop/address",
     icon: Store,
   },
-  {
-    title: "Danh mục",
-    url: "/admin/categories",
-    icon: LayoutDashboard,
-  },
+
   {
     title: "Voucher",
     url: "/admin/vouchers",
     icon: TicketPercent,
   },
-  {
-    title: "Đơn hoàn trả",
-    url: "/admin/refunds",
-    icon: Package,
-  },
+
   {
     title: "Giao dịch",
     url: "/admin/transactions",
@@ -64,7 +61,7 @@ export function AppSidebar() {
   return (
     <Sidebar
       collapsible="icon"
-      className="bg-[#202328] text-white pt-20 transition-all duration-300 w-64 data-[collapsible=icon]:w-16"
+      className="bg-[#202328] text-white pt-20 transition-all duration-200 w-64 data-[collapsible=icon]:w-16 overflow-hidden"
     >
       <SidebarContent className="bg-[#202328] text-white">
         <SidebarGroup>
