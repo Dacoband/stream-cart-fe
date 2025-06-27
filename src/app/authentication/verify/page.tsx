@@ -8,7 +8,7 @@ import {
   InputOTPGroup,
   InputOTPSlot,
 } from "@/components/ui/input-otp";
-import { verifyOtps, ReSendOtp } from "@/services/api/authentication";
+import { verifyOtps, ReSendOtp } from "@/services/api/auth/authentication";
 import { toast } from "sonner"; // hoặc react-toastify
 import {
   ArrowLeft,

@@ -1,6 +1,6 @@
 export interface Product{
    id:string;
-   productNAme:string;
+   productName:string;
    description:string;
    sku:string;
    categoryId:string;
@@ -19,7 +19,7 @@ export interface Product{
    lastModifiedBy:string;
 }
 export interface CreateProduct{
-   productNAme:string;
+   productName:string;
    description:string;
    sku:string;
    categoryId:string;
@@ -31,3 +31,18 @@ export interface CreateProduct{
    hasVariant:boolean;
    shopId:string;
 }
+
+
+export interface UpdateProduct{
+   id:string;
+   productName:string;
+   description:string;
+   sku:string;
+   categoryId:string;
+   basePrice:number;
+   discountPrice:number;
+   weight:number;
+   dimensions:string;
+   hasVariant:boolean;
+}
+

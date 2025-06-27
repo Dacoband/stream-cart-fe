@@ -8,7 +8,7 @@ import { useRouter } from "next/navigation";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { TriangleAlert } from "lucide-react";
-import { loginApi } from "@/services/api/authentication";
+import { loginApi } from "@/services/api/auth/authentication";
 import { toast } from "sonner";
 import { AxiosError } from "axios";
 
@@ -53,7 +53,11 @@ export default function LoginForm() {
           router.push("/home");
           break;
         case 2:
-          router.push("/shop/dashboard");
+          if (responseData.account.shopId === null) {
+            router.push("/shop/register");
+          } else {
+            router.push("/shop/dashboard");
+          }
           break;
         case 3:
           router.push("/partner/manageproduct");

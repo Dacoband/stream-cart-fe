@@ -26,12 +26,12 @@ const items = [
     icon: PieChart,
   },
   {
-    title: "Quản lí sản phẩm",
+    title: "Quản lý sản phẩm",
     url: "/shop/manager-products",
     icon: ScanBarcode,
   },
   {
-    title: "Quản lí đơn hàng",
+    title: "Quản lý đơn hàng",
     url: "/shop/order",
     icon: Package,
   },
@@ -72,9 +72,10 @@ export function AppSidebar() {
                   <SidebarMenuButton
                     asChild
                     className={
-                      pathname === item.url
+                      `active:bg-[#202328] active:text-[#B0F847] focus:bg-[#202328] focus:text-[#B0F847] ` +
+                      (pathname === item.url
                         ? "bg-base text-black mx-auto "
-                        : "text-white hover:bg-gray-800 hover:text-gray-400 mx-auto"
+                        : "text-white hover:bg-[#202328] hover:text-[#B0F847] mx-auto")
                     }
                   >
                     <a

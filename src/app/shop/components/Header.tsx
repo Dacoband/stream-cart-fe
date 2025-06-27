@@ -6,8 +6,8 @@ import { Bell, CircleArrowOutDownRight, MessageCircleMore } from "lucide-react";
 import Image from "next/image";
 import React, { useEffect, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getMe } from "@/services/api/authentication";
-import { User } from "@/types/user";
+import { getMe } from "@/services/api/auth/authentication";
+import { User } from "@/types/auth/user";
 import { useRouter } from "next/navigation";
 import {
   NavigationMenuContent,
@@ -48,7 +48,6 @@ function Header() {
     e.preventDefault();
     localStorage.clear();
     router.push("/home");
-    window.location.reload();
   };
   return (
     <NavigationMenu className="py-1.5 bg-[#202328] h-full flex justify-between items-center">

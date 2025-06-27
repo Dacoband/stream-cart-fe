@@ -15,7 +15,7 @@ import { useRouter } from "next/navigation";
 import { NavigationMenu } from "@radix-ui/react-navigation-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getMe } from "@/services/api/authentication";
-import { User } from "@/types/user";
+import { User } from "@/types/auth/user";
 export function HeaderNewShop() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);

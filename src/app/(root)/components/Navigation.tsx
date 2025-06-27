@@ -25,8 +25,8 @@ import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { NavigationMenu } from "@radix-ui/react-navigation-menu";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getMe } from "@/services/api/authentication";
-import { User } from "@/types/user";
+import { getMe } from "@/services/api/auth/authentication";
+import { User } from "@/types/auth/user";
 export function Navigation() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
