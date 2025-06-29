@@ -3,7 +3,10 @@ import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { loginSchema, LoginSchema } from "./schema";
+import {
+  loginSchema,
+  LoginSchema,
+} from "../../../components/schema/auth_schema";
 import { useRouter } from "next/navigation";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";

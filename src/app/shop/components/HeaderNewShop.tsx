@@ -1,6 +1,5 @@
 "use client";
 import * as React from "react";
-import Link from "next/link";
 import {
   NavigationMenuItem,
   NavigationMenuTrigger,
@@ -14,7 +13,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { NavigationMenu } from "@radix-ui/react-navigation-menu";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getMe } from "@/services/api/authentication";
+import { getMe } from "@/services/api/auth/authentication";
 import { User } from "@/types/auth/user";
 export function HeaderNewShop() {
   const [user, setUser] = useState<User | null>(null);
@@ -46,7 +45,6 @@ export function HeaderNewShop() {
     e.preventDefault();
     localStorage.clear();
     router.push("/home");
-    window.location.reload();
   };
 
   return (
@@ -110,14 +108,13 @@ export function HeaderNewShop() {
                 <ul className="grid w-[200px] gap-4">
                   <li>
                     <NavigationMenuLink asChild>
-                      <Link
-                        href="/home"
+                      <div
                         className="flex-row items-center gap-2"
                         onClick={handleLogout}
                       >
                         <CircleArrowOutDownRight />
                         Đăng xuất
-                      </Link>
+                      </div>
                     </NavigationMenuLink>
                   </li>
                 </ul>

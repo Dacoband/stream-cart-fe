@@ -26,6 +26,6 @@ export interface RegisterShop{
     shopName:string;
     description:string;
     logoURL:string;
-    coverImage:string;
+    coverImageURL:string;
 
 }

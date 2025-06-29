@@ -1,7 +1,10 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { registerSchema, RegisterSchema } from "./schema";
+import {
+  registerSchema,
+  RegisterSchema,
+} from "../../../components/schema/auth_schema";
 import { useForm } from "react-hook-form";
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
