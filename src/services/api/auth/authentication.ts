@@ -17,6 +17,7 @@ export const loginApi = async (request: LoginRequest) => {
         role: data.account.role,
         isActive: data.account.isActive,
         isVerified: data.account.isVerified,
+        shopId: data.account.shopId,
       };
 
 

@@ -29,6 +29,7 @@ export interface UserLocal{
   role: string;
   isActive: boolean;
   isVerified: boolean;
+  shopId:string;
 };
 
 export interface RegisterUser{

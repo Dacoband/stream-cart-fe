@@ -13,11 +13,13 @@ export const registerShop = async (data: RegisterShop) => {
       "shops",
       data,
       {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+       headers: {
+  Authorization: `Bearer ${token}`, 
+},
+
       }
     );
+   
     return response.data;
   } catch (error) {
     console.error("Error registering shop:", error);

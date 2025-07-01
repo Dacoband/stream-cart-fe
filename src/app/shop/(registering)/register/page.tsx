@@ -96,14 +96,14 @@ function Page() {
 
       const logoURL = logoUpload.imageUrl;
       const coverImageURL = coverUpload.imageUrl;
-
-      await registerShop({
+      const response = await registerShop({
         shopName: data.shopName,
         description: data.description,
         logoURL,
         coverImageURL,
       });
-
+      console.log("Register Shop success:", response);
+      localStorage.setItem("shopId", response.id);
       toast.success("Đơn đăng ký cửa hàng thành công");
       router.push("/shop/registerAddress");
     } catch (error: unknown) {

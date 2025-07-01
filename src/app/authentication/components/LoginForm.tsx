@@ -14,10 +14,11 @@ import { TriangleAlert } from "lucide-react";
 import { loginApi } from "@/services/api/auth/authentication";
 import { toast } from "sonner";
 import { AxiosError } from "axios";
-
+import { Eye, EyeOff } from "lucide-react";
 export default function LoginForm() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const {
     register,
@@ -126,14 +127,28 @@ export default function LoginForm() {
                 Quên mật khẩu?
               </a>
             </div>
-            <Input
-              type="password"
-              id="password"
-              autoComplete="current-password"
-              {...register("password")}
-              className="bg-white text-black"
-              placeholder="Nhập mật khẩu"
-            />
+            <div className="relative">
+              <Input
+                type={showPassword ? "text" : "password"} // Chuyển đổi giữa text/password
+                id="password"
+                autoComplete="current-password"
+                {...register("password")}
+                className="bg-white text-black pr-10" // Thêm padding để tránh icon
+                placeholder="Nhập mật khẩu"
+              />
+              {/* Nút toggle hiển thị mật khẩu */}
+              <button
+                type="button"
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 cursor-pointer"
+                onClick={() => setShowPassword(!showPassword)}
+              >
+                {showPassword ? (
+                  <EyeOff size={18} className="text-gray-500" />
+                ) : (
+                  <Eye size={18} className="text-gray-500" />
+                )}
+              </button>
+            </div>
             {errors.password && (
               <p className="text-gray-300 text-xs mt-1 flex gap-2">
                 <TriangleAlert size={14} />
