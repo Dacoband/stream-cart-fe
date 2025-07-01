@@ -1,16 +1,16 @@
-import Header from "./components/Header";
+import Header from './components/Header'
 
-import { cookies } from "next/headers";
-import { SidebarProvider } from "@/components/ui/sidebar";
-import { AppSidebar } from "./components/Sidebar";
+import { cookies } from 'next/headers'
+import { SidebarProvider } from '@/components/ui/sidebar'
+import { AppSidebar } from './components/Sidebar'
 
 export default async function Layout({
   children,
 }: {
-  children: React.ReactNode;
+  children: React.ReactNode
 }) {
-  const cookieStore = await cookies();
-  const defaultOpen = cookieStore.get("sidebar_state")?.value === "true";
+  const cookieStore = await cookies()
+  const defaultOpen = cookieStore.get('sidebar_state')?.value === 'true'
 
   return (
     <SidebarProvider
@@ -20,10 +20,10 @@ export default async function Layout({
       <div className="fixed top-0 left-0 right-0 bg-black h-16 w-full z-50">
         <Header />
       </div>
-      <div className="flex flex-1 w-full pt-16">
+      <div className="flex flex-1 w-full pt-16 ">
         <AppSidebar />
-        <div className="flex-1 px-10 py-8 bg-[#fbfbfb]">{children}</div>
+        <div className="flex-1  bg-[#F5F5F5] overflow-auto">{children}</div>
       </div>
     </SidebarProvider>
-  );
+  )
 }
