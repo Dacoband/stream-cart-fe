@@ -27,3 +27,17 @@ export const registerShop = async (data: RegisterShop) => {
   }
 };
 
+export const getMyShop = async (token: string) => {
+  try {
+    const response = await rootApi.get("shops/my-shops", {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching Shop:", error);
+    throw error;
+  }
+};

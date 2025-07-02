@@ -15,6 +15,7 @@ import { loginApi } from "@/services/api/auth/authentication";
 import { toast } from "sonner";
 import { AxiosError } from "axios";
 import { Eye, EyeOff } from "lucide-react";
+import { getMyShop } from "@/services/api/shop/shop";
 export default function LoginForm() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -60,7 +61,12 @@ export default function LoginForm() {
           if (responseData.account.shopId === null) {
             router.push("/shop/register");
           } else {
-            router.push("/shop/dashboard");
+            const responseShop = await getMyShop(userData.token);
+            if (responseShop.data.data.approvalStatus === "Approved") {
+              router.push("/shop/");
+            } else {
+              router.push("/shop/pending-register");
+            }
           }
           break;
         case 3:

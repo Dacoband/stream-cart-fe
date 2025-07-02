@@ -267,7 +267,7 @@ function Page() {
             <div className="flex justify-end">
               <Button
                 type="submit"
-                className="w-44 bg-[#B0F847]  text-black hover:text-black/50 cursor-pointer"
+                className="w-44 bg-[#B0F847] hover:bg-[#B0F847]/80  text-black hover:text-black/50 cursor-pointer"
                 disabled={loading}
               >
                 {loading ? (

@@ -36,3 +36,15 @@ export interface CreateAddress{
     shopId:string;
 
 }
+
+export interface Province {
+  id: string;
+ full_name: string;
+ name:string;
+}
+export interface Ward {
+  id: string;
+ full_name: string;
+  latitude:string;
+ longitude:string;
+}

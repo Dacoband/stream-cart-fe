@@ -4,8 +4,6 @@ import {
   getProvinces,
   getDistrict,
   getWard,
-  Province,
-  Ward,
 } from "@/services/api/address/listaddress";
 import {
   Select,
@@ -27,16 +25,18 @@ import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { AxiosError } from "axios";
 import { Input } from "@/components/ui/input";
-import { TriangleAlert } from "lucide-react";
+import { CircleCheckBig, Loader2, TriangleAlert } from "lucide-react";
+import { Province, Ward } from "@/types/address/address";
+import { Label } from "@/components/ui/label";
 
 function FromAddress() {
   const [provinces, setProvinces] = useState<Province[]>([]);
   const [districts, setDistricts] = useState<Province[]>([]);
   const [wards, setWards] = useState<Ward[]>([]);
-  const [selectedProvince, setSelectedProvince] = useState<string>("");
-  const [selectedDistrict, setSelectedDistrict] = useState<string>("");
-  const [selectedWard, setSelectedWard] = useState<string>("");
-  const selectedWardObj = wards.find((w) => w.id === selectedWard);
+  const [selectedProvinceId, setSelectedProvinceId] = useState<string>("");
+  const [selectedDistrictId, setSelectedDistrictId] = useState<string>("");
+  const [selectedWardId, setSelectedWardId] = useState<string>("");
+  const selectedWardObj = wards.find((w) => w.id === selectedWardId);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
@@ -57,9 +57,9 @@ function FromAddress() {
       const payload: CreateAddress = {
         recipientName: data.recipientName,
         street: data.street,
-        ward: selectedWard,
-        district: selectedDistrict,
-        city: selectedProvince,
+        ward: data.ward,
+        district: data.district,
+        city: data.city,
         country: "Việt Nam",
         postalCode: "7000",
         phoneNumber: data.phonenumber,
@@ -78,7 +78,7 @@ function FromAddress() {
 
       toast.dismiss();
       toast.success(responseData.message);
-      router.push("/pending-register");
+      router.push("/shop/pending-register");
     } catch (error: unknown) {
       const err = error as AxiosError<{ message: string }>;
       const message = err?.response?.data?.message || "Có lỗi xảy ra!";
@@ -96,159 +96,203 @@ function FromAddress() {
   }, []);
 
   useEffect(() => {
-    if (selectedProvince) {
-      getDistrict(selectedProvince).then((data) => {
+    if (selectedProvinceId) {
+      getDistrict(selectedProvinceId).then((data) => {
         if (Array.isArray(data)) setDistricts(data);
         else setDistricts([]);
-        setSelectedDistrict("");
+        setSelectedDistrictId("");
         setWards([]);
-        setSelectedWard("");
+        setSelectedWardId("");
       });
     } else {
       setDistricts([]);
-      setSelectedDistrict("");
+      setSelectedDistrictId("");
       setWards([]);
-      setSelectedWard("");
+      setSelectedWardId("");
     }
-  }, [selectedProvince]);
+  }, [selectedProvinceId]);
 
   useEffect(() => {
-    if (selectedDistrict) {
-      getWard(selectedDistrict).then((data) => {
+    if (selectedDistrictId) {
+      getWard(selectedDistrictId).then((data) => {
         if (Array.isArray(data)) setWards(data);
         else setWards([]);
-        setSelectedWard("");
+        setSelectedWardId("");
       });
     } else {
       setWards([]);
-      setSelectedWard("");
+      setSelectedWardId("");
     }
-  }, [selectedDistrict]);
+  }, [selectedDistrictId]);
 
   return (
     <form
       onSubmit={handleSubmit(onSubmit)}
-      className="max-w-md mx-auto mt-6 space-y-4"
+      className="mx-auto mt-6 space-y-6 px-4"
     >
-      {/* Tên người nhận */}
-      <div>
-        <label className="block mb-2 font-medium">Tên người nhận</label>
-        <Input
-          {...register("recipientName")}
-          placeholder="Nhập tên người nhận"
-        />
-        {errors.recipientName && (
-          <p className="text-red-500 text-xs mt-1 flex gap-2">
-            <TriangleAlert size={14} />
-            {errors.recipientName.message}
-          </p>
-        )}
+      <div className=" grid grid-cols-2 gap-4">
+        <div>
+          <Label
+            htmlFor="description"
+            className="text-black text-sm font-medium"
+          >
+            Tên người nhận
+          </Label>
+          <Input
+            {...register("recipientName")}
+            placeholder="Nhập tên người nhận"
+          />
+          {errors.recipientName && (
+            <p className="text-red-500 text-xs mt-1 flex gap-2">
+              <TriangleAlert size={14} />
+              {errors.recipientName.message}
+            </p>
+          )}
+        </div>
+
+        <div>
+          <Label
+            htmlFor="phonenumber"
+            className="text-black text-sm font-medium"
+          >
+            Số điện thoại
+          </Label>
+          <Input
+            {...register("phonenumber")}
+            placeholder="Nhập số điện thoại"
+          />
+          {errors.phonenumber && (
+            <p className="text-red-500 text-xs mt-1 flex gap-2">
+              <TriangleAlert size={14} />
+              {errors.phonenumber.message}
+            </p>
+          )}
+        </div>
       </div>
-      {/* Số điện thoại */}
-      <div>
-        <label className="block mb-2 font-medium">Số điện thoại</label>
-        <Input {...register("phonenumber")} placeholder="Nhập số điện thoại" />
-        {errors.phonenumber && (
-          <p className="text-red-500 text-xs mt-1 flex gap-2">
-            <TriangleAlert size={14} />
-            {errors.phonenumber.message}
-          </p>
-        )}
+      <div className=" grid grid-cols-3 gap-4">
+        {/* Tỉnh/Thành phố */}
+        <div>
+          <Label htmlFor="province" className="text-black text-sm font-medium">
+            Tỉnh / Thành phố
+          </Label>
+          <Select
+            value={selectedProvinceId}
+            onValueChange={(value) => {
+              setSelectedProvinceId(value);
+              const provinceObj = provinces.find((p) => p.id === value);
+              setValue("city", provinceObj?.name || "");
+              setSelectedDistrictId("");
+              setSelectedWardId("");
+              setDistricts([]);
+              setWards([]);
+            }}
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Chọn tỉnh/thành phố" />
+            </SelectTrigger>
+            <SelectContent>
+              {provinces.map((province) => (
+                <SelectItem key={province.id} value={province.id}>
+                  {province.full_name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          {errors.city && (
+            <p className="text-red-500 text-xs mt-1 flex gap-2">
+              <TriangleAlert size={14} />
+              {errors.city.message}
+            </p>
+          )}
+        </div>
+        {/* Quận/Huyện */}
+        <div>
+          <Label htmlFor="district" className="text-black text-sm font-medium">
+            Quận / Huyện
+          </Label>
+          <Select
+            value={selectedDistrictId}
+            onValueChange={(value) => {
+              setSelectedDistrictId(value);
+              const districtObj = districts.find((d) => d.id === value);
+              setValue("district", districtObj?.full_name || "");
+              setSelectedWardId("");
+              setWards([]);
+            }}
+            disabled={!selectedProvinceId}
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Chọn quận/huyện" />
+            </SelectTrigger>
+            <SelectContent>
+              {districts.map((district) => (
+                <SelectItem key={district.id} value={district.id}>
+                  {district.full_name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          {errors.district && (
+            <p className="text-red-500 text-xs mt-1 flex gap-2">
+              <TriangleAlert size={14} />
+              {errors.district.message}
+            </p>
+          )}
+        </div>
+        {/* Phường/Xã */}
+        <div>
+          <Label
+            htmlFor="description"
+            className="text-black text-sm font-medium"
+          >
+            Phường / Xã
+          </Label>
+          <Select
+            value={selectedWardId}
+            onValueChange={(value) => {
+              setSelectedWardId(value);
+              const wardObj = wards.find((w) => w.id === value);
+              setValue("ward", wardObj?.full_name || "");
+            }}
+            disabled={!selectedDistrictId}
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Chọn phường/xã" />
+            </SelectTrigger>
+            <SelectContent>
+              {wards.map((ward) => (
+                <SelectItem key={ward.id} value={ward.id}>
+                  {ward.full_name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          {errors.ward && (
+            <p className="text-red-500 text-xs mt-1 flex gap-2">
+              <TriangleAlert size={14} />
+              {errors.ward.message}
+            </p>
+          )}
+        </div>
       </div>
       {/* Địa chỉ chi tiết */}
       <div>
-        <label className="block mb-2 font-medium">Địa chỉ chi tiết</label>
-        <Input {...register("street")} placeholder="Số nhà, tên đường..." />
+        <Label htmlFor="description" className="text-black text-sm font-medium">
+          Địa chỉ chi tiết
+        </Label>
+        <textarea
+          className="bg-white text-black border border-gray-300 w-full rounded-md px-3 py-2 resize-none"
+          {...register("street")}
+          placeholder="Số nhà, tên đường..."
+          rows={4}
+        />
         {errors.street && (
           <p className="text-red-500 text-xs mt-1 flex gap-2">
             <TriangleAlert size={14} />
             {errors.street.message}
-          </p>
-        )}
-      </div>
-      {/* Tỉnh/Thành phố */}
-      <div>
-        <label className="block mb-2 font-medium">Tỉnh / Thành phố</label>
-        <Select
-          value={selectedProvince}
-          onValueChange={(value) => {
-            setSelectedProvince(value);
-            setValue("city", value); // cập nhật vào form
-          }}
-        >
-          <SelectTrigger className="w-full">
-            <SelectValue placeholder="Chọn tỉnh/thành phố" />
-          </SelectTrigger>
-          <SelectContent>
-            {provinces.map((province) => (
-              <SelectItem key={province.id} value={province.id}>
-                {province.full_name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        {errors.city && (
-          <p className="text-red-500 text-xs mt-1 flex gap-2">
-            <TriangleAlert size={14} />
-            {errors.city.message}
-          </p>
-        )}
-      </div>
-      {/* Quận/Huyện */}
-      <div>
-        <label className="block mb-2 font-medium">Quận / Huyện</label>
-        <Select
-          value={selectedDistrict}
-          onValueChange={(value) => {
-            setSelectedDistrict(value);
-            setValue("district", value);
-          }}
-          disabled={!selectedProvince}
-        >
-          <SelectTrigger className="w-full">
-            <SelectValue placeholder="Chọn quận/huyện" />
-          </SelectTrigger>
-          <SelectContent>
-            {districts.map((district) => (
-              <SelectItem key={district.id} value={district.id}>
-                {district.full_name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        {errors.district && (
-          <p className="text-red-500 text-xs mt-1 flex gap-2">
-            <TriangleAlert size={14} />
-            {errors.district.message}
-          </p>
-        )}
-      </div>
-      {/* Phường/Xã */}
-      <div>
-        <label className="block mb-2 font-medium">Phường / Xã</label>
-        <Select
-          value={selectedWard}
-          onValueChange={(value) => {
-            setSelectedWard(value);
-            setValue("ward", value);
-          }}
-          disabled={!selectedDistrict}
-        >
-          <SelectTrigger className="w-full">
-            <SelectValue placeholder="Chọn phường/xã" />
-          </SelectTrigger>
-          <SelectContent>
-            {wards.map((ward) => (
-              <SelectItem key={ward.id} value={ward.id}>
-                {ward.full_name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        {errors.ward && (
-          <p className="text-red-500 text-xs mt-1 flex gap-2">
-            <TriangleAlert size={14} />
-            {errors.ward.message}
           </p>
         )}
       </div>
@@ -267,13 +311,25 @@ function FromAddress() {
             </div>
           </div>
         )} */}
-      <Button
-        type="submit"
-        className="w-full bg-lime-500 text-black hover:bg-lime-600"
-        disabled={loading}
-      >
-        {loading ? "Đang lưu..." : "Xác nhận"}
-      </Button>
+      <div className="flex justify-end">
+        <Button
+          type="submit"
+          className="w-44 bg-[#B0F847] hover:bg-[#B0F847]/80  text-black hover:text-black/50 cursor-pointer"
+          disabled={loading}
+        >
+          {loading ? (
+            <>
+              <Loader2 className="animate-spin mr-2" />
+              Đang đăng ký...
+            </>
+          ) : (
+            <>
+              <CircleCheckBig className="mr-2" />
+              Xác nhận
+            </>
+          )}
+        </Button>
+      </div>
     </form>
   );
 }
