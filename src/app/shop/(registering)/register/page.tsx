@@ -103,7 +103,14 @@ function Page() {
         coverImageURL,
       });
       console.log("Register Shop success:", response);
-      localStorage.setItem("shopId", response.id);
+      // localStorage.setItem("shopId", response.id);
+      const shopId = response.id;
+      const userDataStr = localStorage.getItem("userData");
+      if (userDataStr) {
+        const userData = JSON.parse(userDataStr);
+        userData.shopId = shopId;
+        localStorage.setItem("userData", JSON.stringify(userData));
+      }
       toast.success("Đơn đăng ký cửa hàng thành công");
       router.push("/shop/registerAddress");
     } catch (error: unknown) {
