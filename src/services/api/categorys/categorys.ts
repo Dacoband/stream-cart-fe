@@ -4,7 +4,7 @@ import { filterCategory } from '@/types/category/category'
 
 export const getAllCategories = async (data: filterCategory) => {
   try {
-    const response = await axios.get('https://brightpa.me/api/categorys', {
+    const response = await rootApi.get('categorys', {
       params: {
         PageIndex: data.PageIndex ?? 1,
         PageSize: data.PageSize ?? 10,
