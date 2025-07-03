@@ -1,7 +1,10 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { registerSchema, RegisterSchema } from "./schema";
+import {
+  registerSchema,
+  RegisterSchema,
+} from "../../../components/schema/auth_schema";
 import { useForm } from "react-hook-form";
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
@@ -10,8 +13,8 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { User, Store, TriangleAlert } from "lucide-react";
 import { uploadImage } from "@/services/api/uploadImage";
-import { register as registerApi } from "@/services/api/authentication";
-import { RegisterUser } from "@/types/user";
+import { register as registerApi } from "@/services/api/auth/authentication";
+import { RegisterUser } from "@/types/auth/user";
 import { toast } from "sonner";
 import { AxiosError } from "axios";
 import { useRouter } from "next/navigation";

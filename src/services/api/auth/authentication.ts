@@ -1,5 +1,5 @@
-import { LoginRequest,UserLocal,RegisterUser } from "@/types/user";
-import rootApi from "../rootApi";
+import { LoginRequest,UserLocal,RegisterUser } from "@/types/auth/user";
+import rootApi from "../../rootApi";
 
 // Login
 export const loginApi = async (request: LoginRequest) => {
@@ -17,6 +17,7 @@ export const loginApi = async (request: LoginRequest) => {
         role: data.account.role,
         isActive: data.account.isActive,
         isVerified: data.account.isVerified,
+        shopId: data.account.shopId,
       };
 
 
@@ -30,6 +31,7 @@ export const loginApi = async (request: LoginRequest) => {
     throw error; 
   }
 };
+//Get user login
 export const getMe = async (token: string) => {
   try {
     const response = await rootApi.get("auth/me", {
@@ -44,6 +46,7 @@ export const getMe = async (token: string) => {
     throw error;
   }
 };
+// VerifyOtps
 export const verifyOtps = async (otpCode: string,accountId:string) => {
   try {
     const response = await rootApi.post("auth/verify-otp", {
@@ -58,6 +61,8 @@ export const verifyOtps = async (otpCode: string,accountId:string) => {
     throw error;
   }
 };
+// Resend VerifyOtps
+
 export const ReSendOtp = async (accountId:string) => {
   try {
     const response = await rootApi.post("auth/resend-otp", {
@@ -72,7 +77,7 @@ export const ReSendOtp = async (accountId:string) => {
     throw error;
   }
 };
-
+// Register
 export const register = async (request: RegisterUser) => {
   try {
     const response = await rootApi.post("auth/register", request);

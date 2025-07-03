@@ -1,29 +1,56 @@
 "use client";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuShortcut,
-} from "@/components/ui/dropdown-menu";
-import { SidebarTrigger } from "@/components/ui/sidebar";
-import { Bell, ChevronDown, MessageCircleMore } from "lucide-react";
-import Image from "next/image";
-import React from "react";
 
+import { SidebarTrigger } from "@/components/ui/sidebar";
+import { Bell, CircleArrowOutDownRight, MessageCircleMore } from "lucide-react";
+import Image from "next/image";
+import React, { useEffect, useState } from "react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { getMe } from "@/services/api/auth/authentication";
+import { User } from "@/types/auth/user";
 import { useRouter } from "next/navigation";
+import {
+  NavigationMenuContent,
+  NavigationMenuLink,
+  NavigationMenuTrigger,
+  NavigationMenuItem,
+  NavigationMenuList,
+} from "@/components/ui/navigation-menu";
+import Link from "next/link";
+import { NavigationMenu } from "@radix-ui/react-navigation-menu";
 function Header() {
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
   const router = useRouter();
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const data = localStorage.getItem("userData");
+        if (!data) return;
+        const parsed = JSON.parse(data);
+        if (!parsed.token) return;
+
+        const response = await getMe(parsed.token);
+        if (response) {
+          setUser(response.data);
+        }
+      } catch (err) {
+        console.error("Error loading user info:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUser();
+  }, []);
+
   const handleLogout = (e: React.MouseEvent) => {
-    e.preventDefault(); // ngăn chuyển trang tức thì
-    localStorage.removeItem("token"); // hoặc localStorage.clear()
-    router.push("/");
+    e.preventDefault();
+    localStorage.clear();
+    router.push("/home");
   };
   return (
-    <div className="py-1.5 bg-[#202328] h-full flex justify-between items-center">
+    <NavigationMenu className="py-1.5 bg-[#202328] h-full flex justify-between items-center">
       <div className="flex w-64 h-full items-center justify-between pl-5">
         <div className=" flex justify-center items-center ">
           <Image
@@ -48,43 +75,61 @@ function Header() {
           <MessageCircleMore className="min-w-[25px] min-h-[25px]" />
         </Button>
 
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button className="bg-[#202328] cursor-pointer rounded-none p-0 flex pl-5 border-white border-l-1">
-              <Image
-                src="https://i.pinimg.com/736x/8b/8a/ed/8b8aed24d96cefbf7b339b3e5e23bf7e.jpg"
-                alt="Stream Card AvatarAvatar"
-                width={44}
-                height={44}
-                className="w-10 h-10 object-cover rounded-full"
-              />
-              <div>Quản lý:</div>
-              <span className="text-slate-200"> TAT TAT TAT</span>
+        {loading ? (
+          <div className="flex items-center space-x-4">
+            <Skeleton className="h-12 w-12 rounded-full" />
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-[120px]" />
+              <Skeleton className="h-4 w-[120px]" />
+            </div>
+          </div>
+        ) : (
+          <NavigationMenuList>
+            <NavigationMenuItem>
+              <NavigationMenuTrigger
+                className="bg-[#202328] text-slate-200 
+  hover:bg-[#202328] focus:bg-[#202328] active:bg-[#202328] 
+  focus:text-slate-200 active:text-slate-200 
+  ring-0 shadow-none border-none cursor-pointer
+  flex items-center gap-2  h-fit"
+              >
+                <Image
+                  src={
+                    user?.avatarURL ||
+                    "https://i.pinimg.com/736x/22/7b/cf/227bcf6f33a61d149764bb6ad90e19eb.jpg"
+                  }
+                  alt="Avatar"
+                  width={44}
+                  height={44}
+                  className="w-10 h-10 object-cover rounded-full shrink-0"
+                />
+                <div className="text-white font-semibold">Quản lý:</div>
+                <span className="text-slate-200 truncate">
+                  {user?.username}
+                </span>
+              </NavigationMenuTrigger>
 
-              <div className="text-white mx-1.5">
-                <ChevronDown />
-              </div>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent className="w-52 mt-2 " align="start">
-            {/* <DropdownMenuLabel>My Account</DropdownMenuLabel> */}
-            <DropdownMenuGroup>
-              <DropdownMenuItem className="cursor-pointer">
-                Profile
-                <DropdownMenuShortcut>⇧⌘P</DropdownMenuShortcut>
-              </DropdownMenuItem>
-            </DropdownMenuGroup>
-
-            <DropdownMenuSeparator />
-
-            <DropdownMenuItem onClick={handleLogout} className="cursor-pointer">
-              Log out
-              <DropdownMenuShortcut>⇧⌘Q</DropdownMenuShortcut>
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+              <NavigationMenuContent className="mt-16 py-2 rounded-md bg-white text-black shadow-xl">
+                <ul className="grid w-[200px] gap-4">
+                  <li>
+                    <NavigationMenuLink asChild>
+                      <Link
+                        href="/home"
+                        className="flex-row items-center gap-2"
+                        onClick={handleLogout}
+                      >
+                        <CircleArrowOutDownRight />
+                        Đăng xuất
+                      </Link>
+                    </NavigationMenuLink>
+                  </li>
+                </ul>
+              </NavigationMenuContent>
+            </NavigationMenuItem>
+          </NavigationMenuList>
+        )}
       </div>
-    </div>
+    </NavigationMenu>
   );
 }
 

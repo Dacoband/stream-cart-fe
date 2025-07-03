@@ -2,12 +2,13 @@
 
 import { usePathname } from "next/navigation";
 import {
+  LayoutDashboard,
   Store,
   TicketPercent,
   PieChart,
+  ShieldCheck,
   Package,
   Wallet,
-  ScanBarcode,
 } from "lucide-react";
 import {
   Sidebar,
@@ -22,32 +23,34 @@ import {
 const items = [
   {
     title: "Thống kê",
-    url: "/shop/dashboard",
+    url: "/admin/dashboard",
     icon: PieChart,
   },
   {
-    title: "Quản lý sản phẩm",
-    url: "/shop/manager-products",
-    icon: ScanBarcode,
+    title: "Chính sách",
+    url: "/admin/policy",
+    icon: ShieldCheck,
   },
   {
-    title: "Quản lý đơn hàng",
-    url: "/shop/order",
-    icon: Package,
-  },
-
-  {
-    title: "Quản lý kho",
-    url: "/shop/address",
+    title: "Quản lý cửa hàng",
+    url: "/admin/store",
     icon: Store,
   },
-
+  {
+    title: "Danh mục",
+    url: "/admin/categories",
+    icon: LayoutDashboard,
+  },
   {
     title: "Voucher",
     url: "/admin/vouchers",
     icon: TicketPercent,
   },
-
+  {
+    title: "Đơn hoàn trả",
+    url: "/admin/refunds",
+    icon: Package,
+  },
   {
     title: "Giao dịch",
     url: "/admin/transactions",
@@ -61,7 +64,7 @@ export function AppSidebar() {
   return (
     <Sidebar
       collapsible="icon"
-      className="bg-[#202328] text-white pt-20 transition-all duration-200 w-64 data-[collapsible=icon]:w-16 overflow-hidden"
+      className="bg-[#202328] text-white pt-20 transition-all duration-300 w-64 data-[collapsible=icon]:w-16"
     >
       <SidebarContent className="bg-[#202328] text-white">
         <SidebarGroup>
@@ -72,10 +75,9 @@ export function AppSidebar() {
                   <SidebarMenuButton
                     asChild
                     className={
-                      `active:bg-[#202328] active:text-[#B0F847] focus:bg-[#202328] focus:text-[#B0F847] ` +
-                      (pathname === item.url
+                      pathname === item.url
                         ? "bg-base text-black mx-auto "
-                        : "text-white hover:bg-[#202328] hover:text-[#B0F847] mx-auto")
+                        : "text-white hover:bg-gray-800 hover:text-gray-400 mx-auto"
                     }
                   >
                     <a

@@ -153,7 +153,7 @@ export default function OperationProduct() {
                     onClick={() => setSelectedColor(color)}
                     className={`px-4 py-2 border-2 rounded-lg text-sm cursor-pointer font-medium mb-4 ${
                       selectedColor === color
-                        ? "border-[#65a406]   text-[#538705]"
+                        ? "border-[#B0F847]   text-black"
                         : "border-gray-300 hover:border-gray-400"
                     }`}
                   >
@@ -173,7 +173,7 @@ export default function OperationProduct() {
                     onClick={() => setSelectedSize(size)}
                     className={`px-2 py-2  border-2 rounded-lg text-sm cursor-pointer font-medium mb-4 ${
                       selectedSize.id === size.id
-                        ? "border-[#65a406]   text-[#538705]"
+                        ? "border-[#B0F847]   text-black"
                         : "border-gray-300 hover:border-gray-400"
                     }`}
                   >

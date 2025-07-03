@@ -39,19 +39,19 @@ function InforShop() {
       <div className="flex gap-4">
         <Button
           variant="outline"
-          className="gap-1 bg-white text-[#65a406] border-[#65a406] border-2 hover:text-[#65a406]/60 hover:bg-white hover:border-[#65a406]/60 cursor-pointer"
+          className="gap-1 bg-[#B0F847] text-black  hover:text-black/70 hover:bg-[#B0F847]/80 cursor-pointer"
         >
           <BotMessageSquare className="w-4 h-4" /> Chat nhanh
         </Button>
         <Button
           variant="outline"
-          className="gap-1 bg-white text-[#65a406] border-[#65a406] border-2 hover:text-[#65a406]/60 hover:bg-white hover:border-[#65a406]/60 cursor-pointer"
+          className="gap-1 bg-[#B0F847] text-black  hover:text-black/70 hover:bg-[#B0F847]/80 cursor-pointer"
         >
           <MessageSquareMore className="w-4 h-4" /> Chat với shop
         </Button>
         <Button
           variant="outline"
-          className="gap-1 bg-white text-[#65a406] border-[#65a406] border-2 hover:text-[#65a406]/60 hover:bg-white hover:border-[#65a406]/60 cursor-pointer"
+          className="gap-1 bg-[#B0F847] text-black  hover:text-black/70 hover:bg-[#B0F847]/80 cursor-pointer"
         >
           <Store className="w-4 h-4" /> Xem shop
         </Button>

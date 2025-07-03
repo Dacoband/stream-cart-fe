@@ -32,7 +32,7 @@ export default function requireRole<T extends object>(
           router.push("/unauthorized");
         }
       } else {
-        router.push("/authentication");
+        router.push("/authentication/login");
       }
     }, []);
 
