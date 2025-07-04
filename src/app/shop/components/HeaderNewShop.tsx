@@ -8,42 +8,19 @@ import {
   NavigationMenuList,
 } from "@/components/ui/navigation-menu";
 import Image from "next/image";
-import { CircleArrowOutDownRight } from "lucide-react";
-import { useEffect, useState } from "react";
+import { CircleArrowOutDownRight, UserRound } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { NavigationMenu } from "@radix-ui/react-navigation-menu";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getMe } from "@/services/api/auth/authentication";
-import { User } from "@/types/auth/user";
+import { useAuth } from "@/lib/AuthContext";
 export function HeaderNewShop() {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { user, loading } = useAuth();
   const router = useRouter();
-  useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const data = localStorage.getItem("userData");
-        if (!data) return;
-        const parsed = JSON.parse(data);
-        if (!parsed.token) return;
-
-        const response = await getMe(parsed.token);
-        if (response) {
-          setUser(response.data);
-        }
-      } catch (err) {
-        console.error("Error loading user info:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchUser();
-  }, []);
+  const { logout } = useAuth();
 
   const handleLogout = (e: React.MouseEvent) => {
     e.preventDefault();
-    localStorage.clear();
+    logout();
     router.push("/home");
   };
 
@@ -88,16 +65,19 @@ export function HeaderNewShop() {
   ring-0 shadow-none border-none cursor-pointer
   flex items-center gap-2  h-fit"
               >
-                <Image
-                  src={
-                    user?.avatarURL ||
-                    "https://i.pinimg.com/736x/22/7b/cf/227bcf6f33a61d149764bb6ad90e19eb.jpg"
-                  }
-                  alt="Avatar"
-                  width={44}
-                  height={44}
-                  className="w-10 h-10 object-cover rounded-full shrink-0"
-                />
+                {user?.avatarURL ? (
+                  <Image
+                    src={user.avatarURL}
+                    alt="Avatar"
+                    width={44}
+                    height={44}
+                    className="w-10 h-10 object-cover rounded-full shrink-0"
+                  />
+                ) : (
+                  <div className="w-10 h-10 rounded-full bg-[#34373b] flex items-center justify-center text-[#B0F847] ">
+                    <UserRound size={25} />
+                  </div>
+                )}
                 <div className="text-white font-semibold">Quản lý:</div>
                 <span className="text-slate-200 truncate">
                   {user?.username}

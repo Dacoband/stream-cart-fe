@@ -3,21 +3,19 @@ import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  loginSchema,
-  LoginSchema,
-} from "../../../components/schema/auth_schema";
+import { loginSchema, LoginSchema } from "@/components/schema/auth_schema";
 import { useRouter } from "next/navigation";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { TriangleAlert } from "lucide-react";
-import { loginApi } from "@/services/api/auth/authentication";
+import { TriangleAlert, Eye, EyeOff } from "lucide-react";
+import { loginApi, getMe } from "@/services/api/auth/authentication";
 import { toast } from "sonner";
-import { AxiosError } from "axios";
-import { Eye, EyeOff } from "lucide-react";
-import { getMyShop } from "@/services/api/shop/shop";
+import axios from "axios";
+import { useAuth } from "@/lib/AuthContext";
+
 export default function LoginForm() {
   const router = useRouter();
+  const { setUser } = useAuth();
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
@@ -33,23 +31,25 @@ export default function LoginForm() {
     setLoading(true);
     try {
       const response = await loginApi(data);
-      const responseData = response.data?.data;
-      const message = response.data?.message;
+      const resData = response.data?.data;
 
-      if (responseData?.requiresVerification) {
-        toast.info(message);
-
-        localStorage.setItem("accountId", responseData.accountId);
-
+      if (resData?.requiresVerification) {
+        toast.info(response.data.message);
+        localStorage.setItem("accountId", resData.accountId);
         router.push("/authentication/verify");
         return;
       }
 
-      const userData = JSON.parse(localStorage.getItem("userData") || "{}");
-      console.log("Login success:", responseData);
+      const token = resData.token;
+      const userInfo = await getMe(token);
+      const userWithToken = { ...userInfo, token };
 
-      toast.success(response.data.data.message);
-      switch (userData.role) {
+      setUser(userWithToken);
+      localStorage.setItem("userData", JSON.stringify(userWithToken));
+
+      toast.success("Đăng nhập thành công!");
+
+      switch (userInfo.role) {
         case 0:
         case 4:
           router.push("/admin/dashboard");
@@ -58,26 +58,24 @@ export default function LoginForm() {
           router.push("/home");
           break;
         case 2:
-          if (responseData.account.shopId === null) {
+          if (!userInfo.shopId) {
             router.push("/shop/register");
           } else {
-            const responseShop = await getMyShop(userData.token);
-            if (responseShop.data.data.approvalStatus === "Approved") {
-              router.push("/shop/");
-            } else {
-              router.push("/shop/pending-register");
-            }
+            router.push("/shop/dashboard");
           }
           break;
         case 3:
           router.push("/partner/manageproduct");
           break;
         default:
+          console.log("Role không hợp lệ");
           router.push("/");
       }
     } catch (error: unknown) {
-      const err = error as AxiosError<{ message: string }>;
-      const message = err?.response?.data?.message;
+      let message = "Đăng nhập thất bại!";
+      if (axios.isAxiosError(error)) {
+        message = error.response?.data?.message || message;
+      }
       toast.error(message);
     } finally {
       setLoading(false);
@@ -94,7 +92,6 @@ export default function LoginForm() {
       </div>
       <form onSubmit={handleSubmit(onSubmit)} className="w-full mx-auto">
         <div className="grid gap-6">
-          {/* Tên người dùng */}
           <div className="grid gap-1.5">
             <Label
               htmlFor="username"
@@ -117,7 +114,6 @@ export default function LoginForm() {
             )}
           </div>
 
-          {/* Mật khẩu */}
           <div className="grid gap-1.5">
             <div className="flex justify-between items-center">
               <Label
@@ -135,14 +131,13 @@ export default function LoginForm() {
             </div>
             <div className="relative">
               <Input
-                type={showPassword ? "text" : "password"} // Chuyển đổi giữa text/password
+                type={showPassword ? "text" : "password"}
                 id="password"
                 autoComplete="current-password"
                 {...register("password")}
-                className="bg-white text-black pr-10" // Thêm padding để tránh icon
+                className="bg-white text-black pr-10"
                 placeholder="Nhập mật khẩu"
               />
-              {/* Nút toggle hiển thị mật khẩu */}
               <button
                 type="button"
                 className="absolute right-3 top-1/2 transform -translate-y-1/2 cursor-pointer"

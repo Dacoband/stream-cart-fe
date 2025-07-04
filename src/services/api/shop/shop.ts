@@ -35,7 +35,7 @@ export const getMyShop = async (token: string) => {
       },
     });
 
-    return response.data;
+  return response.data?.[0] || null;
   } catch (error) {
     console.error("Error fetching Shop:", error);
     throw error;

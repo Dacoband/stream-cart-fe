@@ -1,44 +1,32 @@
-"use client";
-import { useEffect, useState } from "react";
+// utils/withRoleProtection.tsx
+import React from "react";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/lib/AuthContext";
 
-export default function requireRole<T extends object>(
-  WrappedComponent: React.ComponentType<T>,
-  allowedRoles: string[]
+export function withRoleProtection<P>(
+  WrappedComponent: React.ComponentType<P>,
+  allowedRoles: Array<0 | 1 | 2 | 3>
 ) {
-  return function ProtectedComponent(props: T) {
+  const ProtectedComponent: React.FC<React.PropsWithChildren<P>> = (props) => {
+    const { user, loading } = useAuth();
     const router = useRouter();
-    const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
-    // const [dots, setDots] = useState("");
 
-    // useEffect(() => {
-    //   const interval = setInterval(() => {
-    //     setDots((prev) => {
-    //       if (prev === "...") return "";
-    //       return prev + ".";
-    //     });
-    //   }, 500);
+    if (loading) return <div>Loading....</div>;
 
-    //   return () => clearInterval(interval);
-    // }, []);
-    useEffect(() => {
-      const userStr = localStorage.getItem("user");
+    const isAllowedRole = (role: number): role is 0 | 1 | 2 | 3 =>
+      [0, 1, 2, 3].includes(role);
 
-      if (userStr) {
-        const user = JSON.parse(userStr);
-        if (allowedRoles.includes(user.role)) {
-          setIsAuthorized(true);
-        } else {
-          router.push("/unauthorized");
-        }
-      } else {
-        router.push("/authentication/login");
-      }
-    }, []);
-
-    if (isAuthorized === null) {
+    if (
+      !user ||
+      !isAllowedRole(user.role) ||
+      !allowedRoles.includes(user.role)
+    ) {
+      router.push("/unauthorized");
+      return null;
     }
 
     return <WrappedComponent {...props} />;
   };
+
+  return ProtectedComponent;
 }

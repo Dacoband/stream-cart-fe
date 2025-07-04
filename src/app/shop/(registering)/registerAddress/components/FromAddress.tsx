@@ -81,7 +81,7 @@ function FromAddress() {
       router.push("/shop/pending-register");
     } catch (error: unknown) {
       const err = error as AxiosError<{ message: string }>;
-      const message = err?.response?.data?.message || "Có lỗi xảy ra!";
+      const message = err?.response?.data?.message || "Có lỗi đang xảy ra!";
       toast.error(message);
     } finally {
       setLoading(false);

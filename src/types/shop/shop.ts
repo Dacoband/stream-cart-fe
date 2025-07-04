@@ -1,6 +1,6 @@
 export interface Shop {
     id:string;
-    shopname:string;
+    shopName:string;
     description:string;
     logoURL:string;
     coverImageURL:string;
@@ -14,13 +14,13 @@ export interface Shop {
     taxNumber:string;
     totalProduct:number;
     completeRate:number;
-    status:true
+    status:boolean;
    accountId:string;
   createdBy:string
-    createdAt:string;
-    lastModifiedAt:string;
+    createdAt:Date;
+    lastModifiedAt:Date;
     lastModifiedBy:string;
-
+    
 }
 export interface RegisterShop{
     shopName:string;

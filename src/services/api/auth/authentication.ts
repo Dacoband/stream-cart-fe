@@ -18,6 +18,7 @@ export const loginApi = async (request: LoginRequest) => {
         isActive: data.account.isActive,
         isVerified: data.account.isVerified,
         shopId: data.account.shopId,
+        avatarURL:data.account.avatarURL,
       };
 
 
@@ -40,7 +41,7 @@ export const getMe = async (token: string) => {
       },
     });
 
-    return response.data;
+    return response.data.data;
   } catch (error) {
     console.error("Error fetching:", error);
     throw error;
