@@ -7,6 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import Image from "next/image";
 import { Calendar, Store } from "lucide-react";
 import { useAuth } from "@/lib/AuthContext";
+import { Separator } from "@/components/ui/separator";
 
 function InforShop() {
   const [shop, setShop] = useState<Shop | null>(null);
@@ -16,12 +17,7 @@ function InforShop() {
   useEffect(() => {
     const fetchShop = async () => {
       try {
-        const data = localStorage.getItem("userData");
-        if (!data) return;
-        const parsed = JSON.parse(data);
-        if (!parsed.token) return;
-
-        const response = await getMyShop(parsed.token);
+        const response = await getMyShop();
         if (response) {
           setShop(response);
         }
@@ -46,7 +42,7 @@ function InforShop() {
   return (
     <div className="w-full">
       <h3 className="text-lg font-bold mb-5 flex gap-1.5 items-center">
-        <Store />
+        <Store size={20} />
         Thông tin cửa hàng:
       </h3>
       <Image
@@ -60,7 +56,8 @@ function InforShop() {
         quality={100}
         className="w-full h-60 object-cover rounded"
       />
-      <div className="mt-5 border rounded-md py-4 px-4 shadow">
+      <Separator className="mt-5" />
+      <div className=" py-5 px-4">
         <div className="flex gap-4  justify-between ">
           <Image
             src={
@@ -82,7 +79,7 @@ function InforShop() {
               {user.username}
             </div>
           </div>
-          <div className="gap-2 text-sm w-fix flex flex-col justify-center px-5 bg-lime-100 text-lime-700 rounded-md">
+          <div className="gap-2 text-sm w-fix flex flex-col justify-center px-5 bg-blue-50 border border-blue-300 text-blue-600 rounded-md">
             <div className="font-semibold flex gap-1 items-center">
               <Calendar size={20} /> Ngày đăng ký:
             </div>

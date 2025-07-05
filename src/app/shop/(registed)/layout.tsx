@@ -20,7 +20,7 @@ export default async function LayoutShop({
       <div className="fixed top-0 left-0 right-0 bg-black h-20 w-full z-50">
         <Header />
       </div>
-      <div className="flex flex-1 w-full pt-16 h-full min-h-0">
+      <div className="flex flex-1 w-full pt-20 h-full min-h-0">
         <AppSidebar />
         <div className="flex-1 bg-[#F5F5F5] overflow-auto ">{children}</div>
       </div>

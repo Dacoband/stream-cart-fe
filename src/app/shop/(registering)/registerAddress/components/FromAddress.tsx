@@ -25,7 +25,12 @@ import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { AxiosError } from "axios";
 import { Input } from "@/components/ui/input";
-import { CircleCheckBig, Loader2, TriangleAlert } from "lucide-react";
+import {
+  ArrowLeft,
+  CircleCheckBig,
+  Loader2,
+  TriangleAlert,
+} from "lucide-react";
 import { Province, Ward } from "@/types/address/address";
 import { Label } from "@/components/ui/label";
 
@@ -38,6 +43,8 @@ function FromAddress() {
   const [selectedWardId, setSelectedWardId] = useState<string>("");
   const selectedWardObj = wards.find((w) => w.id === selectedWardId);
   const [loading, setLoading] = useState(false);
+  const [loadingBack, setLoadingBack] = useState(false);
+
   const router = useRouter();
 
   const {
@@ -124,7 +131,11 @@ function FromAddress() {
       setSelectedWardId("");
     }
   }, [selectedDistrictId]);
+  const handleClick = () => {
+    setLoadingBack(true);
 
+    router.push("/shop/pending-register");
+  };
   return (
     <form
       onSubmit={handleSubmit(onSubmit)}
@@ -311,7 +322,25 @@ function FromAddress() {
             </div>
           </div>
         )} */}
-      <div className="flex justify-end">
+      <div className="flex justify-between">
+        <Button
+          type="submit"
+          className="w-44 bg-gray-200 hover:bg-gray-300 text-black hover:text-black/80 cursor-pointer"
+          disabled={loadingBack}
+          onClick={handleClick}
+        >
+          {loadingBack ? (
+            <>
+              <Loader2 className="animate-spin mr-2" />
+              Quay lại
+            </>
+          ) : (
+            <>
+              <ArrowLeft className="mr-2" />
+              Quay lại
+            </>
+          )}
+        </Button>
         <Button
           type="submit"
           className="w-44 bg-[#B0F847] hover:bg-[#B0F847]/80  text-black hover:text-black/50 cursor-pointer"

@@ -23,7 +23,8 @@ lastLoginDate:Date;
 
 }
 export interface UserLocal{
-  token: string;
+ phoneNumber:string;
+    fullname:string;
   userId: string;
   username: string;
   role: number;

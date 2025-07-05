@@ -24,12 +24,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const refreshUser = async () => {
     try {
-      const token = JSON.parse(localStorage.getItem("userData") || "{}").token;
+      const token = localStorage.getItem("token");
       if (!token) return;
-      const userInfo = await getMe(token);
-      const userWithToken = { ...userInfo, token };
-      setUser(userWithToken);
-      localStorage.setItem("userData", JSON.stringify(userWithToken));
+
+      const userData = await getMe();
+
+      setUser(userData);
+
+      localStorage.setItem("userData", JSON.stringify(userData));
     } catch (error) {
       console.error("Lỗi lấy thông tin người dùng:", error);
     }

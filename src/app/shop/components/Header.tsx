@@ -4,10 +4,9 @@ import { Button } from "@/components/ui/button";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Bell, CircleArrowOutDownRight, MessageCircleMore } from "lucide-react";
 import Image from "next/image";
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getMe } from "@/services/api/auth/authentication";
-import { User } from "@/types/auth/user";
+import { useAuth } from "@/lib/AuthContext";
 import { useRouter } from "next/navigation";
 import {
   NavigationMenuContent,
@@ -19,35 +18,14 @@ import {
 import Link from "next/link";
 import { NavigationMenu } from "@radix-ui/react-navigation-menu";
 function Header() {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { user, loading } = useAuth();
   const router = useRouter();
-  useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const data = localStorage.getItem("userData");
-        if (!data) return;
-        const parsed = JSON.parse(data);
-        if (!parsed.token) return;
-
-        const response = await getMe(parsed.token);
-        if (response) {
-          setUser(response.data);
-        }
-      } catch (err) {
-        console.error("Error loading user info:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchUser();
-  }, []);
+  const { logout } = useAuth();
 
   const handleLogout = (e: React.MouseEvent) => {
     e.preventDefault();
-    localStorage.clear();
-    router.push("/home");
+    logout();
+    router.push("/authentication/login");
   };
   return (
     <NavigationMenu className="py-1.5 bg-[#202328] h-full flex justify-between items-center">
@@ -67,13 +45,15 @@ function Header() {
 
         <SidebarTrigger className="  border-none hover:bg-[#202328] hover:text-white cursor-pointer rounded-lg text-2xl text-white" />
       </div>
-      <div className="text-white pr-5 flex gap-5 ">
-        <Button className="w-10 h-10 flex items-center text-2xl cursor-pointer justify-center rounded-full bg-[#34373b] hover:bg-[#B0F847] hover:text-black">
-          <Bell className="min-w-[25px] min-h-[25px]" />
-        </Button>
-        <Button className="w-10 h-10 flex items-center text-2xl cursor-pointer justify-center rounded-full bg-[#34373b] hover:bg-[#B0F847] hover:text-black pr-4">
-          <MessageCircleMore className="min-w-[25px] min-h-[25px]" />
-        </Button>
+      <div className="text-white pr-5 flex gap-5 items-center">
+        <div className=" pr-5 gap-5 flex border-r ">
+          <Button className="w-10 h-10 flex items-center text-2xl cursor-pointer text-[#B0F847] justify-center rounded-full bg-[#34373b] hover:bg-[#B0F847] hover:text-black pr-4">
+            <Bell className="min-w-[25px] min-h-[25px]" />
+          </Button>
+          <Button className="w-10 h-10 flex items-center text-2xl cursor-pointer text-[#B0F847] justify-center rounded-full bg-[#34373b] hover:bg-[#B0F847] hover:text-black pr-4">
+            <MessageCircleMore className="min-w-[25px] min-h-[25px]" />
+          </Button>
+        </div>
 
         {loading ? (
           <div className="flex items-center space-x-4">

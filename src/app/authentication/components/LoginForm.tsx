@@ -35,13 +35,12 @@ export default function LoginForm() {
 
       if (resData?.requiresVerification) {
         toast.info(response.data.message);
-        localStorage.setItem("accountId", resData.accountId);
         router.push("/authentication/verify");
         return;
       }
 
       const token = resData.token;
-      const userInfo = await getMe(token);
+      const userInfo = await getMe();
       const userWithToken = { ...userInfo, token };
 
       setUser(userWithToken);

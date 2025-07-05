@@ -4,11 +4,11 @@ import rootApi from "../../rootApi";
 // Register Shop
 export const registerShop = async (data: RegisterShop) => {
   try {
-    const userData = JSON.parse(localStorage.getItem("userData") || "{}");
-    const token = userData.token;
+  const token = localStorage.getItem("token");
     if (!token) {
-      throw new Error("No token found");
+      throw new Error("Not found token.");
     }
+
     const response = await rootApi.post(
       "shops",
       data,
@@ -27,8 +27,13 @@ export const registerShop = async (data: RegisterShop) => {
   }
 };
 
-export const getMyShop = async (token: string) => {
+export const getMyShop = async () => {
   try {
+      const token = localStorage.getItem("token");
+    if (!token) {
+      throw new Error("Not found token.");
+    }
+
     const response = await rootApi.get("shops/my-shops", {
       headers: {
         Authorization: `Bearer ${token}`,
