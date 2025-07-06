@@ -47,7 +47,7 @@ export function Navigation() {
     }
   };
   return (
-    <NavigationMenu className="w-full bg-[#202328] max-w-none h-full px-32 flex items-center justify-between">
+    <NavigationMenu className="w-full bg-[#202328] shadow max-w-none h-full px-32 flex items-center justify-between">
       <div className="flex gap-2 items-center">
         <Link
           href="/home"
