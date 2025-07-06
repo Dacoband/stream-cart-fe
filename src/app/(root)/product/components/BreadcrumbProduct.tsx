@@ -8,7 +8,11 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import Link from "next/link";
-function BreadcrumbProduct() {
+import { Product } from "@/types/product/product";
+interface BreadcrumbProductPops {
+  product: Product;
+}
+function BreadcrumbProduct({ product }: BreadcrumbProductPops) {
   return (
     <Breadcrumb>
       <BreadcrumbList>
@@ -26,7 +30,7 @@ function BreadcrumbProduct() {
         <BreadcrumbSeparator />
         <BreadcrumbItem>
           <BreadcrumbPage className="font-medium text-base  ">
-            Gấu bông Bonnie lông mềm Quãng Châu
+            {product.productName}
           </BreadcrumbPage>
         </BreadcrumbItem>
       </BreadcrumbList>
