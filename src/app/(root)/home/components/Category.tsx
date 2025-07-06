@@ -21,10 +21,7 @@ function Category() {
   const chunked = chunkArray(categories, 16);
 
   return (
-    <div
-      className="flex flex-col px-10 py-5 w-full bg-white rounded-xl"
-      style={{ boxShadow: "0 0 20px rgba(148, 163, 184, 0.3)" }}
-    >
+    <div className="flex flex-col px-10 py-5 w-full bg-white rounded-xl shadow">
       <span className="text-left text-xl font-semibold text-gray-500 ml-2">
         DANH MỤC
       </span>

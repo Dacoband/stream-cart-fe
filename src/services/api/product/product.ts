@@ -9,8 +9,13 @@ export const getAllProducts = async () => {
     throw error;
   }
 };
-export const createProduct = async (data: CreateProduct, token: string) => {
+export const createProduct = async (data: CreateProduct) => {
   try {
+      const token = localStorage.getItem("token");
+    if (!token) {
+      throw new Error("Not found token.");
+    }
+
     const response = await rootApi.post(
       "products",
       data,
@@ -23,6 +28,15 @@ export const createProduct = async (data: CreateProduct, token: string) => {
     return response.data;
   } catch (error) {
     console.error("Error creating product:", error);
+    throw error;
+  }
+};
+export const getBestSellingProducts = async () => {
+  try {
+    const response = await rootApi.get("products/bestselling?count=18");
+    return response.data.data;
+  } catch (error) {
+    console.error("Error fetching products:", error);
     throw error;
   }
 };

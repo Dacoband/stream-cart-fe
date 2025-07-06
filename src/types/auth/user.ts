@@ -23,13 +23,16 @@ lastLoginDate:Date;
 
 }
 export interface UserLocal{
-  token: string;
+ phoneNumber:string;
+    fullname:string;
   userId: string;
   username: string;
-  role: string;
+  role: number;
   isActive: boolean;
   isVerified: boolean;
   shopId:string;
+  avatarURL:string;
+
 };
 
 export interface RegisterUser{

@@ -23,12 +23,12 @@ export const fakeLiveStreams = [
   //   thumbnailUrl: "https://i.pinimg.com/736x/d4/55/80/d4558032cca73e90be56ac0acfd29e06.jpg",
   //   title: "Bộ sưu tập mới - Hè 2025",
   // },
-  // {
-  //   shopName: "Tiệm giày dép",
-  //   shopImage: "https://i.pinimg.com/736x/f1/76/29/f17629057d2cb0f1e79621d04fee4b5e.jpg",
-  //   thumbnailUrl: "https://i.pinimg.com/736x/f1/76/29/f17629057d2cb0f1e79621d04fee4b5e.jpg",
-  //   title: "Deal hời giới hạn",
-  // },
+  {
+    shopName: "Tiệm giày dép",
+    shopImage: "https://i.pinimg.com/736x/f1/76/29/f17629057d2cb0f1e79621d04fee4b5e.jpg",
+    thumbnailUrl: "https://i.pinimg.com/736x/f1/76/29/f17629057d2cb0f1e79621d04fee4b5e.jpg",
+    title: "Deal hời giới hạn",
+  },
   {
     shopName: "Baby HeHe",
     shopImage: "https://i.pinimg.com/736x/0d/c6/5e/0dc65e0094c6704c7961e1feaf62c668.jpg",

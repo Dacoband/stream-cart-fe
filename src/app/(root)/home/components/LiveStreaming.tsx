@@ -10,12 +10,12 @@ function LiveStreaming() {
       className="flex flex-col px-10 py-5 w-full rounded-xl"
       style={{
         background:
-          "linear-gradient(to bottom, #bef46e 20%, #ffffff ,#ffffff )",
+          "linear-gradient(to bottom, #BDF965 20%, #ffffff ,#ffffff )",
         boxShadow: "0 0 20px rgba(148, 163, 184, 0.3)",
       }}
     >
       <div className="flex justify-between">
-        <div className="flex text-gray-800 items-center text-xl font-semibold gap-2 mb-4">
+        <div className="flex text-gray-800 items-center text-2xl font-bold  gap-2 mb-4">
           <svg
             xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 24 24"
@@ -35,11 +35,11 @@ function LiveStreaming() {
         </Button>
       </div>
 
-      <div className="flex flex-wrap justify-between pt-2 mb-5">
+      <div className="grid grid-cols-4 justify-between pt-2 gap-2 mb-5">
         {fakeLiveStreams.map((live, index) => (
           <Card
             key={index}
-            className="w-[32%] p-0 hover:shadow-lg gap-2 transition-all duration-300 cursor-pointer hover:scale-102"
+            className=" p-0 hover:shadow-lg gap-2 transition-all duration-300 cursor-pointer hover:scale-102 shadow-none "
           >
             <CardHeader className="p-0 m-0 relative">
               <Image
@@ -49,7 +49,6 @@ function LiveStreaming() {
                 height={200}
                 className="w-full h-72 object-cover rounded-t-xl"
               />
-              {/* LIVE badge absolute on image */}
               <div className="absolute top-3 left-3 bg-red-500 text-white  px-3 py-1 rounded-full text-xs font-semibold flex items-center space-x-1 z-10 shadow">
                 <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
                 <span>LIVE</span>

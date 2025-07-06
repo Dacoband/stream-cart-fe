@@ -71,8 +71,8 @@ function RegisterForm() {
       router.push("/authentication/verify");
     } catch (error: unknown) {
       const err = error as AxiosError<{ message: string }>;
-      const message = err?.response?.data?.message;
-      toast.error(message);
+      const message = err?.response?.data?.message || "Có lỗi đang xảy ra!";
+      toast.error(message || "Có lỗi xảy ra!");
     } finally {
       setLoading(false);
     }

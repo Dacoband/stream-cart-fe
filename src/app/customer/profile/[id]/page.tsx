@@ -1,11 +1,11 @@
 "use client";
 import { Button } from "@/components/ui/button";
-import requireRole from "@/lib/requireRole";
 import { Edit } from "lucide-react";
 import React from "react";
 import { Avatar, AvatarImage } from "@/components/ui/avatar";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { withRoleProtection } from "@/lib/requireRole";
 function Profile() {
   return (
     <div className="flex flex-col">
@@ -57,4 +57,4 @@ function Profile() {
   );
 }
 
-export default requireRole(Profile, ["user"]);
+export default withRoleProtection(Profile, [1]);

@@ -4,11 +4,11 @@ import rootApi from "../../rootApi";
 
 export const CreateAddresses = async (data: CreateAddress) => {
   try {
-    const userData = JSON.parse(localStorage.getItem("userData") || "{}");
-    const token = userData.token;
+    const token = localStorage.getItem("token");
     if (!token) {
-      throw new Error("No token found");
+      throw new Error("Not found token.");
     }
+
     const response = await rootApi.post(
       "addresses",
       data,
@@ -23,6 +23,26 @@ export const CreateAddresses = async (data: CreateAddress) => {
     return response.data;
   } catch (error) {
     console.error("Error create address shop:", error);
+    throw error;
+  }
+};
+export const getAddressByShopId = async (shopId: string) => {
+  try {
+  const token = localStorage.getItem("token");
+    if (!token) {
+      throw new Error("Not found token.");
+    }
+
+
+    const response = await rootApi.get(`addresses/shops/${shopId}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    return response.data.data;
+  } catch (error) {
+    console.error("Error get address by shopId:", error);
     throw error;
   }
 };

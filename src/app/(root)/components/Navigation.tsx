@@ -18,45 +18,26 @@ import {
   ScrollText,
   Search,
   ShoppingCart,
+  UserRound,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { NavigationMenu } from "@radix-ui/react-navigation-menu";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getMe } from "@/services/api/auth/authentication";
-import { User } from "@/types/auth/user";
+import { useAuth } from "@/lib/AuthContext";
 export function Navigation() {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { user, loading } = useAuth();
   const router = useRouter();
-  useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const data = localStorage.getItem("userData");
-        if (!data) return;
-        const parsed = JSON.parse(data);
-        if (!parsed.token) return;
 
-        const response = await getMe(parsed.token);
-        if (response) {
-          setUser(response.data);
-        }
-      } catch (err) {
-        console.error("Error loading user info:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchUser();
-  }, []);
   const handleLogout = (e: React.MouseEvent) => {
     e.preventDefault();
     localStorage.clear();
-    router.push("/home");
-    window.location.reload();
+    if (window.location.pathname === "/home") {
+      window.location.reload();
+    } else {
+      router.push("/home");
+    }
   };
 
   const handleClick = () => {
@@ -66,7 +47,7 @@ export function Navigation() {
     }
   };
   return (
-    <NavigationMenu className="w-full bg-[#202328] max-w-none h-full px-32 flex items-center justify-between">
+    <NavigationMenu className="w-full bg-[#202328] shadow max-w-none h-full px-32 flex items-center justify-between">
       <div className="flex gap-2 items-center">
         <Link
           href="/home"
@@ -102,7 +83,7 @@ export function Navigation() {
         </div>
       </div>
       <div className="flex items-center justify-end h-full">
-        <div className=" pr-5 gap-5 flex ">
+        <div className=" pr-5 gap-5 flex border-r ">
           <Button
             onClick={handleClick}
             className="w-10 h-10 flex items-center text-2xl cursor-pointer text-[#B0F847] justify-center rounded-full bg-[#34373b] hover:bg-[#B0F847] hover:text-black pr-4"
@@ -146,16 +127,19 @@ export function Navigation() {
   ring-0 shadow-none border-none cursor-pointer
   flex items-center gap-2 max-w-[200px] h-fit"
               >
-                <Image
-                  src={
-                    user.avatarURL ||
-                    "https://i.pinimg.com/736x/22/7b/cf/227bcf6f33a61d149764bb6ad90e19eb.jpg"
-                  }
-                  alt="Avatar"
-                  width={44}
-                  height={44}
-                  className="w-10 h-10 object-cover rounded-full shrink-0"
-                />
+                {user.avatarURL ? (
+                  <Image
+                    src={user.avatarURL}
+                    alt="Avatar"
+                    width={44}
+                    height={44}
+                    className="w-10 h-10 object-cover rounded-full shrink-0"
+                  />
+                ) : (
+                  <div className="w-10 h-10 rounded-full bg-[#34373b] flex items-center justify-center text-[#B0F847] ">
+                    <UserRound size={25} />
+                  </div>
+                )}
                 <span className="text-slate-200 truncate">{user.username}</span>
               </NavigationMenuTrigger>
 

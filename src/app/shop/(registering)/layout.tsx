@@ -9,10 +9,10 @@ export default async function LayoutRegisterShop({
 }) {
   return (
     <div className="min-h-screen bg-[#F5F5F5]">
-      <div className="fixed top-0 w-full z-50">
+      <div className="fixed top-0 w-full z-50 h-20">
         <HeaderNewShop />
       </div>
-      <div className="w-[50%] mx-auto pt-24 ">
+      <div className="w-[60%] mx-auto pt-28 ">
         <div className="text-center mb-5">
           <div className="inline-flex items-center space-x-2 mb-3">
             <h1 className="text-3xl font-bold text-gray-900">

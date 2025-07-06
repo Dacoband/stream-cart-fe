@@ -8,19 +8,21 @@ export const loginApi = async (request: LoginRequest) => {
 
    
     const data = response.data?.data;
-
+ 
     if (data && data.token && data.account) {
-      const userData: UserLocal = {
-        token: data.token,
+      const userData: UserLocal = {      
         userId: data.account.id,
         username: data.account.username,
         role: data.account.role,
         isActive: data.account.isActive,
         isVerified: data.account.isVerified,
         shopId: data.account.shopId,
+        avatarURL:data.account.avatarURL,
+        fullname:data.account.fullname,
+        phoneNumber:data.account.phoneNumber,
       };
 
-
+      localStorage.setItem("token", data.token);
       localStorage.setItem("userData", JSON.stringify(userData));
     }
         console.log(`Fetching sucsses`,response.data)
@@ -32,15 +34,20 @@ export const loginApi = async (request: LoginRequest) => {
   }
 };
 //Get user login
-export const getMe = async (token: string) => {
+export const getMe = async () => {
   try {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      throw new Error("Không tìm thấy token.");
+    }
+
     const response = await rootApi.get("auth/me", {
       headers: {
         Authorization: `Bearer ${token}`,
       },
     });
 
-    return response.data;
+    return response.data.data;
   } catch (error) {
     console.error("Error fetching:", error);
     throw error;
