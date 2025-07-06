@@ -1,16 +1,16 @@
-import Header from "../components/Header";
+import Header from '../components/Header'
 
-import { cookies } from "next/headers";
-import { SidebarProvider } from "@/components/ui/sidebar";
-import { AppSidebar } from "../components/Sidebar";
+import { cookies } from 'next/headers'
+import { SidebarProvider } from '@/components/ui/sidebar'
+import { AppSidebar } from '../components/Sidebar'
 
 export default async function LayoutShop({
   children,
 }: {
-  children: React.ReactNode;
+  children: React.ReactNode
 }) {
-  const cookieStore = await cookies();
-  const defaultOpen = cookieStore.get("sidebar_state")?.value === "true";
+  const cookieStore = await cookies()
+  const defaultOpen = cookieStore.get('sidebar_state')?.value === 'true'
 
   return (
     <SidebarProvider
@@ -25,5 +25,5 @@ export default async function LayoutShop({
         <div className="flex-1 bg-[#F5F5F5] overflow-auto ">{children}</div>
       </div>
     </SidebarProvider>
-  );
+  )
 }

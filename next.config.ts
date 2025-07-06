@@ -1,10 +1,9 @@
-import type { NextConfig } from "next";
+import type { NextConfig } from 'next'
 
 const nextConfig: NextConfig = {
   images: {
-    domains: ["i.pinimg.com","fra.cloud.appwrite.io"],
-   
+    domains: ['i.pinimg.com', 'fra.cloud.appwrite.io'],
   },
-};
+}
 
-export default nextConfig;
+export default nextConfig
