@@ -18,7 +18,7 @@ import {
 } from '@/components/ui/table'
 import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
-import { ChevronDown, Search, MoreHorizontal } from 'lucide-react'
+import { ChevronDown, Search, MoreHorizontal, CirclePlus } from 'lucide-react'
 import Image from 'next/image'
 
 import React, { useEffect, useState } from 'react'
@@ -116,60 +116,79 @@ const TableCatgories: React.FC<Props> = ({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {categories.map((c) => (
-              <TableRow key={c.categoryId}>
-                <TableCell className="text-base py-4 align-middle px-5 ">
-                  {c.categoryName}
-                </TableCell>
-                <TableCell className="text-center align-middle px-5">
-                  <div className="flex items-center justify-center">
+            {categories.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={4}>
+                  <div className="flex flex-col items-center justify-center py-10">
                     <Image
-                      src={c.iconURL}
-                      alt={c.categoryName}
-                      width={60}
-                      height={60}
+                      src="/assets/nodata.png"
+                      alt="No data"
+                      width={300}
+                      height={200}
+                      className="mb-4"
                     />
-                  </div>
-                </TableCell>
-                <TableCell className="text-center align-middle px-5">
-                  {1 === 1 ? (
-                    <span className="px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-600 ">
-                      Đã xóa
-                    </span>
-                  ) : (
-                    <span className="px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-600 ">
-                      Đang hoạt động
-                    </span>
-                  )}
-                </TableCell>
-                <TableCell className="text-center align-middle w-[1%] whitespace-nowrap px-5">
-                  <div className="flex items-center justify-center gap-2">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon">
-                          <MoreHorizontal className="w-4 h-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Thao tác</DropdownMenuLabel>
-                        <DropdownMenuItem>Xem chi tiết</DropdownMenuItem>
-                        <DropdownMenuItem>Chỉnh sửa</DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        {1 === 1 ? (
-                          <DropdownMenuItem className="text-red-500">
-                            Khôi phục
-                          </DropdownMenuItem>
-                        ) : (
-                          <DropdownMenuItem className="text-red-500">
-                            Xóa
-                          </DropdownMenuItem>
-                        )}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                    <p className="text-gray-500 text-base">
+                      Không có danh mục nào
+                    </p>
                   </div>
                 </TableCell>
               </TableRow>
-            ))}
+            ) : (
+              categories.map((c) => (
+                <TableRow key={c.categoryId}>
+                  <TableCell className="text-base py-4 align-middle px-5 ">
+                    {c.categoryName}
+                  </TableCell>
+                  <TableCell className="text-center align-middle px-5">
+                    <div className="flex items-center justify-center">
+                      <Image
+                        src={c.iconURL}
+                        alt={c.categoryName}
+                        width={60}
+                        height={60}
+                      />
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-center align-middle px-5">
+                    {1 === 1 ? (
+                      <span className="px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-600 ">
+                        Đã xóa
+                      </span>
+                    ) : (
+                      <span className="px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-600 ">
+                        Đang hoạt động
+                      </span>
+                    )}
+                  </TableCell>
+                  <TableCell className="text-center align-middle w-[1%] whitespace-nowrap px-5">
+                    <div className="flex items-center justify-center gap-2">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon">
+                            <MoreHorizontal className="w-4 h-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuLabel>Thao tác</DropdownMenuLabel>
+                          <DropdownMenuItem>Xem chi tiết</DropdownMenuItem>
+                          <DropdownMenuItem>Chỉnh sửa</DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          {1 === 1 ? (
+                            <DropdownMenuItem className="text-red-500">
+                              Khôi phục
+                            </DropdownMenuItem>
+                          ) : (
+                            <DropdownMenuItem className="text-red-500">
+                              Xóa
+                            </DropdownMenuItem>
+                          )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
           </TableBody>
         </Table>
       </div>

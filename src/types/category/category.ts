@@ -12,3 +12,16 @@ export interface filterCategory {
   PageSize?: number
   // IsDeleted?: boolean | null
 }
+
+export interface createCategory {
+  categoryName: string
+  description?: string
+  iconURL?: string
+  slug?: string
+  parentCategoryID?: string
+}
+
+export interface listCategory {
+  totalItem: number
+  categories: Category[]
+}
