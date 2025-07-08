@@ -1,7 +1,8 @@
 'use client'
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { fakeShops } from '../fakeShops'
+import { Shop } from '@/types/shop/shop'
+import { getShopDetail } from '@/services/api/shop/shop'
 import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import {
@@ -23,36 +24,103 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
+import { toast } from 'sonner'
 
 const ShopDetailPage = () => {
   const params = useParams()
   const router = useRouter()
-  const shop = fakeShops.find((s) => s.id === params.id)
+  const [shop, setShop] = useState<Shop | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   const [actionType, setActionType] = useState<
     'approve' | 'reject' | 'delete' | null
   >(null)
 
-  if (!shop) return <div className="p-8">Không tìm thấy cửa hàng</div>
+  useEffect(() => {
+    const fetchShopDetail = async () => {
+      if (!params.id) return
+
+      try {
+        setLoading(true)
+        setError(null)
+
+        const response = await getShopDetail(params.id as string)
+        console.log('Shop detail response:', response)
+
+        if (response && response.data) {
+          setShop(response.data)
+        } else if (response) {
+          setShop(response)
+        } else {
+          throw new Error('Không tìm thấy thông tin cửa hàng')
+        }
+      } catch (err: any) {
+        const message = err?.message || 'Không thể tải thông tin cửa hàng'
+        setError(message)
+        toast.error(message)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchShopDetail()
+  }, [params.id])
 
   const handleConfirmAction = () => {
+    if (!shop) return
+
     switch (actionType) {
       case 'approve':
         console.log('✅ Phê duyệt shop:', shop.id)
+        toast.success('Đã phê duyệt cửa hàng thành công!')
         break
       case 'reject':
         console.log('❌ Từ chối shop:', shop.id)
+        toast.success('Đã từ chối cửa hàng!')
         break
       case 'delete':
         console.log('🗑️ Xóa shop:', shop.id)
+        toast.success('Đã xóa cửa hàng!')
         break
       default:
         break
     }
+
+    setActionType(null)
   }
 
   const handleSendMail = () => {
+    if (!shop) return
     console.log('📧 Gửi email tới shop:', shop.id)
+    toast.success('Đã gửi email thành công!')
+  }
+
+  if (loading) {
+    return (
+      <div className="max-w-5xl mx-auto p-8 bg-white rounded-lg shadow mt-8">
+        <div className="flex items-center justify-center py-20">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500"></div>
+          <span className="ml-4 text-lg">Đang tải thông tin cửa hàng...</span>
+        </div>
+      </div>
+    )
+  }
+
+  if (error || !shop) {
+    return (
+      <div className="max-w-5xl mx-auto p-8 bg-white rounded-lg shadow mt-8">
+        <Button variant="ghost" className="mb-4" onClick={() => router.back()}>
+          <ArrowLeft className="mr-2 w-4 h-4" /> Quay lại
+        </Button>
+        <div className="text-center py-20">
+          <div className="text-red-500 text-lg mb-2">
+            {error || 'Không tìm thấy cửa hàng'}
+          </div>
+          <Button onClick={() => router.back()}>Quay lại danh sách</Button>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -65,14 +133,14 @@ const ShopDetailPage = () => {
       {/* Header */}
       <div className="flex gap-6 items-center mb-6">
         <Image
-          src={shop.logoURL}
-          alt={shop.shopname}
+          src={shop.logoURL || '/assets/nodata.png'}
+          alt={shop.shopName}
           width={80}
           height={80}
           className="rounded-full object-cover"
         />
         <div className="flex flex-col">
-          <h1 className="text-2xl font-bold">{shop.shopname}</h1>
+          <h1 className="text-2xl font-bold">{shop.shopName}</h1>
           <div className="flex items-center gap-2 mt-1">
             <span className="font-medium text-lg">
               {shop.ratingAverage.toFixed(1)}
@@ -98,7 +166,7 @@ const ShopDetailPage = () => {
       {/* Cover */}
       <div className="mb-6">
         <Image
-          src={shop.coverImageURL}
+          src={shop.coverImageURL || '/assets/nodata.png'}
           alt="cover"
           width={800}
           height={200}
@@ -226,7 +294,7 @@ const ShopDetailPage = () => {
       <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
         {[
           ['Mô tả', shop.description],
-          ['Gói thành viên', shop.memberPackage || 'Cơ bản'],
+          ['Gói thành viên', (shop as any).memberPackage || 'Cơ bản'],
           ['Tỉ lệ hoàn thành', `${shop.completeRate}%`],
           ['Tổng sản phẩm', shop.totalProduct],
           [
@@ -239,8 +307,11 @@ const ShopDetailPage = () => {
           ],
           ['Mã số thuế', shop.taxNumber],
           ['Người tạo', shop.createdBy],
-          ['Ngày tạo', shop.createdAt],
-          ['Ngày sửa', shop.lastModifiedAt],
+          ['Ngày tạo', new Date(shop.createdAt).toLocaleDateString('vi-VN')],
+          [
+            'Ngày sửa',
+            new Date(shop.lastModifiedAt).toLocaleDateString('vi-VN'),
+          ],
         ].map(([label, value], index) => (
           <div key={index}>
             <div className="mb-1 text-gray-500 text-sm">{label}</div>
