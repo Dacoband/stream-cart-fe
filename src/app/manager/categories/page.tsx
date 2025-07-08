@@ -25,12 +25,12 @@ function page() {
         PageIndex: pageIndex,
         PageSize: pageSize,
         CategoryName: name,
-        // IsDeleted: isDeleted,
+        IsDeleted: isDeleted,
       }
       const res = await getAllCategories(params)
       console.log(res.data.categories)
       setCategories(res.data.categories || [])
-      // setTotalPages(res.totalPages || 1)
+      setTotalPages(res.totalPages || 1)
     } catch (err: any) {
       const message =
         err?.response?.data?.message ||
@@ -44,7 +44,7 @@ function page() {
 
   useEffect(() => {
     fetchData()
-  }, [pageIndex, pageSize, name])
+  }, [pageIndex, pageSize, name, isDeleted])
 
   const handleAddCategoryClick = () => {
     setShowModal(true)
@@ -80,8 +80,9 @@ function page() {
           setPage={setPageIndex}
           totalPages={totalPages}
           onSearch={setName}
-          // statusFilter={isDeleted}
-          // setStatusFilter={setIsDeleted}
+          onRefresh={fetchData}
+          statusFilter={isDeleted}
+          setStatusFilter={setIsDeleted}
         />
       </div>
     </div>

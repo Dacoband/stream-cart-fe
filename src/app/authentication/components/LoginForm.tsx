@@ -1,23 +1,23 @@
-"use client";
-import React, { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { loginSchema, LoginSchema } from "@/components/schema/auth_schema";
-import { useRouter } from "next/navigation";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { TriangleAlert, Eye, EyeOff } from "lucide-react";
-import { loginApi, getMe } from "@/services/api/auth/authentication";
-import { toast } from "sonner";
-import axios from "axios";
-import { useAuth } from "@/lib/AuthContext";
+'use client'
+import React, { useState } from 'react'
+import { Button } from '@/components/ui/button'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { loginSchema, LoginSchema } from '@/components/schema/auth_schema'
+import { useRouter } from 'next/navigation'
+import { Label } from '@/components/ui/label'
+import { Input } from '@/components/ui/input'
+import { TriangleAlert, Eye, EyeOff } from 'lucide-react'
+import { loginApi, getMe } from '@/services/api/auth/authentication'
+import { toast } from 'sonner'
+import axios from 'axios'
+import { useAuth } from '@/lib/AuthContext'
 
 export default function LoginForm() {
-  const router = useRouter();
-  const { setUser } = useAuth();
-  const [loading, setLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
+  const router = useRouter()
+  const { setUser } = useAuth()
+  const [loading, setLoading] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
 
   const {
     register,
@@ -25,61 +25,64 @@ export default function LoginForm() {
     formState: { errors },
   } = useForm<LoginSchema>({
     resolver: zodResolver(loginSchema),
-  });
+  })
 
   const onSubmit = async (data: LoginSchema) => {
-    setLoading(true);
+    setLoading(true)
     try {
-      const response = await loginApi(data);
-      const resData = response.data?.data;
+      const response = await loginApi(data)
+      const resData = response.data?.data
 
       if (resData?.requiresVerification) {
-        toast.info(response.data.message);
-        router.push("/authentication/verify");
-        return;
+        toast.info(response.data.message)
+        router.push('/authentication/verify')
+        return
       }
 
-      const token = resData.token;
-      const userInfo = await getMe();
-      const userWithToken = { ...userInfo, token };
+      const token = resData.token
+      const userInfo = await getMe()
+      const userWithToken = { ...userInfo, token }
 
-      setUser(userWithToken);
-      localStorage.setItem("userData", JSON.stringify(userWithToken));
+      setUser(userWithToken)
+      localStorage.setItem('userData', JSON.stringify(userWithToken))
 
-      toast.success("Đăng nhập thành công!");
+      toast.success('Đăng nhập thành công!')
 
       switch (userInfo.role) {
         case 0:
         case 4:
-          router.push("/admin/dashboard");
-          break;
+          router.push('/manager/dashboard')
+          break
         case 1:
-          router.push("/home");
-          break;
+          router.push('/home')
+          break
         case 2:
           if (!userInfo.shopId) {
-            router.push("/shop/register");
+            router.push('/shop/register')
           } else {
-            router.push("/shop/dashboard");
+            router.push('/shop/dashboard')
           }
-          break;
+          break
         case 3:
-          router.push("/partner/manageproduct");
-          break;
+          router.push('/partner/manageproduct')
+          break
+        case 5:
+          router.push('/manager/dashboard')
+          break
         default:
-          console.log("Role không hợp lệ");
-          router.push("/");
+          console.log('Role không hợp lệ')
+          router.push('/')
       }
     } catch (error: unknown) {
-      let message = "Đăng nhập thất bại!";
+      let message = 'Đăng nhập thất bại!'
       if (axios.isAxiosError(error)) {
-        message = error.response?.data?.message || message;
+        message = error.response?.data?.message || message
       }
-      toast.error(message);
+      toast.error(message)
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   return (
     <div className="flex w-full  my-20 px-5 py-8  flex-col rounded-md">
@@ -100,7 +103,7 @@ export default function LoginForm() {
             </Label>
             <Input
               id="username"
-              {...register("username")}
+              {...register('username')}
               className="bg-white text-black"
               placeholder="Nhập tên người dùng"
               autoComplete="username"
@@ -130,10 +133,10 @@ export default function LoginForm() {
             </div>
             <div className="relative">
               <Input
-                type={showPassword ? "text" : "password"}
+                type={showPassword ? 'text' : 'password'}
                 id="password"
                 autoComplete="current-password"
-                {...register("password")}
+                {...register('password')}
                 className="bg-white text-black pr-10"
                 placeholder="Nhập mật khẩu"
               />
@@ -162,7 +165,7 @@ export default function LoginForm() {
             className="w-full  bg-gradient-to-r from-[#B0F847] via-[#c6ef88] to-[#B0F847]  text-black hover:text-black/50 cursor-pointer"
             disabled={loading}
           >
-            {loading ? "Đang đăng nhập..." : "Đăng nhập"}
+            {loading ? 'Đang đăng nhập...' : 'Đăng nhập'}
           </Button>
           <div className="flex items-center gap-2 text-center text-sm my-4">
             <span className="flex-1 border-t border-white/30"></span>
@@ -183,5 +186,5 @@ export default function LoginForm() {
         </div>
       </form>
     </div>
-  );
+  )
 }
