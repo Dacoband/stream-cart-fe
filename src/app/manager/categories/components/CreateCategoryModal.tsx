@@ -1,25 +1,25 @@
-'use client'
+"use client";
 
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useRef, useState } from "react";
 import {
   createCategory,
   getAllCategories,
-} from '@/services/api/categorys/categorys'
-import { uploadImage } from '@/services/api/uploadImage'
-import { Button } from '@/components/ui/button'
+} from "@/services/api/categories/categorys";
+import { uploadImage } from "@/services/api/uploadImage";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog'
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
+} from "@/components/ui/dialog";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import {
   createCategorySchema,
   CreateCategorySchema,
-} from '@/components/schema/category_schema'
+} from "@/components/schema/category_schema";
 import {
   Form,
   FormItem,
@@ -27,24 +27,24 @@ import {
   FormControl,
   FormMessage,
   FormField,
-} from '@/components/ui/form'
-import { Input } from '@/components/ui/input'
-import Image from 'next/image'
-import { ImagePlus, Loader2, TriangleAlert } from 'lucide-react'
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import Image from "next/image";
+import { ImagePlus, Loader2, TriangleAlert } from "lucide-react";
 import {
   Select,
   SelectTrigger,
   SelectContent,
   SelectItem,
   SelectValue,
-} from '@/components/ui/select'
-import { Category, filterCategory } from '@/types/category/category'
-import { toast } from 'sonner'
+} from "@/components/ui/select";
+import { Category, filterCategory } from "@/types/category/category";
+import { toast } from "sonner";
 
 interface CreateCategoryModalProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  onSuccess: () => void
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSuccess: () => void;
 }
 
 const CreateCategoryModal: React.FC<CreateCategoryModalProps> = ({
@@ -55,13 +55,13 @@ const CreateCategoryModal: React.FC<CreateCategoryModalProps> = ({
   const form = useForm<CreateCategorySchema>({
     resolver: zodResolver(createCategorySchema),
     defaultValues: {
-      categoryName: '',
-      description: '',
-      iconURL: '',
-      slug: '',
-      parentCategoryID: '',
+      categoryName: "",
+      description: "",
+      iconURL: "",
+      slug: "",
+      parentCategoryID: "",
     },
-  })
+  });
 
   const {
     handleSubmit,
@@ -69,78 +69,78 @@ const CreateCategoryModal: React.FC<CreateCategoryModalProps> = ({
     setValue,
     watch,
     formState: { isSubmitting },
-  } = form
+  } = form;
 
-  const [uploading, setUploading] = useState(false)
-  const [uploadError, setUploadError] = useState<string | null>(null)
-  const [categories, setCategories] = useState<Category[]>([])
-  const [loadingCategories, setLoadingCategories] = useState(false)
-  const iconURL = watch('iconURL')
-  const fileInputRef = useRef<HTMLInputElement>(null)
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [loadingCategories, setLoadingCategories] = useState(false);
+  const iconURL = watch("iconURL");
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const fetchData = async () => {
     try {
       const params: filterCategory = {
         PageIndex: 1,
         PageSize: 100,
-        CategoryName: '',
+        CategoryName: "",
         // IsDeleted: false,
-      }
-      var res = await getAllCategories(params)
-      console.log(res.data)
-      setLoadingCategories(res.data || [])
+      };
+      var res = await getAllCategories(params);
+      console.log(res.data);
+      setLoadingCategories(res.data || []);
       // setTotalPages(res.totalPages || 1)
     } catch (err) {
-      console.log(res)
-      toast.error(res.message || 'Không thể tải danh mục')
-      console.error('Failed to fetch categories:', err)
+      console.log(res);
+      toast.error(res.message || "Không thể tải danh mục");
+      console.error("Failed to fetch categories:", err);
     } finally {
     }
-  }
+  };
   useEffect(() => {
     if (!open) {
-      reset()
-      setUploadError(null)
+      reset();
+      setUploadError(null);
     } else {
-      fetchData()
+      fetchData();
     }
-  }, [open, reset])
+  }, [open, reset]);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-    setUploadError(null)
-    setUploading(true)
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadError(null);
+    setUploading(true);
     try {
-      const res = await uploadImage(file)
-      console.log(res)
-      setValue('iconURL', res.imageUrl, { shouldValidate: true })
-      toast.success(res.message || 'Tải ảnh lên thành công')
+      const res = await uploadImage(file);
+      console.log(res);
+      setValue("iconURL", res.imageUrl, { shouldValidate: true });
+      toast.success(res.message || "Tải ảnh lên thành công");
     } catch (err: any) {
       const message =
-        err?.response?.data?.message || err?.message || 'Tải ảnh thất bại'
-      setUploadError(message)
-      toast.error(message)
+        err?.response?.data?.message || err?.message || "Tải ảnh thất bại";
+      setUploadError(message);
+      toast.error(message);
     } finally {
-      setUploading(false)
+      setUploading(false);
     }
-  }
+  };
 
   const onSubmit = async (values: CreateCategorySchema) => {
     try {
-      const res = await createCategory(values)
-      console.log(res)
-      toast.success(res.message || 'Tạo danh mục thành công')
-      onSuccess()
-      onOpenChange(false)
-      reset()
+      const res = await createCategory(values);
+      console.log(res);
+      toast.success(res.message || "Tạo danh mục thành công");
+      onSuccess();
+      onOpenChange(false);
+      reset();
     } catch (err: any) {
       const message =
         err?.response?.data?.message ||
         err?.message ||
-        'Tạo danh mục thất bại. Vui lòng thử lại!'
-      toast.error(message)
+        "Tạo danh mục thất bại. Vui lòng thử lại!";
+      toast.error(message);
     }
-  }
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -248,9 +248,9 @@ const CreateCategoryModal: React.FC<CreateCategoryModalProps> = ({
                   <FormLabel>Danh mục cha</FormLabel>
                   <FormControl>
                     <Select
-                      value={field.value || 'none'}
+                      value={field.value || "none"}
                       onValueChange={(v) =>
-                        field.onChange(v === 'none' ? '' : v)
+                        field.onChange(v === "none" ? "" : v)
                       }
                       disabled={isSubmitting || loadingCategories}
                     >
@@ -258,8 +258,8 @@ const CreateCategoryModal: React.FC<CreateCategoryModalProps> = ({
                         <SelectValue
                           placeholder={
                             loadingCategories
-                              ? 'Đang tải...'
-                              : 'Chọn danh mục cha (nếu có)'
+                              ? "Đang tải..."
+                              : "Chọn danh mục cha (nếu có)"
                           }
                         />
                       </SelectTrigger>
@@ -295,14 +295,14 @@ const CreateCategoryModal: React.FC<CreateCategoryModalProps> = ({
                 className="bg-[#B0F847] text-black shadow py-5 text-base hover:bg-[#B0F847]/80 hover:text-black/80"
                 disabled={isSubmitting || uploading}
               >
-                {isSubmitting ? 'Đang tạo...' : 'Tạo'}
+                {isSubmitting ? "Đang tạo..." : "Tạo"}
               </Button>
             </DialogFooter>
           </form>
         </Form>
       </DialogContent>
     </Dialog>
-  )
-}
+  );
+};
 
-export default CreateCategoryModal
+export default CreateCategoryModal;

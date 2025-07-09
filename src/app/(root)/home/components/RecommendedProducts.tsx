@@ -6,8 +6,9 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { Product } from "@/types/product/product";
 import { getBestSellingProducts } from "@/services/api/product/product";
-import { ArrowRight, ShoppingCart, Sparkles } from "lucide-react";
+import { ArrowRight, ShoppingCart, Sparkles, ImageIcon } from "lucide-react";
 import LoadingCard from "./LoadingCard";
+import PriceTag from "@/components/common/PriceTag";
 function RecommendedProducts() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -67,13 +68,19 @@ function RecommendedProducts() {
                 <CardContent className="p-0">
                   {/* Product Image */}
                   <div className="relative overflow-hidden">
-                    <Image
-                      src="https://i.pinimg.com/736x/40/e5/a3/40e5a3c38746fbff18ddc0b30e47cfc6.jpg"
-                      alt={item.productName}
-                      width={200}
-                      height={200}
-                      className="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-500"
-                    />
+                    {item.primaryImageUrl ? (
+                      <Image
+                        src={item.primaryImageUrl}
+                        alt={item.productName}
+                        width={200}
+                        height={200}
+                        className="w-full h-48 object-cover object-center group-hover:scale-110 transition-transform duration-500"
+                      />
+                    ) : (
+                      <div className="bg-gray-200 w-full flex items-center justify-center h-48 text-gray-400">
+                        <ImageIcon size={50} />
+                      </div>
+                    )}
 
                     {/* Badge */}
                     {/* <div className="absolute top-2 left-2">
@@ -83,9 +90,11 @@ function RecommendedProducts() {
                     </div> */}
 
                     {/* Discount */}
-                    <div className="absolute top-2 right-2 bg-[#B7F560] text-black px-2 py-1 rounded text-xs font-bold">
-                      -{item.discountPrice}%
-                    </div>
+                    {item.discountPrice > 0 && (
+                      <div className="absolute top-2 right-2 bg-[#B7F560] text-black px-2 py-1 rounded text-xs font-bold">
+                        -{item.discountPrice}%
+                      </div>
+                    )}
                   </div>
 
                   {/* Product Info */}
@@ -99,7 +108,7 @@ function RecommendedProducts() {
                     <div className="mb-2 flex gap-5 justify-between items-end">
                       <div className="flex items-center space-x-1">
                         <span className="text-lg font-semibold text-[#7FB800]">
-                          {item.basePrice}
+                          <PriceTag value={item.finalPrice} />
                         </span>
                       </div>
                       {/* Sold Count */}
@@ -110,7 +119,7 @@ function RecommendedProducts() {
                   </div>
                   {/* Add to Cart Button */}
                   <Button
-                    className="w-full cursor-pointer bg-[#9FE040]  text-white font-medium shadow-md rounded-none hover:shadow-lg transition-all duration-300"
+                    className="w-full cursor-pointer bg-[#9FE040] hover:bg-[#9FE040]/80  text-white font-medium shadow-md rounded-none hover:shadow-lg transition-all duration-300"
                     size="sm"
                   >
                     <ShoppingCart className="w-3 h-3 mr-1" />

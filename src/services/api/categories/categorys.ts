@@ -1,4 +1,4 @@
-import axios from 'axios'
+
 import rootApi from '../../rootApi'
 import type {
   createCategory as CreateCategoryDTO,
@@ -23,6 +23,15 @@ export const getAllCategories = async (data: filterCategory) => {
   }
 }
 
+export const getCategoryById = async (categoryId:string) => {
+  try {
+    const response = await rootApi.get(`categorys/${categoryId}`);
+    return response.data.data;
+  } catch (error) {
+    console.error("Error fetching category detail:", error);
+    throw error;
+  }
+};
 export const getDetailCategory = async (id: string) => {
   try {
     const response = await rootApi.get('categorys', {

@@ -9,14 +9,12 @@ import {
   NavigationMenuList,
 } from "@/components/ui/navigation-menu";
 import Image from "next/image";
-import { Input } from "@/components/ui/input";
 import {
   Bell,
   CircleArrowOutDownRight,
   CircleUser,
   MessageCircleMore,
   ScrollText,
-  Search,
   ShoppingCart,
   UserRound,
 } from "lucide-react";
@@ -26,6 +24,7 @@ import { useRouter } from "next/navigation";
 import { NavigationMenu } from "@radix-ui/react-navigation-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/lib/AuthContext";
+import SearchBar from "./SearchBar";
 export function Navigation() {
   const { user, loading } = useAuth();
   const router = useRouter();
@@ -68,19 +67,7 @@ export function Navigation() {
             Stream Cart
           </div>
         </Link>
-
-        <div className="flex items-center gap-2 ml-8">
-          <div className="relative">
-            <Input
-              type="text"
-              placeholder="Tìm kiếm sản phẩm, cửa hàng..."
-              className=" pr-4 py-5 w-2xl rounded-md bg-white text-slate-500 text-lg font-medium placeholder:text-gray-400"
-            />
-            <div className="absolute bg-gradient-to-r from-[#B0F847]  via-[#c6ef88]  to-[#B0F847] py-1.5 rounded-sm px-3.5 right-1.5 top-1/2 -translate-y-1/2 cursor-pointer">
-              <Search className="text-black " />
-            </div>
-          </div>
-        </div>
+        <SearchBar />
       </div>
       <div className="flex items-center justify-end h-full">
         <div className=" pr-5 gap-5 flex border-r ">

@@ -8,11 +8,11 @@ import { useRouter } from "next/navigation";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { TriangleAlert, Eye, EyeOff } from "lucide-react";
-import { loginApi, getMe } from "@/services/api/auth/authentication";
+import { loginApi } from "@/services/api/auth/authentication";
 import { toast } from "sonner";
 import axios from "axios";
 import { useAuth } from "@/lib/AuthContext";
-
+import { getMyShop } from "@/services/api/shop/shop";
 export default function LoginForm() {
   const router = useRouter();
   const { setUser } = useAuth();
@@ -38,17 +38,21 @@ export default function LoginForm() {
         router.push("/authentication/verify");
         return;
       }
+      const token = localStorage.getItem("token");
+      const userData = localStorage.getItem("userData");
 
-      const token = resData.token;
-      const userInfo = await getMe();
-      const userWithToken = { ...userInfo, token };
+      if (!token || !userData) {
+        throw new Error(
+          "Không tìm thấy thông tin người dùng sau khi đăng nhập."
+        );
+      }
 
+      const userInfor = JSON.parse(userData);
+      const userWithToken = { ...userInfor, token };
       setUser(userWithToken);
-      localStorage.setItem("userData", JSON.stringify(userWithToken));
-
       toast.success("Đăng nhập thành công!");
 
-      switch (userInfo.role) {
+      switch (userInfor.role) {
         case 0:
         case 4:
           router.push("/admin/dashboard");
@@ -57,10 +61,17 @@ export default function LoginForm() {
           router.push("/home");
           break;
         case 2:
-          if (!userInfo.shopId) {
+          if (!userInfor.shopId) {
             router.push("/shop/register");
           } else {
-            router.push("/shop/dashboard");
+            const shopRes = await getMyShop();
+
+            const shop = Array.isArray(shopRes) ? shopRes[0] : shopRes;
+            if (shop && shop.approvalStatus === "Approved") {
+              router.push("/shop/dashboard");
+            } else {
+              router.push("/shop/pending-register");
+            }
           }
           break;
         case 3:

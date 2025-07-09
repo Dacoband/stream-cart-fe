@@ -46,3 +46,12 @@ export const getMyShop = async () => {
     throw error;
   }
 };
+export const getshopById = async (shopId:string) => {
+  try {
+    const response = await rootApi.get(`shops/${shopId}`);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching Shop detail:", error);
+    throw error;
+  }
+};

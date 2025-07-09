@@ -25,7 +25,7 @@ export const loginApi = async (request: LoginRequest) => {
       localStorage.setItem("token", data.token);
       localStorage.setItem("userData", JSON.stringify(userData));
     }
-        console.log(`Fetching sucsses`,response.data)
+      console.log(`Fetching sucsses`,response.data)
 
     return response;
   } catch (error) {

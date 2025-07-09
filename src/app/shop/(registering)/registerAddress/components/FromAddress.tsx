@@ -24,7 +24,6 @@ import { CreateAddresses } from "@/services/api/address/address";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { AxiosError } from "axios";
-import { Input } from "@/components/ui/input";
 import {
   ArrowLeft,
   CircleCheckBig,
@@ -33,6 +32,7 @@ import {
 } from "lucide-react";
 import { Province, Ward } from "@/types/address/address";
 import { Label } from "@/components/ui/label";
+import { useAuth } from "@/lib/AuthContext";
 
 function FromAddress() {
   const [provinces, setProvinces] = useState<Province[]>([]);
@@ -44,6 +44,7 @@ function FromAddress() {
   const selectedWardObj = wards.find((w) => w.id === selectedWardId);
   const [loading, setLoading] = useState(false);
   const [loadingBack, setLoadingBack] = useState(false);
+  const { user } = useAuth();
 
   const router = useRouter();
 
@@ -62,14 +63,14 @@ function FromAddress() {
       const shopId = userData.shopId || localStorage.getItem("shopId") || "";
 
       const payload: CreateAddress = {
-        recipientName: data.recipientName,
+        recipientName: user?.fullname ?? "",
         street: data.street,
         ward: data.ward,
         district: data.district,
         city: data.city,
         country: "Việt Nam",
         postalCode: "7000",
-        phoneNumber: data.phonenumber,
+        phoneNumber: user?.phoneNumber ?? "",
         isDefaultShipping: true,
         latitude: selectedWardObj?.latitude
           ? Number(selectedWardObj.latitude)
@@ -141,45 +142,6 @@ function FromAddress() {
       onSubmit={handleSubmit(onSubmit)}
       className="mx-auto mt-6 space-y-6 px-4"
     >
-      <div className=" grid grid-cols-2 gap-4">
-        <div>
-          <Label
-            htmlFor="description"
-            className="text-black text-sm font-medium"
-          >
-            Tên người nhận
-          </Label>
-          <Input
-            {...register("recipientName")}
-            placeholder="Nhập tên người nhận"
-          />
-          {errors.recipientName && (
-            <p className="text-red-500 text-xs mt-1 flex gap-2">
-              <TriangleAlert size={14} />
-              {errors.recipientName.message}
-            </p>
-          )}
-        </div>
-
-        <div>
-          <Label
-            htmlFor="phonenumber"
-            className="text-black text-sm font-medium"
-          >
-            Số điện thoại
-          </Label>
-          <Input
-            {...register("phonenumber")}
-            placeholder="Nhập số điện thoại"
-          />
-          {errors.phonenumber && (
-            <p className="text-red-500 text-xs mt-1 flex gap-2">
-              <TriangleAlert size={14} />
-              {errors.phonenumber.message}
-            </p>
-          )}
-        </div>
-      </div>
       <div className=" grid grid-cols-3 gap-4">
         {/* Tỉnh/Thành phố */}
         <div>
@@ -322,7 +284,7 @@ function FromAddress() {
             </div>
           </div>
         )} */}
-      <div className="flex justify-between">
+      <div className="flex justify-between mt-10">
         <Button
           type="submit"
           className="w-44 bg-gray-200 hover:bg-gray-300 text-black hover:text-black/80 cursor-pointer"

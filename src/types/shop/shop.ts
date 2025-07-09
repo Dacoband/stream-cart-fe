@@ -16,7 +16,7 @@ export interface Shop {
     completeRate:number;
     status:boolean;
    accountId:string;
-  createdBy:string
+   createdBy:string
     createdAt:Date;
     lastModifiedAt:Date;
     lastModifiedBy:string;
