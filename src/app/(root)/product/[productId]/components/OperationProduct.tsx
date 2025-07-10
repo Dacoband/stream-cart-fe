@@ -11,11 +11,15 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
+import { CreateCart } from "@/types/Cart/Cart";
+import { createCart } from "@/services/api/cart/cart";
 import { ProductDetail, Variant } from "@/types/product/product";
 import PriceTag from "@/components/common/PriceTag";
 import { getImageProductByProductId } from "@/services/api/product/ProductImage";
 import { ProductImage } from "@/types/product/productImage";
 import { Badge } from "@/components/ui/badge";
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 interface OperationProductPops {
   product: ProductDetail;
 }
@@ -28,6 +32,7 @@ export default function OperationProduct({ product }: OperationProductPops) {
     Record<string, string>
   >({});
   const [selectedVariant, setSelectedVariant] = useState<Variant | null>(null);
+  const router = useRouter();
 
   useEffect(() => {
     const fetchImages = async () => {
@@ -63,6 +68,18 @@ export default function OperationProduct({ product }: OperationProductPops) {
     });
 
     setSelectedVariant(matchedVariant || null);
+  };
+  const handleClickBuy = () => {
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      const currentPath = `/product/${product.productId}`;
+      toast.error("Vui lòng đăng nhập.");
+      router.push(
+        `/authentication/login?redirect=${encodeURIComponent(currentPath)}`
+      );
+    } else {
+    }
   };
 
   return (
@@ -228,6 +245,7 @@ export default function OperationProduct({ product }: OperationProductPops) {
               </div>
             ))}
           </div>
+          <div className="h-8 bg-blue-50"></div>
           <div className="w-full flex gap-3 mb-6">
             <div className=" text-gray-600 font-semibold w-[110px] h-10 flex items-center ">
               Số lượng
@@ -264,6 +282,7 @@ export default function OperationProduct({ product }: OperationProductPops) {
           {/* Action Buttons */}
           <div className="flex space-x-4 mt-10">
             <Button
+              onClick={handleClickBuy}
               size="lg"
               className="flex-1 bg-[#B0F847] hover:bg-[#B0F847]/80 font-semibold text-black cursor-pointer"
             >
@@ -271,6 +290,7 @@ export default function OperationProduct({ product }: OperationProductPops) {
               Thêm vào giỏ hàng
             </Button>
             <Button
+              onClick={handleClickBuy}
               size="lg"
               variant="outline"
               className="flex-1 cursor-pointer  bg-black font-medium hover:bg-black/80 text-white hover:text-white"

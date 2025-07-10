@@ -32,19 +32,21 @@ export function Navigation() {
   const handleLogout = (e: React.MouseEvent) => {
     e.preventDefault();
     localStorage.clear();
-    if (window.location.pathname === "/home") {
-      window.location.reload();
+    router.push("/authentication/login");
+  };
+  const handleClick = () => {
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      const currentPath = `/home}`;
+      toast.error("Vui lòng đăng nhập.");
+      router.push(
+        `/authentication/login?redirect=${encodeURIComponent(currentPath)}`
+      );
     } else {
-      router.push("/home");
     }
   };
 
-  const handleClick = () => {
-    if (user?.role !== 1) {
-      toast.error("Vui lòng đăng nhập.");
-      router.push("/authentication/login");
-    }
-  };
   return (
     <NavigationMenu className="w-full bg-[#202328] shadow max-w-none h-full px-32 flex items-center justify-between">
       <div className="flex gap-2 items-center">

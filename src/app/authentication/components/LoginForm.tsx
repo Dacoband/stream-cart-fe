@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { loginSchema, LoginSchema } from "@/components/schema/auth_schema";
-import { useRouter } from "next/navigation";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { TriangleAlert, Eye, EyeOff } from "lucide-react";
@@ -13,11 +12,14 @@ import { toast } from "sonner";
 import axios from "axios";
 import { useAuth } from "@/lib/AuthContext";
 import { getMyShop } from "@/services/api/shop/shop";
+import { useRouter, useSearchParams } from "next/navigation";
 export default function LoginForm() {
   const router = useRouter();
   const { setUser } = useAuth();
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const searchParams = useSearchParams();
+  const redirect = searchParams.get("redirect") || "/";
 
   const {
     register,
@@ -58,7 +60,7 @@ export default function LoginForm() {
           router.push("/admin/dashboard");
           break;
         case 1:
-          router.push("/home");
+          router.push(redirect);
           break;
         case 2:
           if (!userInfor.shopId) {
