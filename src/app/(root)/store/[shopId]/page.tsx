@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-
+import NotFound from "@/components/common/NotFound";
 import { Shop } from "@/types/shop/shop";
 import { getshopById } from "@/services/api/shop/shop";
 import ProfileStore from "./components/ProfileStore";
@@ -30,7 +30,12 @@ export default function StorePage() {
   }, [shopId]);
 
   if (loading) return <div>Đang tải cửa hàng... </div>;
-  if (!shop) return <div>Không tìm thấy cửa hàng</div>;
+  if (!shop)
+    return (
+      <div>
+        <NotFound />
+      </div>
+    );
 
   return (
     <div className="flex w-full ">

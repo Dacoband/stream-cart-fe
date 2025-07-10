@@ -6,10 +6,10 @@ import BreadcrumbProduct from "./components/BreadcrumbProduct";
 import DescriptionProduct from "./components/DescriptionProduct";
 import InforShop from "./components/InforShop";
 import OperationProduct from "./components/OperationProduct";
-
 import { getProductDetailById } from "@/services/api/product/product";
 import { ProductDetail } from "@/types/product/product";
-
+import NotFound from "@/components/common/NotFound";
+import LoadingScreen from "@/components/common/LoadingScreen";
 export default function ProductPage() {
   const { productId } = useParams<{ productId: string }>();
 
@@ -31,8 +31,21 @@ export default function ProductPage() {
     fetchProduct();
   }, [productId]);
 
-  if (loading) return <div>Đang tải sản phẩm...</div>;
-  if (!product) return <div>Không tìm thấy sản phẩm</div>;
+  if (loading)
+    return (
+      <div>
+        <LoadingScreen />
+      </div>
+    );
+  if (!product)
+    return (
+      <div className="flex justify-center w-full items-center flex-col pt-10">
+        <NotFound />
+        <h2 className="font-semibold text-2xl">
+          Rất tiếc! Sản phẩm này không tồn tại hoặc bị xóa.
+        </h2>
+      </div>
+    );
 
   return (
     <div className="flex flex-col w-[70%] mx-auto mt-2 mb-20">
