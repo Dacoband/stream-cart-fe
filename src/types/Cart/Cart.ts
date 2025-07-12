@@ -35,8 +35,8 @@ export interface PriceData {
 // Create Cart
 export interface CreateCart{
     productId:string;
-    variantId:string;
-    quantity:number;
+     variantId: string | null;    
+     quantity:number;
 }
 // UpdateCart
 export interface UpdateCart{

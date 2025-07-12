@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { getMe } from "@/services/api/auth/authentication";
 import { UserLocal } from "@/types/auth/user";
+import { useRouter } from "next/navigation";
 
 interface AuthContextType {
   user: UserLocal | null;
@@ -15,11 +16,14 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
+  const router = useRouter();
+
   const [user, setUser] = useState<UserLocal | null>(null);
   const [loading, setLoading] = useState(true);
   const logout = () => {
     localStorage.clear();
     setUser(null);
+    router.push("/authentication/login");
   };
 
   const refreshUser = async () => {

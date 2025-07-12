@@ -58,7 +58,7 @@ export interface ValueImagePair {
 }
 
 export interface Variant {
-  variantId: string;
+  variantId: string| null;
   attributeValues: Record<string, string>;
   stock: number;
   price: number;

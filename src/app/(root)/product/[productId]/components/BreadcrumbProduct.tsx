@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React from "react";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -11,29 +11,11 @@ import {
 import Link from "next/link";
 import { ProductDetail } from "@/types/product/product";
 
-// import { getCategoryById } from "@/services/api/categories/categorys";
-
 interface BreadcrumbProductProps {
   product: ProductDetail;
 }
 
 export default function BreadcrumbProduct({ product }: BreadcrumbProductProps) {
-  // const [categoryName, setCategoryName] = useState<string>("");
-
-  // useEffect(() => {
-  //   const fetchCategory = async () => {
-  //     try {
-  //       const category = await getCategoryById(product.category);
-  //       setCategoryName(category?.categoryName || "Danh mục");
-  //     } catch (error) {
-  //       console.error("Lỗi khi lấy danh mục:", error);
-  //       setCategoryName("Danh mục");
-  //     }
-  //   };
-
-  //   fetchCategory();
-  // }, [product.categoryId]);
-
   return (
     <Breadcrumb>
       <BreadcrumbList>

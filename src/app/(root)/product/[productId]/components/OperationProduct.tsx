@@ -2,7 +2,15 @@
 
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { ImageIcon, Minus, Plus, ShoppingCart, Star } from "lucide-react";
+import {
+  CircleAlert,
+  Eye,
+  ImageIcon,
+  Minus,
+  Plus,
+  ShoppingCart,
+  Star,
+} from "lucide-react";
 import Image from "next/image";
 import {
   Carousel,
@@ -11,7 +19,6 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
-import { CreateCart } from "@/types/Cart/Cart";
 import { createCart } from "@/services/api/cart/cart";
 import { ProductDetail, Variant } from "@/types/product/product";
 import PriceTag from "@/components/common/PriceTag";
@@ -20,11 +27,15 @@ import { ProductImage } from "@/types/product/productImage";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { useCart } from "@/lib/CartContext";
+import AutoCloseDialog from "./DialogSuccsess";
+
 interface OperationProductPops {
   product: ProductDetail;
 }
 
 export default function OperationProduct({ product }: OperationProductPops) {
+  const { refreshCart } = useCart();
   const [imageProduct, setImageProduct] = useState<ProductImage[]>();
   const [selectedImage, setSelectedImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
@@ -33,22 +44,19 @@ export default function OperationProduct({ product }: OperationProductPops) {
   >({});
   const [selectedVariant, setSelectedVariant] = useState<Variant | null>(null);
   const router = useRouter();
+  const [variantError, setVariantError] = useState<string | null>(null);
+  const [showDialog, setShowDialog] = useState(false);
 
   useEffect(() => {
     const fetchImages = async () => {
       try {
         const res = await getImageProductByProductId(product.productId);
         if (res && Array.isArray(res)) {
-          const sorted = res.sort((a, b) => {
-            if (a.isPrimary !== b.isPrimary) {
-              return a.isPrimary ? -1 : 1;
-            }
-            return a.displayOrder - b.displayOrder;
-          });
+          const sorted = res.sort((a, b) => a.displayOrder - b.displayOrder);
           setImageProduct(sorted);
         }
       } catch (err) {
-        console.error(err);
+        console.error("Lỗi lấy ảnh sản phẩm:", err);
       }
     };
     fetchImages();
@@ -68,8 +76,9 @@ export default function OperationProduct({ product }: OperationProductPops) {
     });
 
     setSelectedVariant(matchedVariant || null);
+    setVariantError(null);
   };
-  const handleClickBuy = () => {
+  const handleClickBuy = async () => {
     const token = localStorage.getItem("token");
 
     if (!token) {
@@ -78,7 +87,29 @@ export default function OperationProduct({ product }: OperationProductPops) {
       router.push(
         `/authentication/login?redirect=${encodeURIComponent(currentPath)}`
       );
-    } else {
+      return;
+    }
+
+    const hasVariants = product.variants && product.variants.length > 0;
+
+    if (hasVariants && !selectedVariant) {
+      setVariantError("Vui lòng chọn phiên bản sản phẩm.");
+      return;
+    }
+
+    try {
+      setVariantError(null);
+      await createCart({
+        productId: product.productId,
+        variantId: hasVariants ? selectedVariant?.variantId ?? null : null,
+        quantity: quantity,
+      });
+      await refreshCart();
+
+      setShowDialog(true);
+    } catch (error) {
+      toast.error("Không thể thêm vào giỏ hàng!");
+      console.error(error);
     }
   };
 
@@ -87,7 +118,7 @@ export default function OperationProduct({ product }: OperationProductPops) {
       <div className="flex flex-col lg:flex-row gap-10">
         {/* Product Images */}
         <div className="space-y-4 w-2/5">
-          <div className="aspect-square w-full mb-5 bg-white rounded-lg overflow-hidden border mx-auto">
+          <div className="aspect-square w-full mb-5 bg-white overflow-hidden border mx-auto">
             {imageProduct && imageProduct.length > 0 ? (
               <Image
                 src={
@@ -116,10 +147,8 @@ export default function OperationProduct({ product }: OperationProductPops) {
                     <CarouselItem key={image.id} className="basis-1/4">
                       <button
                         onClick={() => setSelectedImage(index)}
-                        className={`aspect-square w-full bg-white cursor-pointer rounded-lg overflow-hidden border-2 transition ${
-                          selectedImage === index
-                            ? "border-green-500"
-                            : "border-gray-200"
+                        className={`aspect-square w-full cursor-pointer overflow-hidden border-2 transition relative ${
+                          selectedImage === index ? " z-10" : "border-gray-200"
                         }`}
                       >
                         <Image
@@ -129,6 +158,11 @@ export default function OperationProduct({ product }: OperationProductPops) {
                           height={150}
                           className="w-full h-full object-cover"
                         />
+                        {selectedImage === index && (
+                          <div className="absolute inset-0 bg-black/40 pointer-events-none rounded text-white flex justify-center items-center">
+                            <Eye size={30} />
+                          </div>
+                        )}
                       </button>
                     </CarouselItem>
                   ))}
@@ -203,51 +237,62 @@ export default function OperationProduct({ product }: OperationProductPops) {
               </p>
             )}
           </div>
-
-          <div>
-            {product.attributes?.map((attr, index) => (
-              <div key={index} className="w-full flex gap-3 mb-6">
-                <div className="text-gray-600 font-semibold w-[110px] h-10 flex items-center">
-                  {attr.attributeName}
+          {product.attributes?.length > 0 && (
+            <div className="space-y-5">
+              {product.attributes.map((attr, index) => (
+                <div key={index} className="w-full flex gap-3 ">
+                  <div className="text-gray-600 font-semibold w-[80px] h-10 flex items-center">
+                    {attr.attributeName}
+                  </div>
+                  <div className="flex-1 flex flex-wrap gap-2.5">
+                    {attr.valueImagePairs.map((pair, id) => {
+                      const isSelected =
+                        selectedAttributes[attr.attributeName] === pair.value;
+                      return (
+                        <button
+                          key={id}
+                          onClick={() =>
+                            handleSelectAttribute(
+                              attr.attributeName,
+                              pair.value
+                            )
+                          }
+                          className={`px-4 py-2 border-2 rounded-lg cursor-pointer font-medium mb-2 ${
+                            isSelected
+                              ? "border-[#B0F847] bg-[#B0F847]/8 text-[#70a301]"
+                              : "border-gray-200 hover:border-gray-300 text-gray-700"
+                          }`}
+                        >
+                          <div className="flex gap-2 items-center pr-1">
+                            {pair.imageUrl && (
+                              <Image
+                                src={pair.imageUrl}
+                                alt={`Product Images`}
+                                width={50}
+                                height={50}
+                                className="aspect-square rounded-md object-cover"
+                              />
+                            )}
+                            {pair.value}
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
-                <div className="flex-1 flex flex-wrap gap-2.5">
-                  {attr.valueImagePairs.map((pair, id) => {
-                    const isSelected =
-                      selectedAttributes[attr.attributeName] === pair.value;
-                    return (
-                      <button
-                        key={id}
-                        onClick={() =>
-                          handleSelectAttribute(attr.attributeName, pair.value)
-                        }
-                        className={`px-4 py-2 border-2 rounded-lg cursor-pointer font-medium mb-2 ${
-                          isSelected
-                            ? "border-[#B0F847] bg-[#B0F847]/8 text-[#70a301]"
-                            : "border-gray-200 hover:border-gray-300 text-gray-700"
-                        }`}
-                      >
-                        <div className="flex gap-2 items-center pr-1">
-                          {pair.imageUrl && (
-                            <Image
-                              src={pair.imageUrl}
-                              alt={`Product Images`}
-                              width={50}
-                              height={50}
-                              className="aspect-square rounded-md object-cover"
-                            />
-                          )}
-                          {pair.value}
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
+              ))}
+            </div>
+          )}
+          <div className="min-h-2 mb-0">
+            {variantError && (
+              <div className="text-blue-600 flex items-center mb-5 gap-2 px-5 text-sm font-medium  bg-blue-50 h-8 border-blue-200 border">
+                <CircleAlert size={20} /> {variantError}
               </div>
-            ))}
+            )}
           </div>
-          <div className="h-8 bg-blue-50"></div>
+
           <div className="w-full flex gap-3 mb-6">
-            <div className=" text-gray-600 font-semibold w-[110px] h-10 flex items-center ">
+            <div className=" text-gray-600 font-semibold w-[80px] h-10 flex items-center ">
               Số lượng
             </div>
             <div className="flex items-center space-x-3">
@@ -300,6 +345,7 @@ export default function OperationProduct({ product }: OperationProductPops) {
           </div>
         </div>
       </div>
+      <AutoCloseDialog open={showDialog} onClose={() => setShowDialog(false)} />
     </div>
   );
 }

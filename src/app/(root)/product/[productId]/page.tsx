@@ -10,6 +10,7 @@ import { getProductDetailById } from "@/services/api/product/product";
 import { ProductDetail } from "@/types/product/product";
 import NotFound from "@/components/common/NotFound";
 import LoadingScreen from "@/components/common/LoadingScreen";
+
 export default function ProductPage() {
   const { productId } = useParams<{ productId: string }>();
 

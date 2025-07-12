@@ -6,6 +6,8 @@ import NotFound from "@/components/common/NotFound";
 import { Shop } from "@/types/shop/shop";
 import { getshopById } from "@/services/api/shop/shop";
 import ProfileStore from "./components/ProfileStore";
+import LoadingScreen from "@/components/common/LoadingScreen";
+import { Card } from "@/components/ui/card";
 
 export default function StorePage() {
   const { shopId } = useParams<{ shopId: string }>();
@@ -29,7 +31,12 @@ export default function StorePage() {
     fetchProduct();
   }, [shopId]);
 
-  if (loading) return <div>Đang tải cửa hàng... </div>;
+  if (loading)
+    return (
+      <div>
+        <LoadingScreen />
+      </div>
+    );
   if (!shop)
     return (
       <div>
@@ -38,10 +45,10 @@ export default function StorePage() {
     );
 
   return (
-    <div className="flex w-full ">
-      <div className="bg-white h-[300px] w-full">
+    <div className="flex flex-col  mx-auto -mt-0.5  mb-20">
+      <Card className="bg-white  w-full p-0">
         <ProfileStore shop={shop} />
-      </div>
+      </Card>
     </div>
   );
 }

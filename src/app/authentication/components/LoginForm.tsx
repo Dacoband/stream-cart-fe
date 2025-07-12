@@ -13,6 +13,8 @@ import axios from "axios";
 import { useAuth } from "@/lib/AuthContext";
 import { getMyShop } from "@/services/api/shop/shop";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useCart } from "@/lib/CartContext";
+
 export default function LoginForm() {
   const router = useRouter();
   const { setUser } = useAuth();
@@ -20,6 +22,7 @@ export default function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
   const searchParams = useSearchParams();
   const redirect = searchParams.get("redirect") || "/";
+  const { refreshCart } = useCart();
 
   const {
     register,
@@ -61,6 +64,7 @@ export default function LoginForm() {
           break;
         case 1:
           router.push(redirect);
+          await refreshCart();
           break;
         case 2:
           if (!userInfor.shopId) {

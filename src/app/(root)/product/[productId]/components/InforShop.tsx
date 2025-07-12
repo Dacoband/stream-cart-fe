@@ -19,7 +19,10 @@ function InforShop({ product }: InforShopProps) {
       <div className="flex gap-5 items-center">
         <Link href={`/store/${product.shopId}`}>
           <Avatar className="w-18 h-18 cursor-pointer">
-            <AvatarImage src={product.shopLogo} />
+            <AvatarImage
+              src={product.shopLogo}
+              className="object-cover w-full h-full"
+            />
           </Avatar>
         </Link>
 

@@ -2,6 +2,7 @@
 import React from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/AuthContext";
+import LoadingScreen from "@/components/common/LoadingScreen";
 
 export function withRoleProtection<P>(
   WrappedComponent: React.ComponentType<P>,
@@ -11,7 +12,12 @@ export function withRoleProtection<P>(
     const { user, loading } = useAuth();
     const router = useRouter();
 
-    if (loading) return <div>Loading....</div>;
+    if (loading)
+      return (
+        <div>
+          <LoadingScreen />
+        </div>
+      );
 
     const isAllowedRole = (role: number): role is 0 | 1 | 2 | 3 =>
       [0, 1, 2, 3].includes(role);

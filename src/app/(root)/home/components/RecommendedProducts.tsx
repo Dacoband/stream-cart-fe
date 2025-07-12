@@ -63,7 +63,7 @@ function RecommendedProducts() {
             <Link href={`/product/${item.id}`} key={item.id}>
               <Card
                 key={item.id}
-                className="group py-0 hover:shadow-xl  rounded-none transition-all duration-300 border-0 bg-white overflow-hidden hover:-translate-y-1"
+                className="group py-0 hover:shadow-xl rounded-none transition-all duration-300 border h-full bg-white overflow-hidden hover:-translate-y-1"
               >
                 <CardContent className="p-0">
                   {/* Product Image */}
@@ -74,10 +74,10 @@ function RecommendedProducts() {
                         alt={item.productName}
                         width={200}
                         height={200}
-                        className="w-full h-48 object-cover object-center group-hover:scale-110 transition-transform duration-500"
+                        className="w-full h-52 object-cover object-center group-hover:scale-110 transition-transform duration-500"
                       />
                     ) : (
-                      <div className="bg-gray-200 w-full flex items-center justify-center h-48 text-gray-400">
+                      <div className="bg-gray-200 w-full flex items-center justify-center h-52 text-gray-400">
                         <ImageIcon size={50} />
                       </div>
                     )}
@@ -100,9 +100,9 @@ function RecommendedProducts() {
                   {/* Product Info */}
                   <div className="pt-2 px-3">
                     {/* Product Name */}
-                    <h3 className="font-medium text-gray-900  mb-2 line-clamp-2">
+                    <h4 className="font-medium text-gray-900 mb-2  line-clamp-2 min-h-[48px] ">
                       {item.productName}
-                    </h3>
+                    </h4>
 
                     {/* Price */}
                     <div className="mb-2 flex gap-5 justify-between items-end">
