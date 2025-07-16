@@ -1,6 +1,7 @@
 "use client";
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { getCart } from "@/services/api/cart/cart";
+import { useAuth } from "@/lib/AuthContext"; // thêm dòng này
 
 interface CartContextType {
   cartCount: number;
@@ -12,6 +13,7 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export const CartProvider = ({ children }: { children: React.ReactNode }) => {
   const [cartCount, setCartCount] = useState(0);
+  const { user, loading } = useAuth();
 
   const refreshCart = async () => {
     try {
@@ -23,8 +25,10 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   useEffect(() => {
-    refreshCart();
-  }, []);
+    if (!loading && user?.role === 1) {
+      refreshCart();
+    }
+  }, [user, loading]);
 
   const resetCart = () => setCartCount(0);
 

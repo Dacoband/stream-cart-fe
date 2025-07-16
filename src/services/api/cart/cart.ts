@@ -76,23 +76,48 @@ export const updateCart = async (data: UpdateCart) => {
   }
 };
 // Delete
-export const deleteCart = async (cartId:string) => {
+
+export const deleteCart = async (cartItemIds: string[]) => {
   try {
-  const token = localStorage.getItem("token");
+    const token = localStorage.getItem("token");
     if (!token) {
       throw new Error("Not found token.");
     }
-
-
-    const response = await rootApi.delete(`carts/${cartId}`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-
+    
+    const params = cartItemIds.map(id => `id=${encodeURIComponent(id)}`).join("&");
+    const response = await rootApi.delete(
+      `carts?${params}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
     return response.data.data;
   } catch (error) {
-    console.error("Error delete cart :", error);
+    console.error("Error delete order:", error);
+    throw error;
+  }
+};
+export const previewOrder = async (cartItemIds: string[]) => {
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      throw new Error("Not found token.");
+    }
+    
+    const params = cartItemIds.map(id => `CartItemId=${encodeURIComponent(id)}`).join("&");
+    const response = await rootApi.get(
+      `carts/PreviewOrder?${params}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+    return response.data.data;
+  } catch (error) {
+    console.error("Error preview order:", error);
     throw error;
   }
 };

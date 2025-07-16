@@ -101,7 +101,7 @@ export default function OperationProduct({ product }: OperationProductPops) {
       setVariantError(null);
       await createCart({
         productId: product.productId,
-        variantId: hasVariants ? selectedVariant?.variantId ?? null : null,
+        variantId: hasVariants ? selectedVariant?.variantId ?? "" : "",
         quantity: quantity,
       });
       await refreshCart();
