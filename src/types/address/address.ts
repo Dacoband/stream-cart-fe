@@ -33,7 +33,7 @@ export interface CreateAddress{
     latitude:number;
     longitude:number;
     type:number;
-    shopId:string;
+    shopId:string|null;
 
 }
 

@@ -9,6 +9,8 @@ import PriceTag from "@/components/common/PriceTag";
 import { updateCart, deleteCart, previewOrder } from "@/services/api/cart/cart";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/lib/CartContext";
+import { getAddressDefaultShipping } from "@/services/api/address/address";
+
 import {
   AlertDialog,
   AlertDialogAction,
@@ -37,11 +39,25 @@ function ShoppingCart({ cart }: ShoppingCartProps) {
     shop.products.map((p) => p.cartItemId)
   );
 
-  const handleBuy = () => {
+  const handleBuy = async () => {
     if (selectedIds.length === 0) return;
 
     const params = selectedIds.map((id) => `cartItemIds=${id}`).join("&");
-    router.push(`/customer/order?${params}`);
+
+    try {
+      const address = await getAddressDefaultShipping();
+
+      if (address && address.id) {
+        const addressParam = `addressId=${address.id}`;
+        router.push(`/customer/order?${params}&${addressParam}`);
+      } else {
+        router.push(`/customer/order?${params}`);
+      }
+    } catch (err) {
+      console.error("Lỗi khi lấy địa chỉ mặc định:", err);
+
+      router.push(`/customer/order?${params}`);
+    }
   };
 
   // SelectProduct

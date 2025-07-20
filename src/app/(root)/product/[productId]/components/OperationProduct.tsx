@@ -318,7 +318,7 @@ export default function OperationProduct({ product }: OperationProductPops) {
                 </Button>
               </div>
               <span className="text-sm text-gray-600">
-                Còn lại {selectedVariant?.stock || product.quantitySold} sản
+                Còn lại {selectedVariant?.stock || product.stockQuantity} sản
                 phẩm
               </span>
             </div>

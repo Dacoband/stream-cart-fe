@@ -1,4 +1,4 @@
-import { AppSidebar } from "./components/Sidebar";
+import { AppSidebar } from "../components/Sidebar";
 import Footer from "../../(root)/components/Footer";
 import { SidebarProvider } from "@/components/ui/sidebar";
 export default async function LayoutCustomer({
