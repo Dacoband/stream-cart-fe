@@ -101,7 +101,7 @@ export default function OperationProduct({ product }: OperationProductPops) {
       setVariantError(null);
       await createCart({
         productId: product.productId,
-        variantId: hasVariants ? selectedVariant?.variantId ?? null : null,
+        variantId: hasVariants ? selectedVariant?.variantId ?? "" : "",
         quantity: quantity,
       });
       await refreshCart();
@@ -318,7 +318,7 @@ export default function OperationProduct({ product }: OperationProductPops) {
                 </Button>
               </div>
               <span className="text-sm text-gray-600">
-                Còn lại {selectedVariant?.stock || product.quantitySold} sản
+                Còn lại {selectedVariant?.stock || product.stockQuantity} sản
                 phẩm
               </span>
             </div>

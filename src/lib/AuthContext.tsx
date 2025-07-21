@@ -29,7 +29,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const refreshUser = async () => {
     try {
       const token = localStorage.getItem("token");
-      if (!token) return;
+      if (!token) {
+        setUser(null);
+        return;
+      }
 
       const userData = await getMe();
 
