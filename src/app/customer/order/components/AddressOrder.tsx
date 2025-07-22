@@ -6,7 +6,7 @@ import React, { useEffect, useState } from "react";
 import { getAddressById } from "@/services/api/address/address";
 import { Address } from "@/types/address/address";
 import { Skeleton } from "@/components/ui/skeleton";
-import DialogAddress from "./DialogFirtAddress";
+import DialogAddress from "./DialogFirstAddress";
 import UpdateAddressOrder from "./UpdateAddressOrder";
 
 interface Props {

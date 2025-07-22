@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { CircleUser, ScrollText, Bell, UserRound } from "lucide-react";
+import { CircleUser, ScrollText, Bell, UserRound, MapPin } from "lucide-react";
 import {
   SidebarContent,
   SidebarGroupContent,
@@ -23,13 +23,18 @@ export function AppSidebar() {
   const items = [
     {
       title: "Thông tin cá nhân",
-      url: `/customer/profile/${user.id}`,
+      url: `/customer/profile`,
       icon: CircleUser,
     },
     {
       title: "Đơn hàng",
       url: "/customer/manage-orders",
       icon: ScrollText,
+    },
+    {
+      title: "Địa chỉ",
+      url: "/customer/address-user",
+      icon: MapPin,
     },
     {
       title: "Thông báo",

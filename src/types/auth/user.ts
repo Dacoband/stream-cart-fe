@@ -50,9 +50,9 @@ export interface RegisterUser{
 export interface UpdateUser{
   phoneNumber:string;
   fullname:string;
-  avatarURL:string;
+  avatarURL:string|null;
   role:number;
 isActive:boolean;
  isVerified:boolean;
-shopId:string;
+shopId:string|null;
 }
