@@ -43,6 +43,7 @@ export default function LoginForm() {
         router.push("/authentication/verify");
         return;
       }
+
       const token = localStorage.getItem("token");
       const userData = localStorage.getItem("userData");
 

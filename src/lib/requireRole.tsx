@@ -14,7 +14,7 @@ export function withRoleProtection<P>(
 
     if (loading)
       return (
-        <div>
+        <div className="w-full">
           <LoadingScreen />
         </div>
       );

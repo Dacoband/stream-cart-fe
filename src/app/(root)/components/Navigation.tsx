@@ -156,7 +156,7 @@ export function Navigation() {
                   <li>
                     <NavigationMenuLink asChild>
                       <Link
-                        href="/customer/profile/1"
+                        href={`/customer/profile/${user.id}`}
                         className="flex-row items-center gap-2"
                       >
                         <CircleUser />

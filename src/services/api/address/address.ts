@@ -68,26 +68,26 @@ export const getAddressById = async (Id: string) => {
 };
 
 // UpdateAddress
-export const UpdateAddress = async (shopId: string) => {
-  try {
-  const token = localStorage.getItem("token");
-    if (!token) {
-      throw new Error("Not found token.");
-    }
+// export const UpdateAddress = async (shopId: string) => {
+//   try {
+//   const token = localStorage.getItem("token");
+//     if (!token) {
+//       throw new Error("Not found token.");
+//     }
 
 
-    const response = await rootApi.get(`addresses/shops/${shopId}`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+//     const response = await rootApi.get(`addresses/shops/${shopId}`, {
+//       headers: {
+//         Authorization: `Bearer ${token}`,
+//       },
+//     });
 
-    return response.data.data;
-  } catch (error) {
-    console.error("Error get address by shopId:", error);
-    throw error;
-  }
-};
+//     return response.data.data;
+//   } catch (error) {
+//     console.error("Error get address by shopId:", error);
+//     throw error;
+//   }
+// };
 // Get Address for user
 export const getAddressUser= async () => {
   try {

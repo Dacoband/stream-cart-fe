@@ -24,14 +24,16 @@ lastLoginDate:Date;
 }
 export interface UserLocal{
  phoneNumber:string;
-    fullname:string;
-  userId: string;
+  fullname:string;
+  id: string;
   username: string;
   role: number;
   isActive: boolean;
   isVerified: boolean;
   shopId:string;
   avatarURL:string;
+  email:string;
+
 
 };
 
@@ -45,3 +47,12 @@ export interface RegisterUser{
   role:number;
 }
 
+export interface UpdateUser{
+  phoneNumber:string;
+  fullname:string;
+  avatarURL:string;
+  role:number;
+isActive:boolean;
+ isVerified:boolean;
+shopId:string;
+}
