@@ -69,13 +69,20 @@ export default function OperationProduct({ product }: OperationProductPops) {
     };
     setSelectedAttributes(updatedAttributes);
 
-    const matchedVariant = product.variants.find((variant) => {
-      return Object.entries(updatedAttributes).every(
-        ([key, val]) => variant.attributeValues[key] === val
-      );
-    });
+    const requiredCount = product.attributes.length;
+    const selectedCount = Object.keys(updatedAttributes).length;
 
-    setSelectedVariant(matchedVariant || null);
+    if (selectedCount === requiredCount) {
+      const matchedVariant = product.variants.find((variant) =>
+        Object.entries(updatedAttributes).every(
+          ([key, val]) => variant.attributeValues[key] === val
+        )
+      );
+      setSelectedVariant(matchedVariant || null);
+    } else {
+      setSelectedVariant(null);
+    }
+
     setVariantError(null);
   };
   const handleClickBuy = async () => {
@@ -210,17 +217,24 @@ export default function OperationProduct({ product }: OperationProductPops) {
           <div className="bg-gradient-to-r from-red-50 to-orange-50 py-6 pl-6 pr-16 rounded-2xl border border-red-200 ">
             <div className="flex justify-between">
               <div className="flex items-center space-x-4 mb-2">
-                <span className="text-4xl font-bold text-red-600">
-                  <PriceTag
-                    value={
-                      selectedVariant?.flashSalePrice || product.finalPrice
-                    }
-                  />
-                </span>
+                {selectedVariant ? (
+                  <span className="text-4xl font-bold text-red-600">
+                    <PriceTag value={selectedVariant.flashSalePrice} />
+                  </span>
+                ) : (
+                  <span className="text-4xl font-bold text-red-600">
+                    <PriceTag value={product.finalPrice} />
+                  </span>
+                )}
+
                 {product.discountPrice > 0 && (
                   <span className="text-xl text-gray-500 line-through">
                     <PriceTag
-                      value={selectedVariant?.price || product.basePrice}
+                      value={
+                        selectedVariant
+                          ? selectedVariant.price
+                          : product.basePrice
+                      }
                     />
                   </span>
                 )}
@@ -318,8 +332,11 @@ export default function OperationProduct({ product }: OperationProductPops) {
                 </Button>
               </div>
               <span className="text-sm text-gray-600">
-                Còn lại {selectedVariant?.stock || product.stockQuantity} sản
-                phẩm
+                Còn lại{" "}
+                {selectedVariant
+                  ? selectedVariant.stock
+                  : product.stockQuantity}{" "}
+                sản phẩm
               </span>
             </div>
           </div>

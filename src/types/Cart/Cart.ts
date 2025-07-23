@@ -44,10 +44,11 @@ export interface UpdateCart{
     variantId:string;
     quantity:number;
 }
-//Preview
+
 export interface PreviewOrder {
-    totalItem:number,
-    subTotal:number,
-    discount:number;
-    totalAmount:number;
+  totalItem: number;
+  subTotal: number;
+  discount: number;
+  totalAmount: number;
+  listCartItem: CartItemByShop[]; 
 }

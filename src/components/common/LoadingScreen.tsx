@@ -12,7 +12,7 @@ interface LoadingPageProps {
 
 const LoadingScreen: React.FC<LoadingPageProps> = ({}) => {
   return (
-    <div className="flex flex-col items-center justify-center w-full space-y-4 h-[calc(100vh-80px)]">
+    <div className="fixed inset-0 z-50 bg-white bg-opacity-80 flex flex-col items-center justify-center space-y-4">
       {/* Lottie Animation */}
       <div className="w-80 h-80 rounded-full flex justify-center items-center relative">
         {/* Vòng viền loading xoay */}

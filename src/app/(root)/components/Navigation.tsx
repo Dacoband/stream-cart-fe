@@ -76,9 +76,9 @@ export function Navigation() {
             alt="Stream Card Logo"
             width={96}
             height={96}
-            className="w-14 h-14 object-contain"
+            className="w-12 h-12 object-contain"
           />
-          <div className="text-3xl text-[#B0F847] font-semibold font-sans">
+          <div className="text-2xl text-[#B0F847] font-semibold font-sans">
             Stream Cart
           </div>
         </Link>
@@ -156,7 +156,7 @@ export function Navigation() {
                   <li>
                     <NavigationMenuLink asChild>
                       <Link
-                        href="/customer/profile/1"
+                        href={`/customer/profile`}
                         className="flex-row items-center gap-2"
                       >
                         <CircleUser />
