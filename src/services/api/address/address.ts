@@ -114,7 +114,7 @@ export const UpdateAddressById = async (Id: string,data:UpdateAddress) => {
     }
 
 
-    const response = await rootApi.put(`addresses/${Id}`,{ data,
+    const response = await rootApi.put(`addresses/${Id}`,data,{ 
       headers: {
         Authorization: `Bearer ${token}`,
       },

@@ -60,6 +60,7 @@ const DialogAddNewAddress = ({ onSuccess }: DialogAddressProps) => {
     handleSubmit,
     setValue,
     formState: { errors },
+    reset,
   } = useForm<AddressSchemaCustomer>({
     resolver: zodResolver(registerAddressCustomer),
     defaultValues: {
@@ -99,6 +100,13 @@ const DialogAddNewAddress = ({ onSuccess }: DialogAddressProps) => {
       toast.dismiss();
       toast.success(responseData.message);
       setIsOpen(false);
+      reset();
+      setSelectedProvinceId("");
+      setSelectedDistrictId("");
+      setSelectedWardId("");
+      setDistricts([]);
+      setWards([]);
+      setIsDefaultShipping(false);
     } catch (error: unknown) {
       const err = error as AxiosError<{ message: string }>;
       const message = err?.response?.data?.message || "Lỗi thêm địa chỉ ra!";
@@ -172,10 +180,7 @@ const DialogAddNewAddress = ({ onSuccess }: DialogAddressProps) => {
               <div className="grid grid-cols-2 gap-4">
                 {/* Tên người nhận */}
                 <div>
-                  <Label
-                    htmlFor="recipientName"
-                    className="text-black text-sm font-medium mb-1"
-                  >
+                  <Label className="text-black text-sm font-medium mb-1">
                     Tên người nhận
                   </Label>
                   <Input
@@ -195,10 +200,7 @@ const DialogAddNewAddress = ({ onSuccess }: DialogAddressProps) => {
 
                 {/* Số điện thoại */}
                 <div>
-                  <Label
-                    htmlFor="phoneNumber"
-                    className="text-black text-sm font-medium mb-1"
-                  >
+                  <Label className="text-black text-sm font-medium mb-1">
                     Số điện thoại
                   </Label>
                   <Input
@@ -353,7 +355,7 @@ const DialogAddNewAddress = ({ onSuccess }: DialogAddressProps) => {
                   </p>
                 )}
               </div>
-            </div>{" "}
+            </div>
             <div className="flex items-center space-x-2 px-5">
               <Checkbox
                 className="w-5 h-5 cursor-pointer"

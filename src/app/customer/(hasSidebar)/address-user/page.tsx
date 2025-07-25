@@ -26,6 +26,7 @@ import {
   AlertDialogCancel,
   AlertDialogTitle,
 } from "@radix-ui/react-alert-dialog";
+import DialogUpdateAddress from "../../components/DialogUpdateAddress";
 function AddressUser() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [loadingDelete, setLoadingDelete] = useState(false);
@@ -135,6 +136,11 @@ function AddressUser() {
                 </div>
                 <div className="flex flex-col items-end gap-2">
                   <div className="flex gap-4 text-sm">
+                    <DialogUpdateAddress
+                      address={addr}
+                      onSuccess={fetchAddresses}
+                    />
+
                     <AlertDialog
                       open={deleteId === addr.id}
                       onOpenChange={(open) => !open && setDeleteId(null)}
