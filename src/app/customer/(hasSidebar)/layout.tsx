@@ -1,5 +1,4 @@
 import { AppSidebar } from "../components/Sidebar";
-import Footer from "../../(root)/components/Footer";
 import { SidebarProvider } from "@/components/ui/sidebar";
 export default async function LayoutCustomer({
   children,
@@ -15,7 +14,7 @@ export default async function LayoutCustomer({
           </div>
 
           <div
-            className="flex-1 sticky top-28 py-8 px-10 bg-white min-h-[calc(100vh-9rem)] rounded-lg "
+            className="flex-1  sticky top-28 py-8 px-10 bg-white min-h-[calc(100vh-9rem)]  mb-8 rounded-lg  "
             style={{
               boxShadow: "0 0 20px rgba(148, 163, 184, 0.3)",
             }}
@@ -23,9 +22,6 @@ export default async function LayoutCustomer({
             {children}
           </div>
         </SidebarProvider>
-      </div>
-      <div className="mt-8">
-        <Footer />
       </div>
     </div>
   );

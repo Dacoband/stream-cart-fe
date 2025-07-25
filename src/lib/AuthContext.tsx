@@ -20,10 +20,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const [user, setUser] = useState<UserLocal | null>(null);
   const [loading, setLoading] = useState(true);
-  const logout = () => {
+  const logout = async () => {
     localStorage.clear();
-    setUser(null);
-    router.push("/authentication/login");
+    await router.push("/authentication/login");
+    setTimeout(() => {
+      setUser(null);
+    }, 100);
   };
 
   const refreshUser = async () => {

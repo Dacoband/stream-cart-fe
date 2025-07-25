@@ -7,7 +7,6 @@ import { useEffect, useState } from "react";
 import AddressOrder from "./components/AddressOrder";
 import ProductsOrder from "./components/ProductsOrder";
 import MethodOrder from "./components/MethodOrder";
-
 export default function OrderPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -36,7 +35,7 @@ export default function OrderPage() {
   };
 
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col mb-10">
       <div className="bg-white mx-auto w-full shadow flex py-3">
         <div className="w-[70%] mx-auto relative flex items-center h-[70px]">
           <div className="absolute left-0">
@@ -61,16 +60,7 @@ export default function OrderPage() {
           setAddressId={handleUpdateAddressId}
         />
         <ProductsOrder cartItemIds={cartItemIds} />
-        <MethodOrder />
-      </div>
-
-      <div className="w-[70%] mx-auto mt-4">
-        <h4 className="text-lg font-semibold">Sản phẩm đã chọn:</h4>
-        <ul className="list-disc list-inside">
-          {cartItemIds.map((id) => (
-            <li key={id}>🛒 {id}</li>
-          ))}
-        </ul>
+        <MethodOrder cartItemIds={cartItemIds} />
       </div>
     </div>
   );

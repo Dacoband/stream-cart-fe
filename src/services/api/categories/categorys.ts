@@ -23,6 +23,18 @@ export const getAllCategories = async (data: filterCategory) => {
   }
 }
 
+export const getAllCategoriesForHome = async () => {
+  try {
+    const response = await rootApi.get('categorys', {
+      
+    })
+    console.log(response)
+    return response.data.data
+  } catch (error) {
+    console.error('Error fetching categories:', error)
+    throw error
+  }
+}
 export const getCategoryById = async (categoryId:string) => {
   try {
     const response = await rootApi.get(`categorys/${categoryId}`);
