@@ -82,35 +82,73 @@ export default function DialogUpdateAddress({ address, onSuccess }: Props) {
     getProvinces().then((data) => setProvinces(data || []));
   }, []);
 
+  // useEffect(() => {
+  //   if (isOpen) {
+  //     const province = provinces.find(
+  //       (p) => p.name === address.city || p.full_name === address.city
+  //     );
+  //     if (province) {
+  //       setSelectedProvinceId(province.id);
+  //       setSelectedProvinceName(province.name);
+  //       getDistrict(province.id).then((districts) => {
+  //         setDistricts(districts || []);
+  //         const district = districts.find(
+  //           (d) => d.full_name === address.district
+  //         );
+  //         if (district) {
+  //           setSelectedDistrictId(district.id);
+  //           setSelectedDistrictName(district.name);
+  //           getWard(district.id).then((wards) => {
+  //             setWards(wards || []);
+  //             const ward = wards.find((w) => w.full_name === address.ward);
+  //             if (ward) {
+  //               setSelectedWardId(ward.id);
+  //               setSelectedWardFullName(ward.full_name);
+  //             }
+  //           });
+  //         }
+  //       });
+  //     }
+  //   }
+  // }, [isOpen, provinces, address.city, address.district, address.ward]);
   useEffect(() => {
-    if (isOpen) {
-      const province = provinces.find(
-        (p) => p.name === address.city || p.full_name === address.city
-      );
-      if (province) {
-        setSelectedProvinceId(province.id);
-        setSelectedProvinceName(province.name);
-        getDistrict(province.id).then((districts) => {
-          setDistricts(districts || []);
-          const district = districts.find(
-            (d) => d.full_name === address.district
-          );
-          if (district) {
-            setSelectedDistrictId(district.id);
-            setSelectedDistrictName(district.name);
-            getWard(district.id).then((wards) => {
-              setWards(wards || []);
-              const ward = wards.find((w) => w.full_name === address.ward);
-              if (ward) {
-                setSelectedWardId(ward.id);
-                setSelectedWardFullName(ward.full_name);
-              }
-            });
-          }
-        });
-      }
+    if (!isOpen || provinces.length === 0) return;
+
+    const province = provinces.find((p) => p.name === address.city);
+    if (province) {
+      setSelectedProvinceId(province.id);
+      setSelectedProvinceName(province.full_name);
+      setValue("city", province.name);
+      getDistrict(province.id).then((districtList) => {
+        setDistricts(districtList || []);
+      });
     }
-  }, [isOpen, provinces, address.city, address.district, address.ward]);
+  }, [isOpen, provinces, address.city, setValue]);
+
+  useEffect(() => {
+    if (districts.length === 0 || !address.district) return;
+
+    const district = districts.find((d) => d.full_name === address.district);
+    if (district) {
+      setSelectedDistrictId(district.id);
+      setSelectedDistrictName(district.full_name);
+      setValue("district", district.full_name);
+
+      getWard(district.id).then((wardList) => {
+        setWards(wardList || []);
+      });
+    }
+  }, [districts, address.district, setValue]);
+  useEffect(() => {
+    if (wards.length === 0 || !address.ward) return;
+
+    const ward = wards.find((w) => w.full_name === address.ward);
+    if (ward) {
+      setSelectedWardId(ward.id);
+      setSelectedWardFullName(ward.full_name);
+      setValue("ward", ward.full_name);
+    }
+  }, [wards, address.ward, setValue]);
 
   const onSubmit = async (data: AddressSchemaCustomer) => {
     setLoading(true);
@@ -163,7 +201,9 @@ export default function DialogUpdateAddress({ address, onSuccess }: Props) {
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <button className="text-blue-600 hover:underline">Cập nhật</button>
+        <button className="text-blue-600 hover:underline cursor-pointer">
+          Cập nhật
+        </button>
       </DialogTrigger>
       <DialogContent className="p-0 m-0 rounded-sm max-w-xl">
         <DialogHeader className="px-5 py-5 border-b flex gap-4 flex-row items-center">
