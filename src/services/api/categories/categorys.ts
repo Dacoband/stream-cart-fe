@@ -12,7 +12,8 @@ export const getAllCategories = async (data: filterCategory) => {
         PageIndex: data.PageIndex ?? 1,
         PageSize: data.PageSize ?? 10,
         CategoryName: data.CategoryName || '',
-        // IsDeleted: data.IsDeleted ?? null,
+        IsDeleted: data.IsDeleted ?? null,
+        ParentCategoryID: data.ParentCategoryID ?? null,
       },
     })
     console.log(response)
@@ -46,11 +47,7 @@ export const getCategoryById = async (categoryId:string) => {
 };
 export const getDetailCategory = async (id: string) => {
   try {
-    const response = await rootApi.get('categorys', {
-      params: {
-        id: id,
-      },
-    })
+    const response = await rootApi.get(`categorys/${id}`)
     return response.data
   } catch (error) {
     console.error('Error fetch detail category', error)
@@ -58,16 +55,63 @@ export const getDetailCategory = async (id: string) => {
 }
 
 export const createCategory = async (createDTO: CreateCategoryDTO) => {
-  const userData = JSON.parse(localStorage.getItem('userData') || '{}')
-  const token = userData.token
-  if (!token) {
-    throw new Error('Vui lòng đăng nhập để thực hiện chứ năng này')
-  }
-  const response = await rootApi.post('categorys', createDTO, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  })
+  try {
+    const token = localStorage.getItem('token')
+    console.log(token)
+    if (!token) {
+      throw new Error('Vui lòng đăng nhập để thực hiện chứ năng này')
+    }
+    const response = await rootApi.post('categorys', createDTO, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
 
-  return response.data
+    return response.data
+  } catch (err) {
+    console.error('error create category', err)
+  }
+}
+
+export const updateCategory = async (
+  id: string,
+  updateDTO: CreateCategoryDTO
+) => {
+  try {
+    const token = localStorage.getItem('token')
+    console.log(token)
+    if (!token) {
+      throw new Error('Vui lòng đăng nhập để thực hiện chức năng này')
+    }
+    const response = await rootApi.put(`categorys/${id}`, updateDTO, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
+
+    return response.data
+  } catch (err) {
+    console.error('error update category', err)
+    throw err
+  }
+}
+
+export const deleteCategory = async (id: string) => {
+  try {
+    const token = localStorage.getItem('token')
+    console.log(token)
+    if (!token) {
+      throw new Error('Vui lòng đăng nhập để thực hiện chức năng này')
+    }
+    const response = await rootApi.delete(`categorys/${id}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
+
+    return response.data
+  } catch (err) {
+    console.error('error delete category', err)
+    throw err
+  }
 }

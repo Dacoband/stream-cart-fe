@@ -4,6 +4,7 @@ export interface Category {
   description: string
   iconURL: string
   slug: string
+  isDeleted: boolean
   subCategories?: Category[]
 }export interface listCategory {
   totalItem: number
@@ -14,7 +15,8 @@ export interface filterCategory {
   CategoryName?: string
   PageIndex?: number
   PageSize?: number
-  // IsDeleted?: boolean | null
+  IsDeleted?: boolean | null
+  ParentCategoryID?: string | null
 }
 
 export interface createCategory {
@@ -22,6 +24,6 @@ export interface createCategory {
   description?: string
   iconURL?: string
   slug?: string
-  parentCategoryID?: string
+  parentCategoryID?: string | null
 }
 
