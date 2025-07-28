@@ -84,6 +84,9 @@ export default function LoginForm() {
         case 3:
           router.push("/partner/manageproduct");
           break;
+        case 5:
+          router.push("/manager/dashboard");
+          break;
         default:
           console.log("Role không hợp lệ");
           router.push("/");

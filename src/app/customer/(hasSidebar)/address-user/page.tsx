@@ -94,7 +94,9 @@ function AddressUser() {
         ) : addresses.length === 0 ? (
           <div></div>
         ) : (
-          <DialogAddNewAddress onSuccess={fetchAddresses} />
+          <div className="bg-[#B0F847] hover:bg-[#B0F847]/80 gap-2 text-black hover:text-black/50 ">
+            <DialogAddNewAddress onSuccess={fetchAddresses} />
+          </div>
         )}
       </div>
 

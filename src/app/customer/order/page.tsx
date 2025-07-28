@@ -36,8 +36,8 @@ export default function OrderPage() {
 
   return (
     <div className="flex flex-col mb-10">
-      <div className="bg-white mx-auto w-full shadow flex py-3">
-        <div className="w-[70%] mx-auto relative flex items-center h-[70px]">
+      <div className="bg-white mx-auto w-full shadow flex py-4">
+        <div className="w-[70%] mx-auto relative flex items-center ">
           <div className="absolute left-0">
             <Button
               className="bg-white shadow-none text-black hover:bg-white hover:text-black cursor-pointer border-none hover:underline"

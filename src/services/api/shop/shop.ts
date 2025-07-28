@@ -1,4 +1,4 @@
-import { RegisterShop, FilterShop, ListShop } from './../../../types/shop/shop'
+import { RegisterShop, FilterShop } from './../../../types/shop/shop'
 import rootApi from '../../rootApi'
 
 // Register Shop
@@ -19,7 +19,7 @@ export const registerShop = async (data: RegisterShop) => {
   } catch (error) {
     console.error('Error registering shop:', error)
     throw error
-  }
+  }}
 
 export const getshopById = async (shopId:string) => {
   try {
@@ -83,4 +83,3 @@ export const getShopDetail = async (id: string) => {
     throw new Error('Xảy ra lỗi trong quá trình tải thông tin cửa hàng')
   }
 }
-

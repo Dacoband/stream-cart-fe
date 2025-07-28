@@ -156,8 +156,8 @@ const DialogAddNewAddress = ({ onSuccess }: DialogAddressProps) => {
   return (
     <div className="w-fix">
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogTrigger className="bg-[#B0F847] flex hover:bg-[#B0F847]/80 gap-2 text-black hover:text-black/50 cursor-pointer py-2.5 px-5 font-normal">
-          <Plus />
+        <DialogTrigger className="flex gap-2 cursor-pointer py-2.5 px-5 font-normal items-center">
+          <Plus size={16} />
           Thêm địa chỉ mới
         </DialogTrigger>
         <DialogContent className="p-0 m-0 rounded-sm max-w-xl">

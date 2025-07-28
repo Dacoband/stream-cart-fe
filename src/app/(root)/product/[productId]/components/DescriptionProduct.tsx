@@ -47,7 +47,11 @@ function DescriptionProduct({ product }: DescriptionProductProps) {
             <div className="space-y-4">
               {[
                 { label: "Khối lượng", value: product.weight },
-                { label: "Kích thước", value: product.dimension },
+                {
+                  label: "Kích thước",
+                  value:
+                    product.height + "x" + product.width + "x" + product.length,
+                },
               ].map((spec, index) => (
                 <div
                   key={index}

@@ -20,16 +20,19 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
+
 import { NavigationMenu } from "@radix-ui/react-navigation-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/lib/AuthContext";
 import SearchBar from "./SearchBar";
 import { useCart } from "@/lib/CartContext";
 export function Navigation() {
+  const pathname = usePathname();
   const { user, loading, logout } = useAuth();
   const router = useRouter();
   const { cartCount, resetCart } = useCart();
+  const currentPath = pathname;
   const handleLogout = () => {
     logout();
     resetCart();
@@ -38,7 +41,6 @@ export function Navigation() {
     const token = localStorage.getItem("token");
 
     if (!token) {
-      const currentPath = `/home`;
       toast.error("Vui lòng đăng nhập.");
       router.push(
         `/authentication/login?redirect=${encodeURIComponent(currentPath)}`
@@ -50,7 +52,6 @@ export function Navigation() {
     const token = localStorage.getItem("token");
 
     if (!token) {
-      const currentPath = `/home}`;
       toast.error("Vui lòng đăng nhập.");
       router.push(
         `/authentication/login?redirect=${encodeURIComponent(currentPath)}`
@@ -120,7 +121,11 @@ export function Navigation() {
             </div>
           </div>
         ) : !user ? (
-          <Link href="/authentication/login">
+          <Link
+            href={`/authentication/login?redirect=${encodeURIComponent(
+              pathname
+            )}`}
+          >
             <Button className="bg-gradient-to-r ml-10 from-[#B0F847]  via-[#c6ef88]  to-[#B0F847] cursor-pointer text-black">
               Đăng nhập
             </Button>

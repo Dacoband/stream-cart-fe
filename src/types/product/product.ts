@@ -10,7 +10,9 @@ export interface Product{
    stockQuantity:number;
    isActive:boolean;
    weight:number;
-   dimensions:string;
+  length: number,
+      width: number,
+      height: number,
    hasVariant:boolean;
    quantitySold:number;
    shopId:string;
@@ -33,7 +35,9 @@ export interface ProductDetail {
   stockQuantity: number;
   quantitySold: number;
   weight: string;
-  dimension: string;
+  length: number,
+      width: number,
+      height: number,
   primaryImage: string[];
   shopId: string;
   shopName: string;

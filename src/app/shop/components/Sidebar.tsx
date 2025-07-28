@@ -2,12 +2,13 @@
 
 import { usePathname } from "next/navigation";
 import {
-  Store,
   TicketPercent,
   PieChart,
   Package,
   Wallet,
   ScanBarcode,
+  Video,
+  UsersRound,
 } from "lucide-react";
 import {
   Sidebar,
@@ -26,20 +27,20 @@ const items = [
     icon: PieChart,
   },
   {
-    title: "Quản lý sản phẩm",
+    title: "Sản phẩm",
     url: "/shop/manager-products",
     icon: ScanBarcode,
   },
   {
-    title: "Quản lý đơn hàng",
+    title: "Đơn hàng",
     url: "/shop/order",
     icon: Package,
   },
 
   {
-    title: "Quản lý kho",
-    url: "/shop/address",
-    icon: Store,
+    title: "Livestrems",
+    url: "/shop/livestreams",
+    icon: Video,
   },
 
   {
@@ -52,6 +53,11 @@ const items = [
     title: "Giao dịch",
     url: "/admin/transactions",
     icon: Wallet,
+  },
+  {
+    title: "Nhân viên",
+    url: "/shop/moderators",
+    icon: UsersRound,
   },
 ];
 

@@ -40,7 +40,7 @@ export default function ProductPage() {
     );
   if (!product)
     return (
-      <div className="flex justify-center w-full items-center flex-col pt-10">
+      <div className="flex justify-center w-full items-center flex-col pt-">
         <NotFound />
         <h2 className="font-semibold text-2xl">
           Rất tiếc! Sản phẩm này không tồn tại hoặc bị xóa.
@@ -49,7 +49,7 @@ export default function ProductPage() {
     );
 
   return (
-    <div className="flex flex-col w-[70%] mx-auto mt-2 mb-20">
+    <div className="flex flex-col w-[70%] mx-auto mt-1 mb-20">
       <div className="my-2.5">
         <BreadcrumbProduct product={product} />
       </div>
