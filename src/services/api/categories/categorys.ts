@@ -26,9 +26,7 @@ export const getAllCategories = async (data: filterCategory) => {
 
 export const getAllCategoriesForHome = async () => {
   try {
-    const response = await rootApi.get('categorys', {
-      
-    })
+    const response = await rootApi.get('categorys')
     console.log(response)
     return response.data.data
   } catch (error) {

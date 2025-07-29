@@ -2,7 +2,12 @@
 import { Button } from "@/components/ui/button";
 
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import { Bell, CircleArrowOutDownRight, MessageCircleMore } from "lucide-react";
+import {
+  Bell,
+  CircleArrowOutDownRight,
+  MessageCircleMore,
+  UserRound,
+} from "lucide-react";
 import Image from "next/image";
 import React from "react";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -73,16 +78,19 @@ function Header() {
   ring-0 shadow-none border-none cursor-pointer
   flex items-center gap-2  h-fit"
               >
-                <Image
-                  src={
-                    user?.avatarURL ||
-                    "https://i.pinimg.com/736x/22/7b/cf/227bcf6f33a61d149764bb6ad90e19eb.jpg"
-                  }
-                  alt="Avatar"
-                  width={44}
-                  height={44}
-                  className="w-10 h-10 object-cover rounded-full shrink-0"
-                />
+                {user?.avatarURL ? (
+                  <Image
+                    src={user.avatarURL}
+                    alt="Avatar"
+                    width={44}
+                    height={44}
+                    className="w-10 h-10 object-cover rounded-full shrink-0"
+                  />
+                ) : (
+                  <div className="w-10 h-10 rounded-full bg-[#34373b] flex items-center justify-center text-[#B0F847] ">
+                    <UserRound size={25} />
+                  </div>
+                )}
                 <div className="text-white font-semibold">Quản lý:</div>
                 <span className="text-slate-200 truncate">
                   {user?.username}
