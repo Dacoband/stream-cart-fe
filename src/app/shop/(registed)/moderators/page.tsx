@@ -1,9 +1,32 @@
-import { Button } from "@/components/ui/button";
-import React from "react";
-import { CirclePlus } from "lucide-react";
+"use client";
+import React, { useCallback, useEffect, useState } from "react";
+
 import { TableModerator } from "./components/TableModerator";
-// import { TableProducts } from "./components/TableProducts";
-function page() {
+import { getModeratorsByShop } from "@/services/api/auth/moderator";
+import { Moderator } from "@/types/auth/user";
+
+import { useAuth } from "@/lib/AuthContext";
+import DialogCreateModerator from "./components/DialogCreateModerator";
+function ModeratorsPage() {
+  const { user } = useAuth();
+  const [moderators, setModerators] = useState<Moderator[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  // const [openDialog, setOpenDialog] = useState(false);
+  const fetchModerators = useCallback(async () => {
+    try {
+      if (!user?.shopId) return;
+      const response = await getModeratorsByShop(user.shopId);
+      setModerators(response);
+    } catch (error) {
+      console.error("Fetch Error List Moderators:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, [user?.shopId]); // chỉ phụ thuộc shopId
+
+  useEffect(() => {
+    fetchModerators();
+  }, [fetchModerators]);
   return (
     <div className="flex flex-col gap-5 min-h-full">
       <div className="bg-white sticky top-0  z-10 h-fit w-full py-4 px-8 shadow flex justify-between items-center">
@@ -11,19 +34,18 @@ function page() {
           <h2 className="text-xl font-bold">
             Danh sách nhân viên cửa hàng nhân viên
           </h2>
-          {/* <h2 className="text-black/70">Danh sách nhân viên trong cửa hàng</h2> */}
         </div>
-        <Button className="bg-[#B0F847] text-black shadow flex gap-2 py-5 text-base cursor-pointer hover:bg-[#B0F847]/80 hover:text-black/80">
-          <CirclePlus />
-          Thêm nhân viên
-        </Button>
+        <DialogCreateModerator onSuccess={fetchModerators} />
       </div>
       <div className="flex flex-col gap-5 mx-5 mb-10">
-        {/* <TableProducts /> */}
-        <TableModerator />
+        <TableModerator
+          moderators={moderators}
+          loading={loading}
+          fetchModerators={fetchModerators}
+        />
       </div>
     </div>
   );
 }
 
-export default page;
+export default ModeratorsPage;
