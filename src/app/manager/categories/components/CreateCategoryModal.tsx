@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from "react";
 import {
   createCategory,
   getAllCategories,
+  updateCategory,
 } from "@/services/api/categories/categorys";
 import { uploadImage } from "@/services/api/uploadImage";
 import { Button } from "@/components/ui/button";
@@ -40,17 +41,24 @@ import {
 } from "@/components/ui/select";
 import { Category, filterCategory } from "@/types/category/category";
 import { toast } from "sonner";
+import { Textarea } from "@/components/ui/textarea";
 
 interface CreateCategoryModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess: () => void;
+  parentCategoryID?: string;
+  mode?: "create" | "update";
+  initialData?: Category | null;
 }
 
 const CreateCategoryModal: React.FC<CreateCategoryModalProps> = ({
   open,
   onOpenChange,
   onSuccess,
+  parentCategoryID,
+  mode = "create",
+  initialData = null,
 }) => {
   const form = useForm<CreateCategorySchema>({
     resolver: zodResolver(createCategorySchema),
@@ -83,11 +91,12 @@ const CreateCategoryModal: React.FC<CreateCategoryModalProps> = ({
         PageIndex: 1,
         PageSize: 100,
         CategoryName: "",
-        // IsDeleted: false,
+        IsDeleted: false,
       };
       var res = await getAllCategories(params);
-      console.log(res.data);
-      setLoadingCategories(res.data || []);
+      console.log(res.data.categories);
+      setLoadingCategories(false);
+      setCategories(res.data.categories);
       // setTotalPages(res.totalPages || 1)
     } catch (err) {
       console.log(res);
@@ -102,8 +111,20 @@ const CreateCategoryModal: React.FC<CreateCategoryModalProps> = ({
       setUploadError(null);
     } else {
       fetchData();
+      if (mode === "update" && initialData) {
+        setValue("categoryName", initialData.categoryName);
+        setValue("description", initialData.description || "");
+        setValue("iconURL", initialData.iconURL || "");
+        setValue("slug", initialData.slug || "");
+        setValue(
+          "parentCategoryID",
+          mode === "update" ? "" : (initialData as any)?.parentCategoryID ?? ""
+        );
+      } else if (parentCategoryID) {
+        setValue("parentCategoryID", parentCategoryID);
+      }
     }
-  }, [open, reset]);
+  }, [open, reset, parentCategoryID, setValue, mode, initialData]);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -127,9 +148,22 @@ const CreateCategoryModal: React.FC<CreateCategoryModalProps> = ({
 
   const onSubmit = async (values: CreateCategorySchema) => {
     try {
-      const res = await createCategory(values);
-      console.log(res);
-      toast.success(res.message || "Tạo danh mục thành công");
+      const submitValues = {
+        ...values,
+        parentCategoryID:
+          values.parentCategoryID === "" || values.parentCategoryID === "none"
+            ? null
+            : values.parentCategoryID,
+      };
+
+      console.log("Giá trị gửi đi:", submitValues);
+      if (mode === "update" && initialData) {
+        await updateCategory(initialData.categoryId, submitValues);
+        toast.success("Cập nhật danh mục thành công");
+      } else {
+        const res = await createCategory(submitValues);
+        toast.success(res.message || "Tạo danh mục thành công");
+      }
       onSuccess();
       onOpenChange(false);
       reset();
@@ -137,7 +171,9 @@ const CreateCategoryModal: React.FC<CreateCategoryModalProps> = ({
       const message =
         err?.response?.data?.message ||
         err?.message ||
-        "Tạo danh mục thất bại. Vui lòng thử lại!";
+        (mode === "update"
+          ? "Cập nhật danh mục thất bại. Vui lòng thử lại!"
+          : "Tạo danh mục thất bại. Vui lòng thử lại!");
       toast.error(message);
     }
   };
@@ -147,7 +183,7 @@ const CreateCategoryModal: React.FC<CreateCategoryModalProps> = ({
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle className="text-xl font-bold">
-            Thêm danh mục mới
+            {mode === "update" ? "Cập nhật danh mục" : "Thêm danh mục mới"}
           </DialogTitle>
         </DialogHeader>
         <Form {...form}>
@@ -181,7 +217,7 @@ const CreateCategoryModal: React.FC<CreateCategoryModalProps> = ({
                 <FormItem>
                   <FormLabel>Mô tả</FormLabel>
                   <FormControl>
-                    <Input
+                    <Textarea
                       placeholder="Mô tả (tối đa 250 ký tự)"
                       {...field}
                       disabled={isSubmitting}
@@ -249,10 +285,9 @@ const CreateCategoryModal: React.FC<CreateCategoryModalProps> = ({
                   <FormControl>
                     <Select
                       value={field.value || "none"}
-                      onValueChange={(v) =>
-                        field.onChange(v === "none" ? "" : v)
-                      }
+                      onValueChange={(v) => field.onChange(v === "" ? null : v)}
                       disabled={isSubmitting || loadingCategories}
+                      // disabled={false}
                     >
                       <SelectTrigger className="w-full">
                         <SelectValue
@@ -295,7 +330,13 @@ const CreateCategoryModal: React.FC<CreateCategoryModalProps> = ({
                 className="bg-[#B0F847] text-black shadow py-5 text-base hover:bg-[#B0F847]/80 hover:text-black/80"
                 disabled={isSubmitting || uploading}
               >
-                {isSubmitting ? "Đang tạo..." : "Tạo"}
+                {isSubmitting
+                  ? mode === "update"
+                    ? "Đang cập nhật..."
+                    : "Đang tạo..."
+                  : mode === "update"
+                  ? "Cập nhật"
+                  : "Tạo"}
               </Button>
             </DialogFooter>
           </form>

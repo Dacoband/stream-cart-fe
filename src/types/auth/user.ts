@@ -56,3 +56,32 @@ isActive:boolean;
  isVerified:boolean;
 shopId:string|null;
 }
+export interface CreateModerator{
+  username:string;
+  email:string;
+  password:string|null;
+  phoneNumber:string;
+  fullname:boolean;
+  avatarURL:string|null,
+  
+}
+export interface Moderator{
+  id:string;
+
+  username:string;
+  email:string;
+  avatarURL:string|null,
+  phoneNumber:string;
+  fullname:boolean;
+  role:number;
+  registrationDate:Date;
+  lastLoginDate:Date;
+  isActive:boolean;
+  isVerified:boolean;
+  completeRate:number;
+  shopId:string;
+  createdAt:Date;
+  createdBy:string;
+  lastModifiedAt:string;
+  lastModifieBy:string;
+}
