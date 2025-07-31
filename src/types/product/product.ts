@@ -34,10 +34,10 @@ export interface ProductDetail {
   finalPrice: number;
   stockQuantity: number;
   quantitySold: number;
-  weight: string;
+  weight: number;
   length: number,
-      width: number,
-      height: number,
+  width: number,
+   height: number,
   primaryImage: string[];
   shopId: string;
   shopName: string;

@@ -1,28 +1,19 @@
-export interface CreateOrderRequest {
-  shopId: string;
-  shippingProviderId: string;
+export interface CreateOrder {
   paymentMethod: string;
-  shippingAddress: ShippingAddress;
-  items: OrderItem[];
-  customerNotes: string;
-  livestreamId: string;
-  createdFromCommentId: string;
-  shippingFee: number;
+  addressId: string;
+  livestreamId: string | null;
+  createdFromCommentId: string | null;
+  ordersByShop: ShopOrder[];
 }
 
-export interface ShippingAddress {
-  fullName: string;
-  phone: string;
-  addressLine1: string;
-  addressLine2: string;
-  ward: string;
-  district: string;
-  city: string;
-  province: string;
-  postalCode: string;
-  country: string;
-  state: string;
-  isDefault: boolean;
+export interface ShopOrder {
+  shopId: string;
+  shippingProviderId: string;
+  shippingFee: number;
+  expectedDeliveryDay: Date;
+  voucherCode: string;
+  items: OrderItem[];
+  customerNotes: string | null;
 }
 
 export interface OrderItem {
@@ -30,5 +21,4 @@ export interface OrderItem {
   variantId: string;
   quantity: number;
   unitPrice: number;
-  notes: string;
 }

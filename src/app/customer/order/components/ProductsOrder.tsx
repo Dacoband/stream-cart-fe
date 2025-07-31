@@ -1,33 +1,23 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Package, ShoppingCart, Store } from "lucide-react";
-import React, { useEffect, useState } from "react";
-import { previewOrder } from "@/services/api/cart/cart";
+import { Package, ShoppingCart, Store, Timer } from "lucide-react";
+import React from "react";
+
 import { PreviewOrder } from "@/types/Cart/Cart";
 import Image from "next/image";
 import { Separator } from "@radix-ui/react-dropdown-menu";
 import PriceTag from "@/components/common/PriceTag";
 
 interface ProductsOrderProps {
-  cartItemIds: string[];
+  orderProduct: PreviewOrder | null;
+  shopNotes: { [shopId: string]: string };
+  onNoteChange: (shopId: string, note: string) => void;
 }
 
-function ProductsOrder({ cartItemIds }: ProductsOrderProps) {
-  const [orderProduct, setOrderProduct] = useState<PreviewOrder | null>(null);
-
-  useEffect(() => {
-    const fetchPreview = async () => {
-      try {
-        if (cartItemIds.length === 0) return;
-        const res: PreviewOrder = await previewOrder(cartItemIds);
-        setOrderProduct(res);
-      } catch (error) {
-        console.error("Lỗi khi xem trước đơn hàng:", error);
-      }
-    };
-
-    fetchPreview();
-  }, [cartItemIds]);
-
+function ProductsOrder({
+  orderProduct,
+  shopNotes,
+  onNoteChange,
+}: ProductsOrderProps) {
   return (
     <Card className="rounded-none shadow-none py-0 flex-col gap-0 flex">
       <CardHeader className="bg-gradient-to-r from-blue-50 via-cyan-50 to-blue-50 border-b-1 border-blue-200">
@@ -123,20 +113,39 @@ function ProductsOrder({ cartItemIds }: ProductsOrderProps) {
                 </label>
                 <input
                   type="text"
+                  value={shopNotes[shop.shopId] || ""}
+                  onChange={(e) => onNoteChange(shop.shopId, e.target.value)}
                   placeholder="Lưu ý cho Người bán..."
-                  className="w-full border  px-3 py-2 text-sm focus:outline-none focus:ring bg-white rounded-none"
+                  className="w-full border px-3 py-2 text-sm focus:outline-none focus:ring bg-white rounded-none"
                 />
               </div>
 
               {/* Thông tin vận chuyển */}
               <div className="flex-1 text-sm text-gray-700 pl-5">
                 <div className="flex flex-col justify-between items-start">
-                  <div className="flex gap-4">
-                    <span className="font-medium">Phương thức vận chuyển:</span>
-                    <span className="ml-1 font-semibold gap-1 items-center  flex text-teal-600 ">
-                      <Package size={16} /> Giao hàng nhanh
-                    </span>
+                  <div className="flex justify-between w-full items-center">
+                    {/* Trái: Phương thức và thời gian */}
+                    <div className="flex flex-col gap-1">
+                      <div className="flex gap-2 items-center">
+                        <span className="font-medium">
+                          Phương thức vận chuyển:
+                        </span>
+                        <span className="ml-1 font-semibold flex gap-1 text-teal-600 items-center">
+                          <Package size={16} /> Giao hàng nhanh
+                        </span>
+                      </div>
+                      <div className=" text-sm mt-0.5 flex gap-1 text-teal-600">
+                        <Timer size={18} /> Thời gian dự kiến:{" "}
+                        <span className="font-medium">3 - 5 ngày</span>
+                      </div>
+                    </div>
+
+                    {/* Phải: Giá tiền */}
+                    <div className="text-teal-600 font-semibold text-base whitespace-nowrap">
+                      +12.000đ
+                    </div>
                   </div>
+
                   <div className="text-gray-400 mt-2 text-sm">
                     Lưu ý: Sử dụng địa chỉ mua hàng trước sáp nhập
                   </div>

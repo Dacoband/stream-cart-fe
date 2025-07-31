@@ -1,10 +1,9 @@
-import { PreviewDeliveries } from '@/types/deliveries/deliveries';
 import rootApi from '../../rootApi'
+import { CreateOrder } from '@/types/order/order';
 
 
 
-
-export const previewDeliveries = async (data:PreviewDeliveries ) => {
+export const createOrder = async (data:CreateOrder ) => {
   try {
     const token = localStorage.getItem("token");
     if (!token) {
@@ -12,7 +11,7 @@ export const previewDeliveries = async (data:PreviewDeliveries ) => {
     }
 
     const response = await rootApi.post(
-      "deliveries/preview-order",
+      "orders/multi",
       data,
       {
        headers: {
