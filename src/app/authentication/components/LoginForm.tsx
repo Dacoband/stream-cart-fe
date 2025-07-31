@@ -40,7 +40,7 @@ export default function LoginForm() {
 
       if (resData?.requiresVerification) {
         toast.info(response.data.message);
-        router.push("/authentication/verify");
+        router.push(`/authentication/verify/${resData.accountId}`);
         return;
       }
 

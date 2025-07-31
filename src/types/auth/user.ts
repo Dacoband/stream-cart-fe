@@ -61,7 +61,7 @@ export interface CreateModerator{
   email:string;
   password:string|null;
   phoneNumber:string;
-  fullname:boolean;
+  fullname:string;
   avatarURL:string|null,
   
 }
@@ -72,7 +72,7 @@ export interface Moderator{
   email:string;
   avatarURL:string|null,
   phoneNumber:string;
-  fullname:boolean;
+  fullname:string;
   role:number;
   registrationDate:Date;
   lastLoginDate:Date;

@@ -9,7 +9,7 @@ import {
   InputOTPSlot,
 } from "@/components/ui/input-otp";
 import { verifyOtps, ReSendOtp } from "@/services/api/auth/authentication";
-import { toast } from "sonner"; // hoặc react-toastify
+import { toast } from "sonner";
 import {
   ArrowLeft,
   Car,
@@ -20,12 +20,13 @@ import {
   TicketPercent,
 } from "lucide-react";
 import { AxiosError } from "axios";
+import { useParams } from "next/navigation";
 
 function VerifyPage() {
   const [counter, setCounter] = useState(900); // 15 phút
   const [otpCode, setOtpCode] = useState(""); // lưu giá trị 6 số OTP
   const router = useRouter();
-
+  const { accountId } = useParams<{ accountId: string }>();
   // // Định dạng thời gian
   // const formatTime = (seconds: number) => {
   //   const m = Math.floor(seconds / 60)
@@ -48,7 +49,6 @@ function VerifyPage() {
   }, [counter]);
 
   const handleVerify = async () => {
-    const accountId = localStorage.getItem("accountId");
     if (!accountId || otpCode.length !== 6) {
       toast.error("Vui lòng nhập đầy đủ mã OTP");
       return;
@@ -70,8 +70,6 @@ function VerifyPage() {
     }
   };
   const handleResend = async () => {
-    const accountId = localStorage.getItem("accountId");
-
     if (!accountId) {
       router.push("/authentication/login");
       toast.error("Đăng nhập để xác thực");
