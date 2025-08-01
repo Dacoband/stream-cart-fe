@@ -14,21 +14,24 @@ interface Props {
   setAddressId?: (id: string) => void;
   beforeAddressId?: string;
   onSuccess?: (newId: string) => void;
+  onDataChange?: (data: Address | null) => void;
 }
 
-function AddressOrder({ addressId, setAddressId }: Props) {
+function AddressOrder({ addressId, setAddressId, onDataChange }: Props) {
   const [address, SetAddress] = useState<Address | null>(null);
   const [loading, setLoading] = useState(true);
   useEffect(() => {
     const fetchAddress = async () => {
       if (!addressId) {
         SetAddress(null);
+        onDataChange?.(null);
         setLoading(false);
         return;
       }
       try {
         const res = await getAddressById(addressId);
         SetAddress(res);
+        onDataChange?.(res);
         console.log("Fetch address success", res);
       } catch (err) {
         console.error("Fetch error api address", err);
@@ -37,7 +40,7 @@ function AddressOrder({ addressId, setAddressId }: Props) {
       }
     };
     fetchAddress();
-  }, [addressId]);
+  }, [addressId, onDataChange]);
 
   return (
     <Card className="rounded-none shadow-none py-0 flex-col gap-0 flex">

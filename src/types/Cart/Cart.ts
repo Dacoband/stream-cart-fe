@@ -24,6 +24,10 @@ export interface CartProduct {
   attributes: Record<string, string>;
   stockQuantity: number;
   productStatus: boolean;
+  length:number;
+  width:number;
+  height:number;
+  weight:number;
 }
 
 export interface PriceData {

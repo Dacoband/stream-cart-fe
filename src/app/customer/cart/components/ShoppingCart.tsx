@@ -298,9 +298,11 @@ function ShoppingCart({ cart }: ShoppingCartProps) {
               </div>
               <div className="text-center ">
                 <div className="flex gap-4 justify-center items-center">
-                  <span className=" line-through text-black/60">
-                    <PriceTag value={product.priceData.originalPrice} />
-                  </span>
+                  {product.priceData.discount > 0 && (
+                    <span className=" line-through text-black/60">
+                      <PriceTag value={product.priceData.originalPrice} />
+                    </span>
+                  )}
                   <span className="font-medium ">
                     <PriceTag value={product.priceData.currentPrice} />
                   </span>
@@ -347,7 +349,7 @@ function ShoppingCart({ cart }: ShoppingCartProps) {
               </div>
               <div className="text-center text-rose-500 font-medium text-lg">
                 <PriceTag
-                  value={product.quantity * product.priceData.originalPrice}
+                  value={product.quantity * product.priceData.currentPrice}
                 />
               </div>
               <div className="text-center flex">
