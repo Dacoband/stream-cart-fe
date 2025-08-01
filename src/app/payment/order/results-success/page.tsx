@@ -30,10 +30,10 @@ const PaymentSuccess: React.FC<LottieAnimationProps> = ({
           />
         </div>
         <h1 className="text-2xl font-bold text-gray-900 mb-2">
-          Thanh toán thành công!
+          Đặt hàng thành công!
         </h1>
         <p className="text-gray-600 mb-6">
-          Cảm ơn bạn đã mua hàng. Đơn hàng của bạn đã được xử lý thành công.
+          Cảm ơn bạn đã mua hàng. Đơn hàng của bạn đã được đặt thành công.
         </p>
         <div className="bg-gray-100 rounded-lg p-4 mb-10 text-left w-full">
           <div className="flex justify-between items-center mb-2.5">
@@ -45,8 +45,8 @@ const PaymentSuccess: React.FC<LottieAnimationProps> = ({
             <span className=" font-medium">1.299.000 VNĐ</span>
           </div>
           <div className="flex justify-between items-center">
-            <span className=" text-gray-600">Phương thức:</span>
-            <span className=" font-medium">Thẻ tín dụng</span>
+            <span className=" text-gray-600">Thanh toán:</span>
+            <span className=" font-medium">Chờ thanh toán</span>
           </div>
         </div>
         {/* Action Buttons */}

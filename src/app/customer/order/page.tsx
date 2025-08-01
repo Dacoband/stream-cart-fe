@@ -11,10 +11,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import PriceTag from "@/components/common/PriceTag";
 import { previewOrder } from "@/services/api/cart/cart";
 import { PreviewOrder } from "@/types/Cart/Cart";
-import { CreateOrder } from "@/types/order/order";
+import { CreateOrder, Order } from "@/types/order/order";
 import { createOrder } from "@/services/api/order/order";
 import { Address } from "@/types/address/address";
-import { PreviewDeliveries } from "@/types/deliveries/deliveries";
+import {
+  PreviewDeliveries,
+  PreviewDeliveriesResponse,
+} from "@/types/deliveries/deliveries";
 import { previewDeliveries } from "@/services/api/deliveries/deliveries";
 import { toast } from "sonner";
 export default function OrderPage() {
@@ -27,6 +30,8 @@ export default function OrderPage() {
     "COD" | "BankTransfer"
   >("COD");
   const [shopNotes, setShopNotes] = useState<{ [shopId: string]: string }>({});
+  const [deliveryInfo, setDeliveryInfo] =
+    useState<PreviewDeliveriesResponse | null>(null);
 
   useEffect(() => {
     const allIds = searchParams.getAll("cartItemIds");
@@ -85,8 +90,8 @@ export default function OrderPage() {
         toWard: AddressInfo.ward,
       };
       try {
-        const res: PreviewDeliveries = await previewDeliveries(data);
-
+        const res: PreviewDeliveriesResponse = await previewDeliveries(data);
+        setDeliveryInfo(res);
         console.log("PreviewDeliveries:", res);
       } catch (error) {
         console.error("Lỗi khi xem trước phí giao hàng:", error);
@@ -106,21 +111,27 @@ export default function OrderPage() {
       return;
     }
 
-    const ordersByShop = orderProduct.listCartItem.map((shop) => ({
-      shopId: shop.shopId,
-      shippingProviderId: "3fa85f64-5717-4562-b3fc-2c963f66afa6",
-      shippingFee: 10000,
-      expectedDeliveryDay: new Date(),
-      voucherCode: "",
-      customerNotes: shopNotes[shop.shopId] || "",
-      items: shop.products.map((item) => ({
-        productId: item.productId,
-        variantId: item.variantID,
-        quantity: item.quantity,
-        unitPrice: item.priceData.currentPrice,
-      })),
-    }));
+    const ordersByShop = orderProduct.listCartItem.map((shop) => {
+      const deliveryForShop = deliveryInfo?.serviceResponses?.find(
+        (res) => res.shopId === shop.shopId
+      );
 
+      return {
+        shopId: shop.shopId,
+        shippingProviderId: "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+        shippingFee: deliveryForShop?.totalAmount || null,
+        expectedDeliveryDay: deliveryForShop?.expectedDeliveryDate || "",
+
+        voucherCode: "",
+        customerNotes: shopNotes[shop.shopId] || "",
+        items: shop.products.map((item) => ({
+          productId: item.productId,
+          variantId: item.variantID,
+          quantity: item.quantity,
+          // unitPrice: item.priceData.currentPrice,
+        })),
+      };
+    });
     const payload: CreateOrder = {
       paymentMethod: selectedPaymentMethod,
       addressId: AddressInfo.id,
@@ -131,8 +142,24 @@ export default function OrderPage() {
     console.log(payload);
 
     try {
-      await createOrder(payload);
+      const res = await createOrder(payload);
       toast.success("Đặt hàng thành công!");
+
+      const orderIds: string[] =
+        res?.data?.map((order: Order) => order.id) || [];
+
+      if (orderIds.length === 0) {
+        toast.error("Không lấy được mã đơn hàng.");
+        return;
+      }
+
+      const queryParam = orderIds.join(",");
+
+      if (selectedPaymentMethod === "COD") {
+        router.push(`/payment/order/results-success?orders=${queryParam}`);
+      } else {
+        router.push(`/payment/order?orders=${queryParam}`);
+      }
     } catch (err) {
       toast.error("Đặt hàng thất bại!");
       console.error(err);
@@ -167,6 +194,7 @@ export default function OrderPage() {
         />
         <ProductsOrder
           orderProduct={orderProduct}
+          deliveryInfo={deliveryInfo}
           shopNotes={shopNotes}
           onNoteChange={(shopId, note) => {
             setShopNotes((prev) => ({ ...prev, [shopId]: note }));
@@ -198,10 +226,17 @@ export default function OrderPage() {
                   <PriceTag value={orderProduct?.subTotal || 0} />
                 </div>
                 <div>
-                  <PriceTag value={100000} />
+                  <div>
+                    <PriceTag value={deliveryInfo?.totalAmount || 0} />
+                  </div>
                 </div>
                 <div className=" text-rose-500 font-medium text-2xl">
-                  <PriceTag value={100000} />
+                  <PriceTag
+                    value={
+                      (orderProduct?.subTotal || 0) +
+                      (deliveryInfo?.totalAmount || 0)
+                    }
+                  />
                 </div>
               </div>
             </div>

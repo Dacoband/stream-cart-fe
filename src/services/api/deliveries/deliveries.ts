@@ -22,7 +22,7 @@ export const previewDeliveries = async (data:PreviewDeliveries ) => {
       }
     );
    
-    return response.data;
+    return response.data.data;
   } catch (error) {
     console.error("Error create orders:", error);
     throw error;

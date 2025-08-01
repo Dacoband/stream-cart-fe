@@ -6,17 +6,20 @@ import { PreviewOrder } from "@/types/Cart/Cart";
 import Image from "next/image";
 import { Separator } from "@radix-ui/react-dropdown-menu";
 import PriceTag from "@/components/common/PriceTag";
+import { PreviewDeliveriesResponse } from "@/types/deliveries/deliveries";
 
 interface ProductsOrderProps {
   orderProduct: PreviewOrder | null;
   shopNotes: { [shopId: string]: string };
   onNoteChange: (shopId: string, note: string) => void;
+  deliveryInfo: PreviewDeliveriesResponse | null;
 }
 
 function ProductsOrder({
   orderProduct,
   shopNotes,
   onNoteChange,
+  deliveryInfo,
 }: ProductsOrderProps) {
   return (
     <Card className="rounded-none shadow-none py-0 flex-col gap-0 flex">
@@ -119,38 +122,54 @@ function ProductsOrder({
                   className="w-full border px-3 py-2 text-sm focus:outline-none focus:ring bg-white rounded-none"
                 />
               </div>
+              {orderProduct?.listCartItem.map((shop) => {
+                const deliveryForShop = deliveryInfo?.serviceResponses?.find(
+                  (res) => res.shopId === shop.shopId
+                );
 
-              {/* Thông tin vận chuyển */}
-              <div className="flex-1 text-sm text-gray-700 pl-5">
-                <div className="flex flex-col justify-between items-start">
-                  <div className="flex justify-between w-full items-center">
-                    {/* Trái: Phương thức và thời gian */}
-                    <div className="flex flex-col gap-1">
-                      <div className="flex gap-2 items-center">
-                        <span className="font-medium">
-                          Phương thức vận chuyển:
-                        </span>
-                        <span className="ml-1 font-semibold flex gap-1 text-teal-600 items-center">
-                          <Package size={16} /> Giao hàng nhanh
-                        </span>
+                return (
+                  <div
+                    className="flex-1 w-full text-sm text-gray-700 pl-5"
+                    key={shop.shopId}
+                  >
+                    <div className="flex flex-col justify-between items-start">
+                      <div className="flex justify-between w-full items-center">
+                        {/* Trái: Phương thức và thời gian */}
+                        <div className="flex flex-col gap-1">
+                          <div className="flex gap-2 items-center">
+                            <span className="font-medium">
+                              Phương thức vận chuyển:
+                            </span>
+                            <span className="ml-1 font-semibold flex gap-1 text-teal-600 items-center">
+                              <Package size={16} /> Giao hàng nhanh
+                            </span>
+                          </div>
+                          <div className="text-sm mt-0.5 flex gap-1 text-teal-600">
+                            <Timer size={18} /> Thời gian dự kiến:{" "}
+                            <span className="font-medium">
+                              {deliveryForShop?.expectedDeliveryDate
+                                ? new Date(
+                                    deliveryForShop.expectedDeliveryDate
+                                  ).toLocaleDateString("vi-VN")
+                                : "Vui lòng nhập địa chỉ"}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Phải: Giá tiền */}
+                        <div className="text-teal-600 font-semibold text-base whitespace-nowrap">
+                          +
+                          <PriceTag value={deliveryForShop?.totalAmount || 0} />
+                        </div>
                       </div>
-                      <div className=" text-sm mt-0.5 flex gap-1 text-teal-600">
-                        <Timer size={18} /> Thời gian dự kiến:{" "}
-                        <span className="font-medium">3 - 5 ngày</span>
+
+                      <div className="text-gray-400 mt-2 text-sm">
+                        Lưu ý: Sử dụng địa chỉ mua hàng trước sáp nhập
                       </div>
                     </div>
-
-                    {/* Phải: Giá tiền */}
-                    <div className="text-teal-600 font-semibold text-base whitespace-nowrap">
-                      +12.000đ
-                    </div>
                   </div>
-
-                  <div className="text-gray-400 mt-2 text-sm">
-                    Lưu ý: Sử dụng địa chỉ mua hàng trước sáp nhập
-                  </div>
-                </div>
-              </div>
+                );
+              })}
             </div>
           </div>
         ))}
