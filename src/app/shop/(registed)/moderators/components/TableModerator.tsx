@@ -45,7 +45,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { deletesUserById } from "@/services/api/auth/account";
+import { deletesModeratorById } from "@/services/api/auth/moderator";
 import { toast } from "sonner";
 
 interface TableModeratorProps {
@@ -78,7 +78,10 @@ export function TableModerator({
     if (!confirmDeleteId) return;
     setLoadingDelete(true);
     try {
-      await deletesUserById(confirmDeleteId);
+      await deletesModeratorById(
+        confirmDeleteId,
+        selectedModerator?.shopId ?? ""
+      );
       fetchModerators();
       toast.success("Xóa nhân viên thành công!");
     } catch (error) {

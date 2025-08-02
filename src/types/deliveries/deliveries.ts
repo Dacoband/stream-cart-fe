@@ -18,3 +18,19 @@ export interface PreviewDeliveries  {
   toDistrict: string;
   toWard: string;
 }
+export interface ServiceResponse {
+  shopId: string;
+  serviceTypeId: number;
+  serviceName: string;
+  totalAmount: number;
+  expectedDeliveryDate: string;
+}
+
+export interface PreviewDeliveriesResponse {
+
+
+    serviceResponses: ServiceResponse[];
+    totalAmount: number;
+
+
+}

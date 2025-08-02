@@ -36,3 +36,23 @@ export const createModerator = async (shopId: string,data:CreateModerator) => {
     throw error
   }
 }
+export const deletesModeratorById = async (moderatorId: string,shopId:string) => {
+  try{
+ 
+const token = localStorage.getItem("token");
+    if (!token) {
+      throw new Error("Không tìm thấy token.");
+    }
+
+  const response = await rootApi.delete(`accounts/moderators/${moderatorId}/shops/${shopId}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  })
+
+  return response.data}
+   catch (error) {
+    console.error("Error delete user:", error);
+    throw error;
+  }
+}

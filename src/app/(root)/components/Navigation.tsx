@@ -169,7 +169,10 @@ export function Navigation() {
                       </Link>
                     </NavigationMenuLink>
                     <NavigationMenuLink asChild>
-                      <Link href="#" className="flex-row items-center gap-2">
+                      <Link
+                        href={`/customer/manage-orders`}
+                        className="flex-row items-center gap-2"
+                      >
                         <ScrollText />
                         Đơn hàng
                       </Link>
