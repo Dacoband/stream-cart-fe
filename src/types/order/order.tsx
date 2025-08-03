@@ -55,7 +55,7 @@ export type ShippingAddress = {
 export type Order = {
   id: string;
   orderCode: string;
-  orderDate: string;
+  orderDate: Date;
   orderStatus: number;
   paymentStatus: number;
   totalPrice: number;

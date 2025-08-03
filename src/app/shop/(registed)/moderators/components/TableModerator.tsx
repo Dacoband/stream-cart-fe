@@ -47,7 +47,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { deletesModeratorById } from "@/services/api/auth/moderator";
 import { toast } from "sonner";
-
+import { useAuth } from "@/lib/AuthContext";
 interface TableModeratorProps {
   moderators: Moderator[];
   loading: boolean;
@@ -59,6 +59,7 @@ export function TableModerator({
   loading,
   fetchModerators,
 }: TableModeratorProps) {
+  const { user } = useAuth();
   const [openDialog, setOpenDialog] = React.useState(false);
   const [selectedModerator, setSelectedModerator] =
     React.useState<Moderator | null>(null);
@@ -78,10 +79,7 @@ export function TableModerator({
     if (!confirmDeleteId) return;
     setLoadingDelete(true);
     try {
-      await deletesModeratorById(
-        confirmDeleteId,
-        selectedModerator?.shopId ?? ""
-      );
+      await deletesModeratorById(confirmDeleteId, user?.shopId ?? "");
       fetchModerators();
       toast.success("Xóa nhân viên thành công!");
     } catch (error) {

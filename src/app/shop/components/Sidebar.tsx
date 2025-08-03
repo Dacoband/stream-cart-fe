@@ -79,7 +79,7 @@ export function AppSidebar() {
                     asChild
                     className={
                       `active:bg-[#202328] active:text-[#B0F847] focus:bg-[#202328] focus:text-[#B0F847] ` +
-                      (pathname === item.url
+                      (pathname.startsWith(item.url)
                         ? "bg-base text-black mx-auto "
                         : "text-white hover:bg-[#202328] hover:text-[#B0F847] mx-auto")
                     }

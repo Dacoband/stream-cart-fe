@@ -219,7 +219,14 @@ export default function OperationProduct({ product }: OperationProductPops) {
               <div className="flex items-center space-x-4 mb-2">
                 {selectedVariant ? (
                   <span className="text-4xl font-bold text-red-600">
-                    <PriceTag value={selectedVariant.flashSalePrice} />
+                    <PriceTag
+                      value={
+                        selectedVariant.flashSalePrice &&
+                        selectedVariant.flashSalePrice > 0
+                          ? selectedVariant.flashSalePrice
+                          : selectedVariant.price
+                      }
+                    />
                   </span>
                 ) : (
                   <span className="text-4xl font-bold text-red-600">
