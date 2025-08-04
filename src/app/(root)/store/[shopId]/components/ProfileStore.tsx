@@ -9,8 +9,7 @@ import {
   Clock, 
   Users, 
   Package,
-  Heart,
-  Plus
+  Heart
 } from "lucide-react";
 
 interface ProfileStoreProps {
@@ -93,10 +92,6 @@ function ProfileStore({ shop }: ProfileStoreProps) {
 
               {/* Action Buttons */}
               <div className="flex items-center gap-3">
-                <Button variant="outline" className="gap-2">
-                  <Plus className="w-4 h-4" />
-                  Theo dõi
-                </Button>
                 <Button variant="outline" className="gap-2">
                   <Heart className="w-4 h-4" />
                   Yêu thích

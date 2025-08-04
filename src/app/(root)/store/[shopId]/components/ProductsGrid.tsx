@@ -14,7 +14,6 @@ import {
 } from '@/components/ui/select';
 import { 
   Search, 
-  ShoppingCart,
   Grid3X3,
   List,
   Package
@@ -30,15 +29,22 @@ interface ProductsGridProps {
 function ProductsGrid({ shopId }: ProductsGridProps) {
   const [products, setProducts] = useState<ProductByShop[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searching, setSearching] = useState(false); // Riêng cho search
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState<string>('quantitySold');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 20;
 
-  const fetchProducts = async () => {
+  const fetchProducts = async (isSearching = false) => {
     try {
-      setLoading(true);
+      // Chỉ show loading screen khi không phải search
+      if (!isSearching) {
+        setLoading(true);
+      } else {
+        setSearching(true);
+      }
+      
       const filter: ProductFilter = {
         shopId,
         pageNumber: currentPage,
@@ -46,12 +52,38 @@ function ProductsGrid({ shopId }: ProductsGridProps) {
         searchTerm: searchTerm.trim() || undefined,
         sortBy: sortBy as 'productName' | 'basePrice' | 'finalPrice' | 'quantitySold' | 'createdAt',
         ascending: false,
-        activeOnly: true, // Chỉ lấy sản phẩm đang hoạt động
+        activeOnly: true, // Cho API gốc
+        inStockOnly: true, // Cho search API
       };
 
       const response = await getProductsByShop(filter);
+      console.log('API Response:', response); // Debug log
+      
       if (response.success && response.data) {
-        setProducts(response.data);
+        let productsArray: ProductByShop[] = [];
+        
+        // Kiểm tra xem response.data có phải là array không (API gốc)
+        if (Array.isArray(response.data)) {
+          productsArray = response.data;
+        } 
+        // Kiểm tra search API structure: data.products.items
+        else if (typeof response.data === 'object' && response.data !== null) {
+          const data = response.data as { products?: { items?: ProductByShop[] }; items?: ProductByShop[] };
+          
+          if (data.products && data.products.items && Array.isArray(data.products.items)) {
+            productsArray = data.products.items;
+          } 
+          // Fallback cho các structure khác
+          else if (data.items && Array.isArray(data.items)) {
+            productsArray = data.items;
+          } 
+          else {
+            console.log('Response data structure:', data);
+            productsArray = [];
+          }
+        }
+        
+        setProducts(productsArray);
       } else {
         console.error('API response error:', response.errors);
         setProducts([]);
@@ -61,6 +93,7 @@ function ProductsGrid({ shopId }: ProductsGridProps) {
       setProducts([]);
     } finally {
       setLoading(false);
+      setSearching(false);
     }
   };
 
@@ -71,12 +104,12 @@ function ProductsGrid({ shopId }: ProductsGridProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [shopId, currentPage, sortBy]);
 
-  // Debounced search
+  // Debounced search với UX mượt hơn
   useEffect(() => {
     const timeout = setTimeout(() => {
       setCurrentPage(1);
-      fetchProducts();
-    }, 500);
+      fetchProducts(true); // Pass true để đánh dấu đây là search
+    }, 300); // Giảm debounce từ 500ms xuống 300ms để responsive hơn
     return () => clearTimeout(timeout);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchTerm]);
@@ -91,13 +124,20 @@ function ProductsGrid({ shopId }: ProductsGridProps) {
       <div className="p-6 border-b">
         <div className="flex items-center gap-4 mb-4">
           <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 ${
+              searching ? 'text-orange-500 animate-pulse' : 'text-gray-400'
+            }`} />
             <Input
               placeholder="Tìm kiếm sản phẩm trong shop..."
               className="pl-10 h-10"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
+            {searching && (
+              <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                <div className="w-4 h-4 border-2 border-orange-500 border-t-transparent rounded-full animate-spin"></div>
+              </div>
+            )}
           </div>
           
           <Select value={sortBy} onValueChange={setSortBy}>
@@ -133,14 +173,17 @@ function ProductsGrid({ shopId }: ProductsGridProps) {
           </div>
         </div>
 
-        <div className="text-sm text-gray-600">
-          Tìm thấy {products.length} sản phẩm
+        <div className="text-sm text-gray-600 flex items-center gap-2">
+          <span>Tìm thấy {Array.isArray(products) ? products.length : 0} sản phẩm</span>
+          {searchTerm && (
+            <span className="text-orange-500">cho &ldquo;{searchTerm}&rdquo;</span>
+          )}
         </div>
       </div>
 
       {/* Products Grid */}
       <div className="p-6">
-        {products.length === 0 ? (
+        {!Array.isArray(products) || products.length === 0 ? (
           <div className="text-center py-20">
             <div className="text-gray-400 mb-4">
               <Package className="w-16 h-16 mx-auto mb-4" />
@@ -149,12 +192,12 @@ function ProductsGrid({ shopId }: ProductsGridProps) {
             </div>
           </div>
         ) : (
-          <div className={`grid gap-4 ${
+          <div className={`grid gap-4 transition-all duration-300 ${
             viewMode === 'grid' 
               ? 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5' 
               : 'grid-cols-1'
-          }`}>
-            {products.map((product) => (
+          } ${searching ? 'opacity-70' : 'opacity-100'}`}>
+            {Array.isArray(products) && products.map((product) => (
               <ProductCard 
                 key={product.id} 
                 product={product} 
@@ -175,6 +218,11 @@ interface ProductCardProps {
 }
 
 function ProductCard({ product, viewMode }: ProductCardProps) {
+  // Handle cả isActive (API gốc) và inStock (search API)
+  const isProductActive = product.isActive !== undefined ? product.isActive : (product.inStock ?? true);
+  const productHasPrimaryImage = product.hasPrimaryImage !== undefined ? product.hasPrimaryImage : !!product.primaryImageUrl;
+  const imageSource = productHasPrimaryImage && product.primaryImageUrl ? product.primaryImageUrl : '/assets/nodata.png';
+  
   const hasDiscount = product.discountPrice > 0;
   const discountPercentage = hasDiscount 
     ? Math.round(((product.basePrice - product.finalPrice) / product.basePrice) * 100)
@@ -195,7 +243,7 @@ function ProductCard({ product, viewMode }: ProductCardProps) {
             <div className="flex gap-4">
               <div className="relative w-24 h-24 flex-shrink-0">
                 <Image
-                  src={product.hasPrimaryImage ? product.primaryImageUrl : '/assets/nodata.png'}
+                  src={imageSource}
                   alt={product.productName}
                   fill
                   className="object-cover rounded"
@@ -205,7 +253,7 @@ function ProductCard({ product, viewMode }: ProductCardProps) {
                     -{discountPercentage}%
                   </div>
                 )}
-                {!product.isActive && (
+                {!isProductActive && (
                   <div className="absolute inset-0 bg-gray-500/50 flex items-center justify-center rounded">
                     <span className="text-white text-xs font-bold">Hết hàng</span>
                   </div>
@@ -218,7 +266,7 @@ function ProductCard({ product, viewMode }: ProductCardProps) {
                 </h3>
                 
                 <div className="flex items-center gap-4 mb-2">
-                  <span className="text-sm text-gray-500">SKU: {product.sku}</span>
+                  {product.sku && <span className="text-sm text-gray-500">SKU: {product.sku}</span>}
                   <span className="text-sm text-gray-500">Đã bán: {product.quantitySold}</span>
                   <span className="text-sm text-gray-500">Còn lại: {product.stockQuantity}</span>
                 </div>
@@ -234,11 +282,6 @@ function ProductCard({ product, viewMode }: ProductCardProps) {
                       </span>
                     )}
                   </div>
-                  
-                  <Button size="sm" className="gap-1" disabled={!product.isActive || product.stockQuantity === 0}>
-                    <ShoppingCart className="w-4 h-4" />
-                    {product.isActive ? 'Thêm' : 'Hết hàng'}
-                  </Button>
                 </div>
               </div>
             </div>
@@ -250,11 +293,11 @@ function ProductCard({ product, viewMode }: ProductCardProps) {
 
   return (
     <Link href={`/product/${product.id}`}>
-      <Card className="hover:shadow-md transition-shadow cursor-pointer h-full">
+      <Card className="hover:shadow-md transition-shadow cursor-pointer h-full group">
         <CardContent className="p-3">
           <div className="relative aspect-square mb-3">
             <Image
-              src={product.hasPrimaryImage ? product.primaryImageUrl : '/assets/nodata.png'}
+              src={imageSource}
               alt={product.productName}
               fill
               className="object-cover rounded"
@@ -264,11 +307,12 @@ function ProductCard({ product, viewMode }: ProductCardProps) {
                 -{discountPercentage}%
               </div>
             )}
-            {!product.isActive && (
+            {!isProductActive && (
               <div className="absolute inset-0 bg-gray-500/50 flex items-center justify-center rounded">
                 <span className="text-white text-xs font-bold">Hết hàng</span>
               </div>
             )}
+            
           </div>
 
           <h3 className="font-medium text-gray-900 mb-2 line-clamp-2 text-sm">
