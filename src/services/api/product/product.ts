@@ -1,5 +1,5 @@
 import rootApi from "../../rootApi";
-import { CreateProduct } from "@/types/product/product";
+import { CreateProductDTO } from "@/types/product/product";
 export const getAllProducts = async () => {
   try {
     const response = await rootApi.get("products");
@@ -28,7 +28,7 @@ export const getProductDetailById = async (productId:string) => {
   }
 };
 
-export const createProduct = async (data: CreateProduct) => {
+export const createProduct = async (data: CreateProductDTO) => {
   try {
       const token = localStorage.getItem("token");
     if (!token) {
@@ -36,7 +36,7 @@ export const createProduct = async (data: CreateProduct) => {
     }
 
     const response = await rootApi.post(
-      "products",
+      "products/complete",
       data,
       {
         headers: {
