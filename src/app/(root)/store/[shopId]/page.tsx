@@ -6,8 +6,8 @@ import NotFound from "@/components/common/NotFound";
 import { Shop } from "@/types/shop/shop";
 import { getshopById } from "@/services/api/shop/shop";
 import ProfileStore from "./components/ProfileStore";
+import ProductsGrid from "./components/ProductsGrid";
 import LoadingScreen from "@/components/common/LoadingScreen";
-import { Card } from "@/components/ui/card";
 
 export default function StorePage() {
   const { shopId } = useParams<{ shopId: string }>();
@@ -45,10 +45,18 @@ export default function StorePage() {
     );
 
   return (
-    <div className="flex flex-col  mx-auto -mt-0.5  mb-20">
-      <Card className="bg-white  w-full p-0">
-        <ProfileStore shop={shop} />
-      </Card>
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-7xl mx-auto">
+        {/* Shop Profile */}
+        <div className="mb-6">
+          <ProfileStore shop={shop} />
+        </div>
+
+        {/* Products Grid */}
+        <div className="mb-20">
+          <ProductsGrid shopId={shopId} />
+        </div>
+      </div>
     </div>
   );
 }
