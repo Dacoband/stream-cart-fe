@@ -14,13 +14,14 @@ import {
 } from '@/components/ui/select';
 import { 
   Search, 
-  Grid3X3,
-  List,
-  Package
+  Package,
+  ShoppingCart,
+  ImageIcon
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import LoadingScreen from '@/components/common/LoadingScreen';
+import PriceTag from '@/components/common/PriceTag';
 
 interface ProductsGridProps {
   shopId: string;
@@ -31,8 +32,7 @@ function ProductsGrid({ shopId }: ProductsGridProps) {
   const [loading, setLoading] = useState(true);
   const [searching, setSearching] = useState(false); // Riêng cho search
   const [searchTerm, setSearchTerm] = useState('');
-  const [sortBy, setSortBy] = useState<string>('quantitySold');
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [sortOption, setSortOption] = useState<number>(0); // Đổi thành number theo API
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 20;
 
@@ -46,17 +46,15 @@ function ProductsGrid({ shopId }: ProductsGridProps) {
       }
       
       const filter: ProductFilter = {
-        shopId,
         pageNumber: currentPage,
         pageSize,
-        searchTerm: searchTerm.trim() || undefined,
-        sortBy: sortBy as 'productName' | 'basePrice' | 'finalPrice' | 'quantitySold' | 'createdAt',
-        ascending: false,
-        activeOnly: true, // Cho API gốc
-        inStockOnly: true, // Cho search API
+        sortOption: sortOption,
+        activeOnly: true,
+        categoryId: undefined, // Có thể thêm filter category sau
+        inStockOnly: true,
       };
 
-      const response = await getProductsByShop(filter);
+      const response = await getProductsByShop(shopId, filter);
       console.log('API Response:', response); // Debug log
       
       if (response.success && response.data) {
@@ -102,7 +100,7 @@ function ProductsGrid({ shopId }: ProductsGridProps) {
       fetchProducts();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [shopId, currentPage, sortBy]);
+  }, [shopId, currentPage, sortOption]);
 
   // Debounced search với UX mượt hơn
   useEffect(() => {
@@ -140,37 +138,18 @@ function ProductsGrid({ shopId }: ProductsGridProps) {
             )}
           </div>
           
-          <Select value={sortBy} onValueChange={setSortBy}>
+          <Select value={sortOption.toString()} onValueChange={(value) => setSortOption(parseInt(value))}>
             <SelectTrigger className="w-48">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="quantitySold">Bán chạy nhất</SelectItem>
-              <SelectItem value="productName">Tên A-Z</SelectItem>
-              <SelectItem value="basePrice">Giá thấp đến cao</SelectItem>
-              <SelectItem value="finalPrice">Giá bán thực tế</SelectItem>
-              <SelectItem value="createdAt">Mới nhất</SelectItem>
+              <SelectItem value="0">Mặc định</SelectItem>
+              <SelectItem value="1">Bán chạy nhất</SelectItem>
+              <SelectItem value="2">Giá thấp đến cao</SelectItem>
+              <SelectItem value="3">Giá cao đến thấp</SelectItem>
+              <SelectItem value="4">Mới nhất</SelectItem>
             </SelectContent>
           </Select>
-
-          <div className="flex border rounded-md">
-            <Button
-              variant={viewMode === 'grid' ? 'default' : 'ghost'}
-              size="sm"
-              onClick={() => setViewMode('grid')}
-              className="rounded-r-none"
-            >
-              <Grid3X3 className="w-4 h-4" />
-            </Button>
-            <Button
-              variant={viewMode === 'list' ? 'default' : 'ghost'}
-              size="sm"
-              onClick={() => setViewMode('list')}
-              className="rounded-l-none"
-            >
-              <List className="w-4 h-4" />
-            </Button>
-          </div>
         </div>
 
         <div className="text-sm text-gray-600 flex items-center gap-2">
@@ -192,16 +171,11 @@ function ProductsGrid({ shopId }: ProductsGridProps) {
             </div>
           </div>
         ) : (
-          <div className={`grid gap-4 transition-all duration-300 ${
-            viewMode === 'grid' 
-              ? 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5' 
-              : 'grid-cols-1'
-          } ${searching ? 'opacity-70' : 'opacity-100'}`}>
+          <div className="grid grid-cols-6 gap-x-5 gap-y-10 transition-all duration-300 ${searching ? 'opacity-70' : 'opacity-100'}">
             {Array.isArray(products) && products.map((product) => (
               <ProductCard 
                 key={product.id} 
-                product={product} 
-                viewMode={viewMode}
+                product={product}
               />
             ))}
           </div>
@@ -211,13 +185,7 @@ function ProductsGrid({ shopId }: ProductsGridProps) {
   );
 }
 
-// Product Card Component
-interface ProductCardProps {
-  product: ProductByShop;
-  viewMode: 'grid' | 'list';
-}
-
-function ProductCard({ product, viewMode }: ProductCardProps) {
+function ProductCard({ product }: { product: ProductByShop }) {
   // Handle cả isActive (API gốc) và inStock (search API)
   const isProductActive = product.isActive !== undefined ? product.isActive : (product.inStock ?? true);
   const productHasPrimaryImage = product.hasPrimaryImage !== undefined ? product.hasPrimaryImage : !!product.primaryImageUrl;
@@ -228,114 +196,71 @@ function ProductCard({ product, viewMode }: ProductCardProps) {
     ? Math.round(((product.basePrice - product.finalPrice) / product.basePrice) * 100)
     : 0;
 
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('vi-VN', {
-      style: 'currency',
-      currency: 'VND',
-    }).format(price);
-  };
-
-  if (viewMode === 'list') {
-    return (
-      <Link href={`/product/${product.id}`}>
-        <Card className="hover:shadow-md transition-shadow cursor-pointer">
-          <CardContent className="p-4">
-            <div className="flex gap-4">
-              <div className="relative w-24 h-24 flex-shrink-0">
-                <Image
-                  src={imageSource}
-                  alt={product.productName}
-                  fill
-                  className="object-cover rounded"
-                />
-                {hasDiscount && (
-                  <div className="absolute top-0 left-0 bg-red-500 text-white text-xs px-1 py-0.5 rounded-br">
-                    -{discountPercentage}%
-                  </div>
-                )}
-                {!isProductActive && (
-                  <div className="absolute inset-0 bg-gray-500/50 flex items-center justify-center rounded">
-                    <span className="text-white text-xs font-bold">Hết hàng</span>
-                  </div>
-                )}
-              </div>
-
-              <div className="flex-1">
-                <h3 className="font-medium text-gray-900 mb-2 line-clamp-2">
-                  {product.productName}
-                </h3>
-                
-                <div className="flex items-center gap-4 mb-2">
-                  {product.sku && <span className="text-sm text-gray-500">SKU: {product.sku}</span>}
-                  <span className="text-sm text-gray-500">Đã bán: {product.quantitySold}</span>
-                  <span className="text-sm text-gray-500">Còn lại: {product.stockQuantity}</span>
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="text-orange-500 font-bold text-lg">
-                      {formatPrice(product.finalPrice)}
-                    </span>
-                    {hasDiscount && (
-                      <span className="text-gray-500 line-through text-sm">
-                        {formatPrice(product.basePrice)}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </Link>
-    );
-  }
-
   return (
     <Link href={`/product/${product.id}`}>
-      <Card className="hover:shadow-md transition-shadow cursor-pointer h-full group">
-        <CardContent className="p-3">
-          <div className="relative aspect-square mb-3">
-            <Image
-              src={imageSource}
-              alt={product.productName}
-              fill
-              className="object-cover rounded"
-            />
+      <Card className="group py-0 hover:shadow-xl rounded-none transition-all duration-300 border h-full bg-white overflow-hidden hover:-translate-y-1">
+        <CardContent className="p-0">
+          {/* Product Image */}
+          <div className="relative overflow-hidden">
+            {imageSource && imageSource !== '/assets/nodata.png' ? (
+              <Image
+                src={imageSource}
+                alt={product.productName}
+                width={200}
+                height={200}
+                className="w-full h-52 object-cover object-center group-hover:scale-110 transition-transform duration-500"
+              />
+            ) : (
+              <div className="bg-gray-200 w-full flex items-center justify-center h-52 text-gray-400">
+                <ImageIcon size={50} />
+              </div>
+            )}
+
+            {/* Discount Badge */}
             {hasDiscount && (
-              <div className="absolute top-2 left-2 bg-red-500 text-white text-xs px-2 py-1 rounded">
+              <div className="absolute top-2 right-2 bg-[#B7F560] text-black px-2 py-1 rounded text-xs font-bold">
                 -{discountPercentage}%
               </div>
             )}
+
+            {/* Out of Stock Overlay */}
             {!isProductActive && (
-              <div className="absolute inset-0 bg-gray-500/50 flex items-center justify-center rounded">
+              <div className="absolute inset-0 bg-gray-500/50 flex items-center justify-center">
                 <span className="text-white text-xs font-bold">Hết hàng</span>
               </div>
             )}
-            
           </div>
 
-          <h3 className="font-medium text-gray-900 mb-2 line-clamp-2 text-sm">
-            {product.productName}
-          </h3>
+          {/* Product Info */}
+          <div className="pt-2 px-3">
+            {/* Product Name */}
+            <h4 className="font-medium text-gray-900 mb-2 line-clamp-2 min-h-[48px]">
+              {product.productName}
+            </h4>
 
-          <div className="flex items-center justify-between mb-2 text-xs text-gray-500">
-            <span>Đã bán: {product.quantitySold}</span>
-            <span>Còn: {product.stockQuantity}</span>
-          </div>
-
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="text-orange-500 font-bold text-sm">
-                {formatPrice(product.finalPrice)}
+            {/* Price and Sold Count */}
+            <div className="mb-2 flex gap-5 justify-between items-end">
+              <div className="flex items-center space-x-1">
+                <span className="text-lg font-semibold text-[#7FB800]">
+                  <PriceTag value={product.finalPrice} />
+                </span>
               </div>
-              {hasDiscount && (
-                <div className="text-gray-500 line-through text-xs">
-                  {formatPrice(product.basePrice)}
-                </div>
-              )}
+              {/* Sold Count */}
+              <div className="text-xs text-gray-500 mb-2">
+                Đã bán {product.quantitySold}
+              </div>
             </div>
           </div>
+
+          {/* Add to Cart Button */}
+          <Button
+            className="w-full cursor-pointer bg-[#9FE040] hover:bg-[#9FE040]/80 text-white font-medium shadow-md rounded-none hover:shadow-lg transition-all duration-300"
+            size="sm"
+            disabled={!isProductActive || product.stockQuantity === 0}
+          >
+            <ShoppingCart className="w-3 h-3 mr-1" />
+            {isProductActive ? 'Thêm vào giỏ' : 'Hết hàng'}
+          </Button>
         </CardContent>
       </Card>
     </Link>

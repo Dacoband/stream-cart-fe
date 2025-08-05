@@ -62,10 +62,13 @@ function InforShop({ product }: InforShopProps) {
           <MessageSquareMore className="w-4 h-4" /> Chat với shop
         </Button>
         <Button
+          asChild
           variant="outline"
           className="gap-1 bg-black text-white  hover:text-white hover:bg-black/80 cursor-pointer"
         >
-          <Eye className="w-4 h-4" /> Xem shop
+          <Link href={`/store/${product.shopId}`}>
+            <Eye className="w-4 h-4" /> Xem shop
+          </Link>
         </Button>
       </div>
     </div>

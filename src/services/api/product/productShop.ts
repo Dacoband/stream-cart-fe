@@ -72,53 +72,30 @@ export interface ProductsResponse {
 }
 
 export interface ProductFilter {
-  shopId: string
   pageNumber: number
   pageSize: number
-  searchTerm?: string
-  sortBy?: 'productName' | 'basePrice' | 'finalPrice' | 'quantitySold' | 'createdAt'
-  ascending?: boolean
-  minPrice?: number
-  maxPrice?: number
+  sortOption?: number // Theo ảnh: integer($int32)  
   activeOnly?: boolean
   categoryId?: string
   inStockOnly?: boolean
-  minRating?: number
-  onSaleOnly?: boolean
+  searchTerm?: string // Cho tìm kiếm
+  // shopId sẽ được truyền riêng vào function parameter
 }
 
-export const getProductsByShop = async (filter: ProductFilter): Promise<ProductsResponse> => {
+export const getProductsByShop = async (shopId: string, filter: ProductFilter): Promise<ProductsResponse> => {
   try {
-    // Nếu có searchTerm, sử dụng endpoint search riêng
-    const endpoint = filter.searchTerm 
-      ? `products/shop/${filter.shopId}/search`
-      : `products/shop/${filter.shopId}`
-    
-    // Parameters cho search API khác với API gốc
-    const params = filter.searchTerm ? {
-      // Search API parameters
-      SearchTerm: filter.searchTerm,
-      PageNumber: filter.pageNumber,
-      PageSize: filter.pageSize,
-      CategoryId: filter.categoryId,
-      MinPrice: filter.minPrice,
-      MaxPrice: filter.maxPrice,
-      SortBy: filter.sortBy,
-      InStockOnly: filter.inStockOnly,
-      MinRating: filter.minRating,
-      OnSaleOnly: filter.onSaleOnly,
-    } : {
-      // Original API parameters
-      pageNumber: filter.pageNumber,
-      pageSize: filter.pageSize,
-      sortBy: filter.sortBy,
-      ascending: filter.ascending,
-      minPrice: filter.minPrice,
-      maxPrice: filter.maxPrice,
-      activeOnly: filter.activeOnly,
-    }
-    
-    const response = await rootApi.get(endpoint, { params })
+    // API cho sản phẩm của shop cụ thể: https://brightpa.me/api/products/paged với shopId param
+    const response = await rootApi.get('products/paged', {
+      params: {
+        pageNumber: filter.pageNumber,
+        pageSize: filter.pageSize,
+        sortOption: filter.sortOption,
+        activeOnly: filter.activeOnly,
+        shopId: shopId, // Truyền shopId vào query params
+        categoryId: filter.categoryId,
+        InStockOnly: filter.inStockOnly, // Chú ý viết hoa chữ I
+      },
+    })
     
     // Kiểm tra response structure
     if (response.data && response.data.success) {
