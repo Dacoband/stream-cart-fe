@@ -33,6 +33,8 @@ import { Category } from "@/types/category/category";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import HasVariant from "../components/HasVariant";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 function NewProductPage() {
   const { user } = useAuth();
@@ -45,7 +47,9 @@ function NewProductPage() {
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(
     null
   );
+  const [productFiles, setProductFiles] = useState<File[]>([]);
 
+  const router = useRouter();
   const form = useForm<CreateProductSchema>({
     resolver: zodResolver(creatProductSchema),
     defaultValues: { hasVariant: false },
@@ -65,7 +69,9 @@ function NewProductPage() {
     const newPreviews = files.map((file) => URL.createObjectURL(file));
 
     setProductPreviews((prev) => [...prev, ...newPreviews].slice(0, 9));
+    setProductFiles((prev) => [...prev, ...files].slice(0, 9));
   };
+
   const onSubmit = async (data: CreateProductSchema) => {
     console.log("Form data:", data);
     setLoadingbt(true);
@@ -82,10 +88,7 @@ function NewProductPage() {
         });
       }
 
-      // Upload các ảnh sản phẩm khác
-      const productFiles = Array.from(productsInputRef.current?.files || []);
       console.log("productFiles:", productFiles);
-
       for (let i = 0; i < productFiles.length; i++) {
         const file = productFiles[i];
         const { imageUrl } = await uploadImage(file);
@@ -140,12 +143,13 @@ function NewProductPage() {
           };
 
       await createProduct(newProduct);
-
-      toast.success("Cập nhật thành công!");
+      router.push("/shop/manager-products");
+      toast.success("Thêm sản phẩm thành công!");
     } catch (error: unknown) {
       console.error("Update user failed:", error);
       const err = error as AxiosError<{ message?: string }>;
-      const messages = err?.response?.data?.message ?? "Cập nhật thất bại!";
+      const messages =
+        err?.response?.data?.message ?? "Thêm sản phẩm thất bại!";
       toast.error(messages);
     } finally {
       setLoadingbt(false);
@@ -317,8 +321,7 @@ function NewProductPage() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel className="text-base">
-                        <div className="text-red-500 text-lg">*</div>Danh mục
-                        sản phẩm
+                        <div className="text-red-500 text-lg">*</div>SKU
                       </FormLabel>
                       <FormControl>
                         <Input
@@ -385,12 +388,14 @@ function NewProductPage() {
 
             <div className="bg-white sticky  bottom-0  z-10 h-fit w-full py-3 px-5 shadow border flex justify-between items-center">
               <div className="w-[90%] flex justify-end mx-auto gap-5">
-                <Button
-                  type="submit"
-                  className="px-8 font-normal py-2 h-full bg-white hover:bg-white border-2 text-black hover:text-black/50 text-base cursor-pointer"
-                >
-                  Thoát
-                </Button>
+                <Link href={"/shop/manager-products"}>
+                  <Button
+                    type="submit"
+                    className="px-8 font-normal py-2 h-full bg-white hover:bg-white border-2 text-black hover:text-black/50 text-base cursor-pointer"
+                  >
+                    Thoát
+                  </Button>
+                </Link>
                 <Button
                   type="submit"
                   className="px-8 h-full py-2 font-normal bg-[#B0F847] hover:bg-[#B0F847]/80 text-black hover:text-black/50 text-base cursor-pointer"

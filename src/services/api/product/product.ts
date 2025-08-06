@@ -1,5 +1,5 @@
 import rootApi from "../../rootApi";
-import { CreateProductDTO } from "@/types/product/product";
+import { CreateProductDTO,filterProduct } from "@/types/product/product";
 export const getAllProducts = async () => {
   try {
     const response = await rootApi.get("products");
@@ -59,3 +59,22 @@ export const getBestSellingProducts = async () => {
     throw error;
   }
 };
+export const getProductHasFilter = async (data: filterProduct) => {
+  try {
+    const response = await rootApi.get('/products/paged', {
+      params: {
+        pageNumber: data.pageNumber ?? 1,
+        pageSize: data.pageSize ?? 10,
+        sortOption:data.sortOption??null,
+        activeOnly: data.activeOnly ?? null,
+        shopId: data.shopId ?? null,
+        InstockOnly:data.InstockOnly??null
+      },
+    })
+    console.log(response)
+    return response.data
+  } catch (error) {
+    console.error('Error fetching categories:', error)
+    throw error
+  }
+}

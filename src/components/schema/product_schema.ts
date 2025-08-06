@@ -48,19 +48,19 @@ const withVariantSchema = commonFields.extend({
 
   variants: z.array(
     z.object({
-      price: z.number().min(0, "Giá phải ≥ 0"),
-      stock: z.number().min(0, "Tồn kho phải ≥ 0"),
-     attributes: z.array(
+      price: z.number().min(0, "Giá phải ≥ 0").nullable(),
+      stock: z.number().min(0, "Tồn kho phải ≥ 0").nullable(),
+      attributes: z.array(
         z.object({
           attributeName: z.string().min(1),
           attributeValue: z.string().min(1),
         })
       ).min(1),
    sku: z.string().nonempty("Nhập SKU sản phẩm"),
-weight: z.number().min(0, "Cân nặng phải ≥ 0"),
-length: z.number().min(0, "Chiều dài phải ≥ 0"),
-width: z.number().min(0, "Chiều rộng phải ≥ 0"),
-height: z.number().min(0, "Chiều cao phải ≥ 0"),
+weight: z.number().min(0, "Cân nặng phải ≥ 0").nullable(),
+length: z.number().min(0, "Chiều dài phải ≥ 0").nullable(),
+width: z.number().min(0, "Chiều rộng phải ≥ 0").nullable(),
+height: z.number().min(0, "Chiều cao phải ≥ 0").nullable(),
 
 
     })
