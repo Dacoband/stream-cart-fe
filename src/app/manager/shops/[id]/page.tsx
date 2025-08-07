@@ -3,16 +3,10 @@ import React, { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
-import {
-  getShopDetail,
-  getShopProducts,
-  getShopActivities,
-  getShopAddress,
-  shopseller,
-  getShopTransactions,
-  getShopMemberships,
-  getShopOrders,
-} from '@/fake data/shop'
+import { getShopDetail, getShopMembers } from '@/services/api/shop/shop'
+import { getAddressByShopId } from '@/services/api/address/address'
+import { getUserById } from '@/services/api/auth/account'
+import { getPagedProducts } from '@/services/api/product/product'
 import { ShopInfo } from '@/app/manager/shops/[id]/components/ShopInfo'
 import { ShopProductList } from '@/app/manager/shops/[id]/components/ShopProduct'
 import { TransactionHistory } from '@/app/manager/shops/[id]/components/TransactionHistory'
@@ -30,70 +24,11 @@ import {
 import { toast } from 'sonner'
 import type { Shop } from '@/types/shop/shop' // adjust path if needed
 import type { Product } from '@/types/product/product' // adjust path if needed
+import type { User } from '@/types/auth/user'
+import type { Address } from '@/types/address/address'
 import ShopHeader from './components/ShopHeader'
 import { ShopMembership } from './components/ShopMembership'
 import { ShopOrderList } from './components/ShopOrder'
-
-type SimpleProduct = { id: string; name: string; image: string; price: number }
-type SimpleShop = {
-  id: string
-  shopName: string
-  logoURL: string
-  coverImageURL: string
-  ratingAverage: number
-  totalAverage: number
-  description: string
-  memberPackage: string
-  completeRate: number
-  totalProduct: number
-  status: boolean
-  totalOrder: number
-  approvalStatus: boolean
-  // ...add any other fields your mock provides
-}
-
-type Seller = {
-  id: string
-  username: string
-  email: string
-  phoneNumber: string
-  fullname: string
-  avatarURL: string
-  role: number
-  registrationDate: string
-  lastLoginDate: string
-  isActive: boolean
-  isVerified: boolean
-  completeRate: number
-  shopId: string
-  createdAt: string
-  createdBy: string
-  lastModifiedAt: string
-  lastModifiedBy: string
-}
-
-type ShopAddress = {
-  id: string
-  recipientName: string
-  street: string
-  ward: string
-  district: string
-  city: string
-  country: string
-  postalCode: string
-  phoneNumber: string
-  isDefaultShipping: boolean
-  latitude: number
-  longitude: number
-  type: number
-  isActive: boolean
-  accountId: string
-  shopId: string
-  createdAt: string
-  createdBy: string
-  lastModifiedAt: string
-  lastModifiedBy: string
-}
 
 type Membership = {
   membershipId: string
@@ -119,17 +54,19 @@ type Order = {
 const ShopDetailPage = () => {
   const params = useParams()
   const router = useRouter()
-  const [shop, setShop] = useState<SimpleShop | null>(null)
-  const [products, setProducts] = useState<SimpleProduct[]>([])
+  const [shop, setShop] = useState<Shop | null>(null)
+  const [products, setProducts] = useState<Product[]>([])
   const [logs, setLogs] = useState<
     { type: string; message: string; timestamp: string }[]
   >([])
   const [loading, setLoading] = useState(true)
-  const [seller, setSeller] = useState<Seller | null>(null)
-  const [address, setAddress] = useState<ShopAddress | null>(null)
+  const [seller, setSeller] = useState<User | null>(null)
+  const [address, setAddress] = useState<Address | null>(null)
   const [transactions, setTransactions] = useState<any[]>([])
   const [memberships, setMemberships] = useState<Membership[]>([])
   const [orders, setOrders] = useState<Order[]>([])
+  const [shopOwner, setShopOwner] = useState<User | null>(null)
+  const [moderators, setModerators] = useState<any[]>([])
 
   useEffect(() => {
     const fetchAll = async () => {
@@ -141,33 +78,60 @@ const ShopDetailPage = () => {
 
       try {
         const id = params.id
-        const [
-          shopRes,
-          prodRes,
-          logRes,
-          txRes,
-          sellerRes,
-          addressRes,
-          membershipRes,
-          orderRes,
-        ] = await Promise.all([
-          getShopDetail(id),
-          getShopProducts(id),
-          getShopActivities(id),
-          getShopTransactions(id),
-          shopseller(id),
-          getShopAddress(id),
-          getShopMemberships(id),
-          getShopOrders(id),
-        ])
+
+        // Fetch shop detail
+        const shopRes = await getShopDetail(id)
         setShop(shopRes.data || shopRes)
-        setProducts(prodRes.data || [])
-        setLogs(logRes.data || [])
-        setTransactions(txRes.data || [])
-        setSeller(sellerRes.data)
-        setAddress(addressRes.data)
-        setMemberships(membershipRes.data)
-        setOrders(orderRes.data)
+
+        // Fetch address
+        try {
+          const addressRes = await getAddressByShopId(id)
+          setAddress(addressRes)
+        } catch (error) {
+          console.error('Error fetching address:', error)
+          setAddress(null)
+        }
+
+        // Fetch shop owner and moderators
+        try {
+          const shopData = shopRes.data || shopRes
+          if (shopData?.createdBy) {
+            const owner = await getUserById(shopData.createdBy)
+            setShopOwner(owner)
+          }
+        } catch (error) {
+          console.error('Error fetching shop owner:', error)
+        }
+
+        try {
+          const members = await getShopMembers(id)
+          console.log('member', members)
+          setModerators(Array.isArray(members) ? members : [])
+        } catch (error) {
+          console.error('Error fetching moderators:', error)
+          setModerators([])
+        }
+
+        // Fetch products for the shop
+        try {
+          const productsRes = await getPagedProducts({
+            shopId: id,
+            pageNumber: 1,
+            pageSize: 50,
+            activeOnly: false,
+          })
+          setProducts(Array.isArray(productsRes) ? productsRes : [])
+        } catch (error) {
+          console.error('Error fetching products:', error)
+          setProducts([])
+        }
+
+        // Set empty arrays for other data that doesn't have real APIs yet
+        setLogs([])
+        setTransactions([])
+        setSeller(null)
+        setMemberships([])
+        setOrders([])
       } catch (err) {
         toast.error('Không thể tải dữ liệu')
       } finally {
@@ -228,7 +192,13 @@ const ShopDetailPage = () => {
 
         <TabsContent value="info">
           <div className="">
-            <ShopInfo shop={shop} seller={seller} address={address} />
+            <ShopInfo
+              shop={shop}
+              seller={seller}
+              address={address}
+              shopOwner={shopOwner}
+              moderators={moderators}
+            />
           </div>
         </TabsContent>
 

@@ -5,7 +5,7 @@ import { Shop, FilterShop } from '@/types/shop/shop'
 import { getAllShops } from '@/services/api/shop/shop'
 import { toast } from 'sonner'
 
-const ShopPage = () => {
+const PendingShopPage = () => {
   const [shops, setShops] = useState<Shop[]>([])
   const [loading, setLoading] = useState(false)
   const [pageNumber, setPageNumber] = useState(1)
@@ -13,8 +13,6 @@ const ShopPage = () => {
   const [totalPages, setTotalPages] = useState(1)
   const [totalCount, setTotalCount] = useState(0)
   const [searchTerm, setSearchTerm] = useState('')
-  const [statusFilter, setStatusFilter] = useState<string>('')
-  const [approvalStatusFilter, setApprovalStatusFilter] = useState<string>('')
 
   const fetchShops = async () => {
     try {
@@ -22,11 +20,11 @@ const ShopPage = () => {
       const filter: FilterShop = {
         pageNumber,
         pageSize,
-        status: statusFilter,
-        approvalStatus: 'Approved',
+        status: '',
+        approvalStatus: '0',
         searchTerm,
-        sortBy: 'shopName',
-        ascending: true,
+        sortBy: 'name',
+        ascending: false,
       }
 
       const response = await getAllShops(filter)
@@ -75,7 +73,7 @@ const ShopPage = () => {
 
   useEffect(() => {
     fetchShops()
-  }, [pageNumber, pageSize, statusFilter, approvalStatusFilter])
+  }, [pageNumber, pageSize])
 
   // Debounced search
   useEffect(() => {
@@ -88,16 +86,6 @@ const ShopPage = () => {
 
   const handleSearch = (value: string) => {
     setSearchTerm(value)
-  }
-
-  const handleStatusFilter = (status: string) => {
-    setStatusFilter(status)
-    setPageNumber(1)
-  }
-
-  const handleApprovalStatusFilter = (status: string) => {
-    setApprovalStatusFilter(status)
-    setPageNumber(1)
   }
 
   const handleRefresh = () => {
@@ -117,8 +105,6 @@ const ShopPage = () => {
           shops={shops}
           loading={loading}
           onSearch={handleSearch}
-          onStatusFilter={handleStatusFilter}
-          onApprovalStatusFilter={handleApprovalStatusFilter}
           onRefresh={handleRefresh}
           pageNumber={pageNumber}
           setPageNumber={setPageNumber}
@@ -130,4 +116,4 @@ const ShopPage = () => {
   )
 }
 
-export default ShopPage
+export default PendingShopPage

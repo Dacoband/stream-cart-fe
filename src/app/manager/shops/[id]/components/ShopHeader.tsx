@@ -25,25 +25,10 @@ import {
   AlertDialogAction,
 } from '@/components/ui/alert-dialog'
 import { toast } from 'sonner'
-
-type SimpleShop = {
-  id: string
-  shopName: string
-  logoURL: string
-  coverImageURL: string
-  ratingAverage: number
-  totalAverage: number
-  description: string
-  memberPackage: string
-  completeRate: number
-  totalProduct: number
-  status: boolean
-  totalOrder: number
-  approvalStatus: boolean
-}
+import { Shop } from '@/types/shop/shop'
 
 type Props = {
-  shop: SimpleShop
+  shop: Shop
 }
 
 const ShopHeader: React.FC<Props> = ({ shop }) => {
@@ -106,7 +91,7 @@ const ShopHeader: React.FC<Props> = ({ shop }) => {
                   ) : (
                     <Clock className="w-4 h-4 mr-1" />
                   )}
-                  {shop.approvalStatus ? 'Đã duyệt' : 'Chờ duyệt'}
+                  {shop.approvalStatus == 'Approved' ? 'Đã duyệt' : 'Chờ duyệt'}
                 </span>
 
                 {/* Trạng thái hoạt động */}
@@ -154,7 +139,7 @@ const ShopHeader: React.FC<Props> = ({ shop }) => {
                 <div className="ml-4 flex items-center">
                   <ShoppingBag className="w-4 h-4 mr-1 text-gray-400" />
                   <span className="text-sm text-gray-500">
-                    {shop.totalOrder} đơn hàng
+                    {shop.completeRate} đơn hàng
                   </span>
                 </div>
               </div>

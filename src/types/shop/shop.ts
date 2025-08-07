@@ -47,3 +47,12 @@ export interface ListShop {
   hasNext: boolean
   items: Shop[]
 }
+export interface ShopMember {
+  accountId: string
+  username: string
+  fullName: string
+  email: string
+  role: string
+  isActive: boolean
+  joinedDate: string
+}
