@@ -16,7 +16,10 @@ export const registerSchema = z.object({
   email: z.string().email("Email không hợp lệ").min(1, "Tên đăng nhập là bắt buộc"),
   avatarUrl: z.string().url("Avatar không hợp lệ").optional(),
   role: z.string().min(1, "Vai trò là bắt buộc"),
-  phonenumber: z.string().min(10, "Số điện thoại không hợp lệ"),
+ phonenumber: z
+  .string()
+  .regex(/^0\d{9,10}$/, "Số điện thoại không hợp lệ"),
+
 }).refine((data) => data.password === data.confirmPassword, {
   path: ["confirmPassword"],
   message: "Mật khẩu không khớp",

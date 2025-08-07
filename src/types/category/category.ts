@@ -6,7 +6,11 @@ export interface Category {
   slug: string
   isDeleted: boolean
   subCategories?: Category[]
+}export interface listCategory {
+  totalItem: number
+  categories: Category[]
 }
+
 export interface filterCategory {
   CategoryName?: string
   PageIndex?: number
@@ -23,7 +27,3 @@ export interface createCategory {
   parentCategoryID?: string | null
 }
 
-export interface listCategory {
-  totalItem: number
-  categories: Category[]
-}

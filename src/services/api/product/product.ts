@@ -9,6 +9,25 @@ export const getAllProducts = async () => {
     throw error;
   }
 };
+export const getProductById = async (productId:string) => {
+  try {
+    const response = await rootApi.get(`products/${productId}`);
+    return response.data.data;
+  } catch (error) {
+    console.error("Error fetching product detail:", error);
+    throw error;
+  }
+};
+export const getProductDetailById = async (productId:string) => {
+  try {
+    const response = await rootApi.get(`products/${productId}/detail`);
+    return response.data.data;
+  } catch (error) {
+    console.error("Error fetching product detail:", error);
+    throw error;
+  }
+};
+
 export const createProduct = async (data: CreateProduct) => {
   try {
       const token = localStorage.getItem("token");

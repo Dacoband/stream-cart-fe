@@ -9,43 +9,58 @@ import {
   NavigationMenuList,
 } from "@/components/ui/navigation-menu";
 import Image from "next/image";
-import { Input } from "@/components/ui/input";
 import {
   Bell,
   CircleArrowOutDownRight,
   CircleUser,
   MessageCircleMore,
   ScrollText,
-  Search,
   ShoppingCart,
   UserRound,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
+
 import { NavigationMenu } from "@radix-ui/react-navigation-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/lib/AuthContext";
+import SearchBar from "./SearchBar";
+import { useCart } from "@/lib/CartContext";
 export function Navigation() {
-  const { user, loading } = useAuth();
+  const pathname = usePathname();
+  const { user, loading, logout } = useAuth();
   const router = useRouter();
-
-  const handleLogout = (e: React.MouseEvent) => {
-    e.preventDefault();
-    localStorage.clear();
-    if (window.location.pathname === "/home") {
-      window.location.reload();
-    } else {
-      router.push("/home");
-    }
+  const { cartCount, resetCart } = useCart();
+  const currentPath = pathname;
+  const handleLogout = () => {
+    logout();
+    resetCart();
   };
-
   const handleClick = () => {
-    if (user?.role !== 1) {
+    const token = localStorage.getItem("token");
+
+    if (!token) {
       toast.error("Vui lòng đăng nhập.");
-      router.push("/authentication/login");
+      router.push(
+        `/authentication/login?redirect=${encodeURIComponent(currentPath)}`
+      );
+    } else {
     }
   };
+  const handleClickCart = () => {
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      toast.error("Vui lòng đăng nhập.");
+      router.push(
+        `/authentication/login?redirect=${encodeURIComponent(currentPath)}`
+      );
+    } else {
+      router.push(`/customer/cart`);
+    }
+  };
+
   return (
     <NavigationMenu className="w-full bg-[#202328] shadow max-w-none h-full px-32 flex items-center justify-between">
       <div className="flex gap-2 items-center">
@@ -62,33 +77,27 @@ export function Navigation() {
             alt="Stream Card Logo"
             width={96}
             height={96}
-            className="w-14 h-14 object-contain"
+            className="w-12 h-12 object-contain"
           />
-          <div className="text-3xl text-[#B0F847] font-semibold font-sans">
+          <div className="text-2xl text-[#B0F847] font-semibold font-sans">
             Stream Cart
           </div>
         </Link>
-
-        <div className="flex items-center gap-2 ml-8">
-          <div className="relative">
-            <Input
-              type="text"
-              placeholder="Tìm kiếm sản phẩm, cửa hàng..."
-              className=" pr-4 py-5 w-2xl rounded-md bg-white text-slate-500 text-lg font-medium placeholder:text-gray-400"
-            />
-            <div className="absolute bg-gradient-to-r from-[#B0F847]  via-[#c6ef88]  to-[#B0F847] py-1.5 rounded-sm px-3.5 right-1.5 top-1/2 -translate-y-1/2 cursor-pointer">
-              <Search className="text-black " />
-            </div>
-          </div>
-        </div>
+        <SearchBar />
       </div>
       <div className="flex items-center justify-end h-full">
         <div className=" pr-5 gap-5 flex border-r ">
           <Button
-            onClick={handleClick}
-            className="w-10 h-10 flex items-center text-2xl cursor-pointer text-[#B0F847] justify-center rounded-full bg-[#34373b] hover:bg-[#B0F847] hover:text-black pr-4"
+            onClick={handleClickCart}
+            className="relative w-10 h-10 flex items-center justify-center cursor-pointer text-[#B0F847] bg-[#34373b] hover:bg-[#B0F847] hover:text-black rounded-full"
           >
-            <ShoppingCart className="min-w-[25px] min-h-[25px] " />
+            <ShoppingCart className="min-w-[25px] min-h-[25px]" />
+
+            {cartCount > 0 && (
+              <span className="absolute -top-1.5 -right-2.5 bg-[#B0F847] text-black text-[12.5px] min-w-[18px] h-[18px] flex items-center justify-center rounded-full px-[4px] font-bold leading-none shadow-md">
+                {cartCount}
+              </span>
+            )}
           </Button>
           <Button
             onClick={handleClick}
@@ -107,12 +116,16 @@ export function Navigation() {
           <div className="flex items-center space-x-4">
             <Skeleton className="h-12 w-12 rounded-full" />
             <div className="space-y-2">
-              <Skeleton className="h-4 w-[120px]" />
-              <Skeleton className="h-4 w-[120px]" />
+              <Skeleton className="h-4 w-[150px]" />
+              <Skeleton className="h-4 w-[150px]" />
             </div>
           </div>
         ) : !user ? (
-          <Link href="/authentication/login">
+          <Link
+            href={`/authentication/login?redirect=${encodeURIComponent(
+              pathname
+            )}`}
+          >
             <Button className="bg-gradient-to-r ml-10 from-[#B0F847]  via-[#c6ef88]  to-[#B0F847] cursor-pointer text-black">
               Đăng nhập
             </Button>
@@ -148,7 +161,7 @@ export function Navigation() {
                   <li>
                     <NavigationMenuLink asChild>
                       <Link
-                        href="/customer/profile/1"
+                        href={`/customer/profile`}
                         className="flex-row items-center gap-2"
                       >
                         <CircleUser />
@@ -156,20 +169,22 @@ export function Navigation() {
                       </Link>
                     </NavigationMenuLink>
                     <NavigationMenuLink asChild>
-                      <Link href="#" className="flex-row items-center gap-2">
+                      <Link
+                        href={`/customer/manage-orders`}
+                        className="flex-row items-center gap-2"
+                      >
                         <ScrollText />
                         Đơn hàng
                       </Link>
                     </NavigationMenuLink>
                     <NavigationMenuLink asChild>
-                      <Link
-                        href="/home"
+                      <div
                         className="flex-row items-center gap-2"
                         onClick={handleLogout}
                       >
                         <CircleArrowOutDownRight />
                         Đăng xuất
-                      </Link>
+                      </div>
                     </NavigationMenuLink>
                   </li>
                 </ul>

@@ -8,12 +8,12 @@ import Image from "next/image";
 import { Calendar, Store } from "lucide-react";
 import { useAuth } from "@/lib/AuthContext";
 import { Separator } from "@/components/ui/separator";
-
+import { useRouter } from "next/navigation";
 function InforShop() {
   const [shop, setShop] = useState<Shop | null>(null);
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
-
+  const router = useRouter();
   useEffect(() => {
     const fetchShop = async () => {
       try {
@@ -30,6 +30,21 @@ function InforShop() {
 
     fetchShop();
   }, []);
+  useEffect(() => {
+    if (shop && shop.approvalStatus === "Approved") {
+      router.push("/shop/dashboard");
+    }
+  }, [shop, router]);
+
+  if (!user) return null;
+  if (loading) {
+    return <Skeleton className="w-full h-40" />;
+  }
+
+  if (!shop) {
+    return <div>Không tìm thấy thông tin cửa hàng.</div>;
+  }
+
   if (!user) return null;
   if (loading) {
     return <Skeleton className="w-full h-40" />;

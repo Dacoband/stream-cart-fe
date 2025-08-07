@@ -62,13 +62,13 @@ function RegisterForm() {
 
       const responseData = await registerApi(payload);
       console.log("Register success:", responseData.message);
-      localStorage.setItem("accountId", responseData.data.id);
+
       toast.dismiss();
       toast.success(responseData.message);
       // setTimeout(() => {
       //   toast.success("Vui lòng đăng nhập lại");
       // }, 2000);
-      router.push("/authentication/verify");
+      router.push(`/authentication/verify/${responseData.data.id}`);
     } catch (error: unknown) {
       const err = error as AxiosError<{ message: string }>;
       const message = err?.response?.data?.message || "Có lỗi đang xảy ra!";

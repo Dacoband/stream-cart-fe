@@ -1,5 +1,6 @@
-import React from "react";
-import { categories } from "@/fake data/category";
+"use client";
+
+import React, { useEffect, useState } from "react";
 import Image from "next/image";
 import {
   Carousel,
@@ -8,7 +9,9 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
-
+import { getAllCategoriesForHome } from "@/services/api/categories/categorys";
+import { Category } from "@/types/category/category";
+import { Skeleton } from "@/components/ui/skeleton";
 function chunkArray<T>(arr: T[], chunkSize: number) {
   const result = [];
   for (let i = 0; i < arr.length; i += chunkSize) {
@@ -17,7 +20,22 @@ function chunkArray<T>(arr: T[], chunkSize: number) {
   return result;
 }
 
-function Category() {
+function CategoryComponent() {
+  const [categories, setCategories] = useState<Category[]>([]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const res = await getAllCategoriesForHome();
+        setCategories(res.categories || []);
+      } catch (error) {
+        console.error("Fetch Categoryes errors:", error);
+      }
+    };
+
+    fetchData();
+  }, []);
+
   const chunked = chunkArray(categories, 16);
 
   return (
@@ -42,24 +60,30 @@ function Category() {
                     >
                       {row.map((cat) => (
                         <div
-                          key={cat.id}
+                          key={cat.categoryId}
                           className="flex flex-col w-full items-center justify-center cursor-pointer hover:scale-105 transition border border-gray-300 rounded-md p-2 hover:shadow-lg hover:font-medium"
                         >
                           <div className="w-20 h-20 mb-2 bg-white flex items-center justify-center overflow-hidden">
-                            <Image
-                              src={cat.image}
-                              alt={cat.name}
-                              width={96}
-                              height={96}
-                              className="object-center"
-                            />
+                            {cat.iconURL ? (
+                              <Image
+                                src={cat.iconURL}
+                                alt={cat.categoryName}
+                                width={96}
+                                height={96}
+                                className="object-center"
+                              />
+                            ) : (
+                              <Skeleton className="w-20 h-20" />
+                            )}
                           </div>
+
                           <span className="text-base text-center text-gray-700">
-                            {cat.name}
+                            {cat.categoryName}
                           </span>
                         </div>
                       ))}
 
+                      {/* Thêm ô trống nếu thiếu item để đủ 8 cột */}
                       {Array.from({ length: 8 - row.length }).map((_, i) => (
                         <div key={`empty-${rowIndex}-${i}`} />
                       ))}
@@ -77,4 +101,4 @@ function Category() {
   );
 }
 
-export default Category;
+export default CategoryComponent;

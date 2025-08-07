@@ -33,10 +33,25 @@ export interface CreateAddress{
     latitude:number;
     longitude:number;
     type:number;
-    shopId:string;
+    shopId:string|null;
 
 }
 
+export interface UpdateAddress{
+    recipientName:string;
+    street:string;
+    ward:string;
+    district:string;
+    city:string;
+    country:string;
+    postalCode:string;
+    phoneNumber:string;
+    latitude:number;
+    longitude:number;
+    type:number;
+   
+
+}
 export interface Province {
   id: string;
  full_name: string;

@@ -1,23 +1,28 @@
-'use client'
-import React, { useState } from 'react'
-import { Button } from '@/components/ui/button'
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { loginSchema, LoginSchema } from '@/components/schema/auth_schema'
-import { useRouter } from 'next/navigation'
-import { Label } from '@/components/ui/label'
-import { Input } from '@/components/ui/input'
-import { TriangleAlert, Eye, EyeOff } from 'lucide-react'
-import { loginApi, getMe } from '@/services/api/auth/authentication'
-import { toast } from 'sonner'
-import axios from 'axios'
-import { useAuth } from '@/lib/AuthContext'
+"use client";
+import React, { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { loginSchema, LoginSchema } from "@/components/schema/auth_schema";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { TriangleAlert, Eye, EyeOff } from "lucide-react";
+import { loginApi } from "@/services/api/auth/authentication";
+import { toast } from "sonner";
+import axios from "axios";
+import { useAuth } from "@/lib/AuthContext";
+import { getMyShop } from "@/services/api/shop/shop";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useCart } from "@/lib/CartContext";
 
 export default function LoginForm() {
-  const router = useRouter()
-  const { setUser } = useAuth()
-  const [loading, setLoading] = useState(false)
-  const [showPassword, setShowPassword] = useState(false)
+  const router = useRouter();
+  const { setUser } = useAuth();
+  const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const searchParams = useSearchParams();
+  const redirect = searchParams.get("redirect") || "/";
+  const { refreshCart } = useCart();
 
   const {
     register,
@@ -25,64 +30,77 @@ export default function LoginForm() {
     formState: { errors },
   } = useForm<LoginSchema>({
     resolver: zodResolver(loginSchema),
-  })
+  });
 
   const onSubmit = async (data: LoginSchema) => {
-    setLoading(true)
+    setLoading(true);
     try {
-      const response = await loginApi(data)
-      const resData = response.data?.data
+      const response = await loginApi(data);
+      const resData = response.data?.data;
 
       if (resData?.requiresVerification) {
-        toast.info(response.data.message)
-        router.push('/authentication/verify')
-        return
+        toast.info(response.data.message);
+        router.push(`/authentication/verify/${resData.accountId}`);
+        return;
       }
 
-      const token = resData.token
-      const userInfo = await getMe()
-      const userWithToken = { ...userInfo, token }
+      const token = localStorage.getItem("token");
+      const userData = localStorage.getItem("userData");
 
-      setUser(userWithToken)
-      localStorage.setItem('userData', JSON.stringify(userWithToken))
+      if (!token || !userData) {
+        throw new Error(
+          "Không tìm thấy thông tin người dùng sau khi đăng nhập."
+        );
+      }
 
-      toast.success('Đăng nhập thành công!')
+      const userInfor = JSON.parse(userData);
+      const userWithToken = { ...userInfor, token };
+      setUser(userWithToken);
+      toast.success("Đăng nhập thành công!");
 
-      switch (userInfo.role) {
+      switch (userInfor.role) {
         case 0:
         case 4:
-          router.push('/manager/dashboard')
-          break
+          router.push("/admin/dashboard");
+          break;
         case 1:
-          router.push('/home')
-          break
+          router.push(redirect);
+          await refreshCart();
+          break;
         case 2:
-          if (!userInfo.shopId) {
-            router.push('/shop/register')
+          if (!userInfor.shopId) {
+            router.push("/shop/register");
           } else {
-            router.push('/shop/dashboard')
+            const shopRes = await getMyShop();
+
+            const shop = Array.isArray(shopRes) ? shopRes[0] : shopRes;
+            if (shop && shop.approvalStatus === "Approved") {
+              router.push("/shop/dashboard");
+            } else {
+              router.push("/shop/pending-register");
+            }
           }
-          break
+          break;
         case 3:
-          router.push('/partner/manageproduct')
-          break
+          router.push("/partner/manageproduct");
+          break;
         case 5:
-          router.push('/manager/dashboard')
-          break
+          router.push("/manager/dashboard");
+          break;
         default:
-          console.log('Role không hợp lệ')
-          router.push('/')
+          console.log("Role không hợp lệ");
+          router.push("/");
       }
     } catch (error: unknown) {
-      let message = 'Đăng nhập thất bại!'
+      let message = "Đăng nhập thất bại!";
       if (axios.isAxiosError(error)) {
-        message = error.response?.data?.message || message
+        message = error.response?.data?.message || message;
       }
-      toast.error(message)
+      toast.error(message);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   return (
     <div className="flex w-full  my-20 px-5 py-8  flex-col rounded-md">
@@ -103,7 +121,7 @@ export default function LoginForm() {
             </Label>
             <Input
               id="username"
-              {...register('username')}
+              {...register("username")}
               className="bg-white text-black"
               placeholder="Nhập tên người dùng"
               autoComplete="username"
@@ -133,10 +151,10 @@ export default function LoginForm() {
             </div>
             <div className="relative">
               <Input
-                type={showPassword ? 'text' : 'password'}
+                type={showPassword ? "text" : "password"}
                 id="password"
                 autoComplete="current-password"
-                {...register('password')}
+                {...register("password")}
                 className="bg-white text-black pr-10"
                 placeholder="Nhập mật khẩu"
               />
@@ -165,7 +183,7 @@ export default function LoginForm() {
             className="w-full  bg-gradient-to-r from-[#B0F847] via-[#c6ef88] to-[#B0F847]  text-black hover:text-black/50 cursor-pointer"
             disabled={loading}
           >
-            {loading ? 'Đang đăng nhập...' : 'Đăng nhập'}
+            {loading ? "Đang đăng nhập..." : "Đăng nhập"}
           </Button>
           <div className="flex items-center gap-2 text-center text-sm my-4">
             <span className="flex-1 border-t border-white/30"></span>
@@ -186,5 +204,5 @@ export default function LoginForm() {
         </div>
       </form>
     </div>
-  )
+  );
 }

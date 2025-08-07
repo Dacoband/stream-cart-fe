@@ -11,7 +11,7 @@ export const loginApi = async (request: LoginRequest) => {
  
     if (data && data.token && data.account) {
       const userData: UserLocal = {      
-        userId: data.account.id,
+        id: data.account.id,
         username: data.account.username,
         role: data.account.role,
         isActive: data.account.isActive,
@@ -20,12 +20,15 @@ export const loginApi = async (request: LoginRequest) => {
         avatarURL:data.account.avatarURL,
         fullname:data.account.fullname,
         phoneNumber:data.account.phoneNumber,
+                 email:data.account.email,
+
       };
 
       localStorage.setItem("token", data.token);
+      localStorage.setItem("refreshToken", data.refreshToken);
       localStorage.setItem("userData", JSON.stringify(userData));
     }
-        console.log(`Fetching sucsses`,response.data)
+      console.log(`Fetching sucsses`,response.data)
 
     return response;
   } catch (error) {
@@ -95,3 +98,43 @@ export const register = async (request: RegisterUser) => {
     throw error;
   }
 };
+//Refresh-token
+
+export const refreshToken = async () => {
+  try {
+    const refresh = localStorage.getItem("refreshToken"); 
+
+if (!refresh) throw new Error("Not refresh token");
+  const response = await rootApi.post("/auth/refresh-token", {
+    refreshToken: refresh,
+  });
+
+
+ const data = response.data?.data;
+ 
+    if (data && data.token && data.account) {
+      const userData: UserLocal = {      
+        id: data.account.id,
+        username: data.account.username,
+        role: data.account.role,
+        isActive: data.account.isActive,
+        isVerified: data.account.isVerified,
+        shopId: data.account.shopId,
+        avatarURL:data.account.avatarURL,
+        fullname:data.account.fullname,
+        phoneNumber:data.account.phoneNumber,
+         email:data.account.email,
+              
+
+      };
+      localStorage.setItem("refreshToken", data.refreshToken);
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("userData", JSON.stringify(userData));
+    }
+      console.log(`Fetching sucsses`,response.data)
+return response} catch (error) {
+    console.error(`Error fetching`, error);
+    throw error; 
+  }
+};
+

@@ -1,4 +1,4 @@
-import { RegisterShop, FilterShop, ListShop } from './../../../types/shop/shop'
+import { RegisterShop, FilterShop } from './../../../types/shop/shop'
 import rootApi from '../../rootApi'
 
 // Register Shop
@@ -19,8 +19,19 @@ export const registerShop = async (data: RegisterShop) => {
   } catch (error) {
     console.error('Error registering shop:', error)
     throw error
+  }}
+
+export const getshopById = async (shopId:string) => {
+  try {
+    const response = await rootApi.get(`shops/${shopId}`);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching Shop detail:", error);
+    throw error;
   }
-}
+};
+
+
 
 export const getMyShop = async () => {
   try {

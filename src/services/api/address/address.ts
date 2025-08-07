@@ -1,4 +1,4 @@
-import { CreateAddress } from './../../../types/address/address';
+import { CreateAddress,UpdateAddress } from './../../../types/address/address';
 import rootApi from "../../rootApi";
 // Register Address
 
@@ -43,6 +43,127 @@ export const getAddressByShopId = async (shopId: string) => {
     return response.data.data;
   } catch (error) {
     console.error("Error get address by shopId:", error);
+    throw error;
+  }
+};
+export const getAddressById = async (Id: string) => {
+  try {
+  const token = localStorage.getItem("token");
+    if (!token) {
+      throw new Error("Not found token.");
+    }
+
+
+    const response = await rootApi.get(`addresses/${Id}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    return response.data.data;
+  } catch (error) {
+    console.error("Error get address by Id:", error);
+    throw error;
+  }
+};
+export const deleteAddressById = async (Id: string) => {
+  try {
+  const token = localStorage.getItem("token");
+    if (!token) {
+      throw new Error("Not found token.");
+    }
+
+
+    const response = await rootApi.delete(`addresses/${Id}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    return response.data.data;
+  } catch (error) {
+    console.error("Error delete address by Id:", error);
+    throw error;
+  }
+};
+export const updateDefaultShippingById = async (Id: string) => {
+  try {
+  const token = localStorage.getItem("token");
+    if (!token) {
+      throw new Error("Not found token.");
+    }
+
+
+    const response = await rootApi.put(`addresses/${Id}/set-default-shipping`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    return response.data.data;
+  } catch (error) {
+    console.error("Error update defaul shipphing address by Id:", error);
+    throw error;
+  }
+};
+export const UpdateAddressById = async (Id: string,data:UpdateAddress) => {
+  try {
+  const token = localStorage.getItem("token");
+    if (!token) {
+      throw new Error("Not found token.");
+    }
+
+
+    const response = await rootApi.put(`addresses/${Id}`,data,{ 
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    return response.data.data;
+  } catch (error) {
+    console.error("Error update address by Id:", error);
+    throw error;
+  }
+};
+
+export const getAddressUser= async () => {
+  try {
+  const token = localStorage.getItem("token");
+    if (!token) {
+      throw new Error("Not found token.");
+    }
+
+
+    const response = await rootApi.get(`addresses`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    return response.data.data;
+  } catch (error) {
+    console.error("Error get address for user:", error);
+    throw error;
+  }
+};
+export const getAddressDefaultShipping= async () => {
+  try {
+  const token = localStorage.getItem("token");
+    if (!token) {
+      throw new Error("Not found token.");
+    }
+
+
+    const response = await rootApi.get(`addresses/default-shipping`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    return response.data.data;
+  } catch (error) {
+    console.error("Error get address default shipping for user:", error);
     throw error;
   }
 };
