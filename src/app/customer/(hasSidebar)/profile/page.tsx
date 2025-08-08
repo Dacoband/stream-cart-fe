@@ -105,7 +105,7 @@ function Profile() {
   };
 
   return (
-    <div className="flex flex-col py-8 px-10">
+    <div className="flex flex-col py-8 px-10 bg-white">
       <div className="flex justify-between border-b pb-4">
         <div>
           <div className="text-xl font-semibold ">Hồ sơ của tôi:</div>

@@ -67,12 +67,12 @@ const HasVariant: React.FC<HasVariantProps> = ({
           attributeValue: combo[idx] ?? "",
         })),
         sku: prev?.sku ?? "",
-        price: prev?.price ?? 0,
-        stock: prev?.stock ?? 0,
-        weight: prev?.weight ?? 0,
-        length: prev?.length ?? 0,
-        width: prev?.width ?? 0,
-        height: prev?.height ?? 0,
+        price: prev?.price ?? null,
+        stock: prev?.stock ?? null,
+        weight: prev?.weight ?? null,
+        length: prev?.length ?? null,
+        width: prev?.width ?? null,
+        height: prev?.height ?? null,
       };
     });
     form.setValue("variants", newVariants);

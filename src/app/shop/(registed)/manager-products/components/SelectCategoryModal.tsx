@@ -73,12 +73,9 @@ const SelectCategoryModal: React.FC<Props> = ({
       return [];
     }
   };
-
   const getChildren = (parent?: Category): Category[] => {
     if (!parent) {
-      return allCategories.filter(
-        (c) => !c.subCategories || c.subCategories.length > 0
-      );
+      return allCategories;
     }
     return parent.subCategories || [];
   };

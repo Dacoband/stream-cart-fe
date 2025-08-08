@@ -129,13 +129,13 @@ export interface VariantAttribute {
 
 export interface ProductVariant {
   sku: string;
-  price: number;
-  stock: number;
+  price: number|null;
+  stock: number|null;
   attributes: VariantAttribute[];
-  weight: number;
-  length: number;
-  width: number;
-  height: number;
+  weight: number|null;
+  length: number|null;
+  width: number|null;
+  height: number|null;
 }
 
 export interface CreateProductDTO {
@@ -157,3 +157,11 @@ export interface CreateProductDTO {
 }
 
 
+export interface filterProduct {
+  pageNumber?: number,
+  pageSize?: number
+  sortOption?:number,
+  activeOnly?:boolean,
+  shopId?:string;
+  InstockOnly?:boolean;
+}

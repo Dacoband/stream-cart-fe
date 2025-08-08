@@ -1,9 +1,16 @@
 import React from "react";
-import ReviewOrders from "./components/ReviewOrders";
-import Statistical from "./components/Statistical";
+import dynamic from "next/dynamic";
+// s;
+// import ReviewOrders from "./components/ReviewOrders";
+// import Statistical from "./components/Statistical";
 import { LineChartComponent } from "./components/LineChart";
-import BestSelling from "./components/BestSelling";
+// import BestSelling from "./components/BestSelling";
 function page() {
+  const Statistical = dynamic(() => import("./components/Statistical"));
+
+  const ReviewOrders = dynamic(() => import("./components/ReviewOrders"));
+
+  const BestSelling = dynamic(() => import("./components/BestSelling"));
   return (
     <div className="flex flex-col gap-5 min-h-full">
       <div className="bg-white h-fit w-full py-4 px-8 shadow">
@@ -19,6 +26,7 @@ function page() {
           <div className="w-[65%] ">
             <LineChartComponent />
           </div>
+
           <div className="flex-1">
             <BestSelling />
           </div>
