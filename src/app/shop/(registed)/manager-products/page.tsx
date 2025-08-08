@@ -51,7 +51,7 @@ function Page() {
   const [products, setProducts] = useState<Product[]>([]);
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState<number>(5);
-  const [status, setStatus] = useState<"all" | "true" | "false">("all");
+  const [status, setStatus] = useState<"true" | "false">("true");
   const [stock, setStock] = useState<"all" | "true" | "false">("all");
   const [totalPages, setTotalPages] = useState(1);
   const [page, setPage] = useState(1);
@@ -67,8 +67,7 @@ function Page() {
       setLoading(true);
       if (!user?.shopId) return;
 
-      const activeOnly =
-        status === "all" ? undefined : status === "true" ? true : false;
+      const activeOnly = status === "true" ? true : false;
       const instockOnly =
         stock === "all" ? undefined : stock === "true" ? true : false;
 
@@ -189,17 +188,14 @@ function Page() {
             <div className="w-[180px]">
               <Select
                 value={status}
-                onValueChange={(value) =>
-                  setStatus(value as "all" | "true" | "false")
-                }
+                onValueChange={(value) => setStatus(value as "true" | "false")}
               >
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Trạng thái" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Trạng thái sản phẩm</SelectItem>
-                  <SelectItem value="true">Đang bán</SelectItem>
-                  <SelectItem value="false">Ngừng bán</SelectItem>
+                  <SelectItem value="true">Tất cả sản phẩm</SelectItem>
+                  <SelectItem value="false">Đang hoạt động</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -245,7 +241,7 @@ function Page() {
               className="border-blue-500 text-blue-500 cursor-pointer hover:text-blue-400 hover:bg-white hover:border-blue-400"
               onClick={() => {
                 setSearch("");
-                setStatus("all");
+                setStatus("true");
                 setSort(4);
                 setStock("all");
               }}

@@ -68,19 +68,21 @@ function RecommendedProducts() {
                 <CardContent className="p-0">
                   {/* Product Image */}
                   <div className="relative overflow-hidden">
-                    {item.primaryImageUrl ? (
-                      <Image
-                        src={item.primaryImageUrl}
-                        alt={item.productName}
-                        width={200}
-                        height={200}
-                        className="w-full h-52 object-cover object-center group-hover:scale-110 transition-transform duration-500"
-                      />
-                    ) : (
-                      <div className="bg-gray-200 w-full flex items-center justify-center h-52 text-gray-400">
-                        <ImageIcon size={50} />
-                      </div>
-                    )}
+                    <div className="aspect-square w-full relative overflow-hidden">
+                      {item.primaryImageUrl ? (
+                        <Image
+                          src={item.primaryImageUrl}
+                          alt={item.productName}
+                          width={200}
+                          height={200}
+                          className="w-full h-full object-cover object-center group-hover:scale-110 transition-transform duration-500"
+                        />
+                      ) : (
+                        <div className="bg-gray-200 w-full  h-full flex items-center justify-center  text-gray-400">
+                          <ImageIcon size={50} />
+                        </div>
+                      )}
+                    </div>
 
                     {/* Badge */}
                     {/* <div className="absolute top-2 left-2">
