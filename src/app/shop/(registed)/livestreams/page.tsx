@@ -36,10 +36,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { formatFullDateTimeVN } from "@/components/common/formatFullDateTimeVN";
 function LiveStreamPage() {
   const { user } = useAuth();
   const [loading, setLoading] = useState<boolean>(true);
   const [livestreams, setLivestreams] = useState<Livestream[]>([]);
+  const [searchTerm, setSearchTerm] = useState<string>("");
+
   useEffect(() => {
     const fetchLiveStream = async () => {
       try {
@@ -58,6 +61,7 @@ function LiveStreamPage() {
   const handleStartLivestream = async (id: string) => {
     try {
       await startLivestreamById(id);
+
       const url = `/shop/livestream/${id}`;
       window.open(url, "_blank");
     } catch (err) {
@@ -66,9 +70,16 @@ function LiveStreamPage() {
   };
 
   const handleContinueLivestream = (id: string) => {
-    console.log("Tiếp tục phát sóng livestream với ID:", id);
-    // TODO: Thêm logic gọi API tiếp tục livestream ở đây
+    try {
+      const url = `/shop/livestream/${id}`;
+      window.open(url, "_blank");
+    } catch (err) {
+      console.error("Error starting livestream:", err);
+    }
   };
+  const filteredLivestreams = livestreams.filter((item) =>
+    item.title?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
     <div className="flex flex-col gap-5 min-h-full">
@@ -91,7 +102,9 @@ function LiveStreamPage() {
 
               <Input
                 placeholder="Tìm kiếm tiêu đề live..."
-                className="w-full  pl-12 pr-10 py-5"
+                className="w-full pl-12 pr-10 py-5"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
           </div>
@@ -109,7 +122,6 @@ function LiveStreamPage() {
                   <TableHead className="font-semibold ">
                     Người xem live
                   </TableHead>
-                  <TableHead className="font-semibold ">Sản phẩm</TableHead>
 
                   <TableHead className="font-semibold ">Trạng thái</TableHead>
                   <TableHead className="font-semibold text-right w-24 pr-6">
@@ -134,13 +146,7 @@ function LiveStreamPage() {
                       <TableCell>
                         <Skeleton className="h-4 w-20" />
                       </TableCell>
-                      <TableCell>
-                        <Skeleton className="h-4 w-20" />
-                      </TableCell>
-                      <TableCell>
-                        <Skeleton className="h-4 w-20" />
-                      </TableCell>
-
+                      s
                       <TableCell className="text-right">
                         <Skeleton className="h-4 w-20 ml-auto" />
                       </TableCell>
@@ -164,7 +170,7 @@ function LiveStreamPage() {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  livestreams.map((livestream) => (
+                  filteredLivestreams.map((livestream) => (
                     <TableRow key={livestream.id} className="">
                       <TableCell className="pl-5">
                         <div className="flex items-start gap-4  h-24 py-2">
@@ -186,57 +192,65 @@ function LiveStreamPage() {
                             <p className="font-semibold text-base text-gray-900 line-clamp-2 break-words whitespace-normal max-w-[305px]">
                               {livestream.title}
                             </p>
+                            <p>
+                              <p>
+                                <span>Lịch dự kiến: </span>
+                                {formatFullDateTimeVN(
+                                  livestream.scheduledStartTime
+                                )}
+                              </p>
+                            </p>
                           </div>
                         </div>
                       </TableCell>
-
-                      <TableCell>
-                        <Calendar />
-                        {livestream.actualStartTime
-                          ? new Date(
-                              livestream.actualStartTime
-                            ).toLocaleString()
-                          : "Chưa diễn ra"}
-                        {" - "}
-                        {livestream.actualEndTime
-                          ? new Date(livestream.actualEndTime).toLocaleString()
-                          : "Chưa kết thúc"}
+                      <TableCell className=" align-middle ">
+                        <div className="flex items-center  gap-2">
+                          <Calendar size={14} className="shrink-0" />
+                          {livestream.actualStartTime ? (
+                            <span>
+                              {formatFullDateTimeVN(livestream.actualStartTime)}
+                              {" - "}
+                              {livestream.actualEndTime
+                                ? formatFullDateTimeVN(livestream.actualEndTime)
+                                : "__"}
+                            </span>
+                          ) : (
+                            <span>Chưa diễn ra</span>
+                          )}
+                        </div>
                       </TableCell>
 
                       <TableCell>{livestream.tags}</TableCell>
 
                       <TableCell>
-                        <div className="flex gap-2 items-baseline">
-                          {livestream.maxViewer}
+                        <div className="flex gap-2  items-baseline">
+                          {livestream.maxViewer ?? "_ _"}
                         </div>
                       </TableCell>
-                      <TableCell>
-                        <div className="flex items-center">
-                          {livestream.title}
-                        </div>
-                      </TableCell>
+
                       <TableCell>
                         {livestream.status ? (
                           <Button
                             size="sm"
-                            className="text-white bg-blue-600 hover:bg-blue-700"
+                            variant="outline"
+                            className="text-lime-600 border-lime-600 cursor-pointer hover:text-lime-400 hover:border-lime-400 hover:bg-white bg-white"
                             onClick={() =>
                               handleContinueLivestream(livestream.id)
                             }
                           >
-                            Tiếp tục phát sóng
+                            Tiếp tục livestream
                           </Button>
                         ) : (
                           <Button
                             size="sm"
                             variant="outline"
-                            className="text-blue-600 border-blue-600"
+                            className="text-blue-600 border-blue-600 cursor-pointer hover:text-blue-400 hover:border-blue-400 hover:bg-white"
                             onClick={() => handleStartLivestream(livestream.id)}
                             disabled={!!livestream.actualEndTime}
                           >
                             {livestream.actualEndTime
                               ? "Đã kết thúc"
-                              : "Bắt đầu phát sóng"}
+                              : "Bắt đầu livestream"}
                           </Button>
                         )}
                       </TableCell>
