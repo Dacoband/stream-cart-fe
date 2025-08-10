@@ -11,7 +11,7 @@ export default async function LayoutRegisterShop({
       <div className="fixed top-0 w-full z-50 h-[8vh]">
         <HeaderNewShop />
       </div>
-      <div className="w-full mx-auto pt-[8vh] ">{children}</div>
+      <div className="w-full mx-auto pt-[8vh] h-[92vh]">{children}</div>
     </div>
   );
 }
