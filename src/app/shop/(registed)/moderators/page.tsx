@@ -37,7 +37,7 @@ function ModeratorsPage() {
         </div>
         <DialogCreateModerator onSuccess={fetchModerators} />
       </div>
-      <div className="flex flex-col gap-5 mx-5 mb-10">
+      <div className="mx-5 mb-10">
         <TableModerator
           moderators={moderators}
           loading={loading}

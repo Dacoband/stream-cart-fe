@@ -34,6 +34,7 @@ import { toast } from "sonner";
 import Image from "next/image";
 import { MoreHorizontal, Trash2, Undo2, CirclePlus } from "lucide-react";
 import CreateCategoryModal from "./CreateCategoryModal";
+import { AxiosError } from "axios";
 
 interface CategoryDetailModalProps {
   category: Category | null;
@@ -88,7 +89,8 @@ const CategoryDetailModal: React.FC<CategoryDetailModalProps> = ({
     try {
       const detail = await getDetailCategory(id);
       if (detail && detail.data) setCategoryDetail(detail.data);
-    } catch (e) {
+    } catch (error) {
+      console.log(error);
       /* handle error if needed */
     }
   };
@@ -106,11 +108,14 @@ const CategoryDetailModal: React.FC<CategoryDetailModalProps> = ({
       setSelectedCategory(null);
       // reload detail in modal
       reloadCategoryDetail(selectedCategory.id);
-    } catch (error: any) {
+    } catch (error: unknown) {
+      console.error("Create user failed:", error);
+      const err = error as AxiosError<{ message?: string; errors?: string[] }>;
       const message =
-        error?.response?.data?.message ||
-        error?.message ||
+        err?.response?.data?.errors?.[0] ||
+        err?.response?.data?.message ||
         `Không thể ${actionText.toLowerCase()} danh mục. Vui lòng thử lại!`;
+      toast.error(message);
       toast.error(message);
     }
   };
@@ -383,8 +388,8 @@ const CategoryDetailModal: React.FC<CategoryDetailModalProps> = ({
             </DialogTitle>
             <p>
               Bạn có chắc chắn muốn{" "}
-              {selectedCategory?.isDeleted ? "khôi phục" : "xóa"} danh mục "
-              {selectedCategory?.name}" không? Hành động này không thể hoàn tác.
+              {selectedCategory?.isDeleted ? "khôi phục" : "xóa"} danh mục{" "}
+              {selectedCategory?.name} không? Hành động này không thể hoàn tác.
             </p>
           </DialogHeader>
           <DialogFooter>

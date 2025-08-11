@@ -19,6 +19,8 @@ import {
   PreviewDeliveriesResponse,
 } from "@/types/deliveries/deliveries";
 import { previewDeliveries } from "@/services/api/deliveries/deliveries";
+import { deleteCart } from "@/services/api/cart/cart";
+
 import { toast } from "sonner";
 export default function OrderPage() {
   const searchParams = useSearchParams();
@@ -151,6 +153,11 @@ export default function OrderPage() {
       if (orderIds.length === 0) {
         toast.error("Không lấy được mã đơn hàng.");
         return;
+      }
+      try {
+        await deleteCart(cartItemIds);
+      } catch (err) {
+        console.warn("Không thể xóa giỏ hàng:", err);
       }
 
       const queryParam = orderIds.join(",");

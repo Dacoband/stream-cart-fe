@@ -66,6 +66,10 @@ export interface Variant {
   attributeValues: Record<string, string>;
   stock: number;
   price: number;
+  weight:number;
+  length:number;
+  width:number;
+  height:number;
   flashSalePrice: number;
   variantImage: VariantImage;
 }
@@ -77,19 +81,19 @@ export interface VariantImage {
 }
 
 
-export interface CreateProduct{
-   productName:string;
-   description:string;
-   sku:string;
-   categoryId:string;
-   basePrice:number;
-   discountPrice:number;
-   stockQuantity:number;
-   weight:number;
-   dimensions:string;
-   hasVariant:boolean;
-   shopId:string;
-}
+// export interface CreateProduct{
+//    productName:string;
+//    description:string;
+//    sku:string;
+//    categoryId:string;
+//    basePrice:number;
+//    discountPrice:number;
+//    stockQuantity:number;
+//    weight:number;
+//    dimensions:string;
+//    hasVariant:boolean;
+//    shopId:string;
+// }
 
 
 export interface UpdateProduct{
@@ -105,3 +109,59 @@ export interface UpdateProduct{
    hasVariant:boolean;
 }
 
+// Create Procuct
+export interface ProductImage {
+  imageUrl: string;
+  isPrimary: boolean;
+  displayOrder: number;
+  altText: string;
+}
+
+export interface ProductAttribute {
+  name: string;
+  values: string[];
+}
+
+export interface VariantAttribute {
+  attributeName: string;
+  attributeValue: string;
+}
+
+export interface ProductVariant {
+  sku: string;
+  price: number|null;
+  stock: number|null;
+  attributes: VariantAttribute[];
+  weight: number|null;
+  length: number|null;
+  width: number|null;
+  height: number|null;
+}
+
+export interface CreateProductDTO {
+  productName: string;
+  description: string;
+  sku: string;
+  categoryId: string;
+  basePrice: number;
+  stockQuantity: number;
+  weight: number;
+  length: number;
+  width: number;
+  height: number;
+  hasVariant: boolean;
+  shopId: string;
+  images: ProductImage[];
+  attributes: ProductAttribute[];
+  variants: ProductVariant[];
+}
+
+
+export interface filterProduct {
+  pageNumber?: number,
+  pageSize?: number
+  sortOption?:number,
+  activeOnly?:boolean,
+  shopId?:string;
+  InstockOnly?:boolean;
+}

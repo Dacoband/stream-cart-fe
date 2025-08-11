@@ -75,7 +75,7 @@ rootApi.interceptors.response.use(
         } catch (err) {
           // Nếu lấy user thất bại, xóa token và chuyển về login
           localStorage.clear();
-          window.location.href = "/authentication/login";
+          // window.location.href = "/authentication/login";
           return Promise.reject(err);
         }
 
@@ -83,7 +83,7 @@ rootApi.interceptors.response.use(
       } catch (err) {
         processQueue(err, null);
         localStorage.clear();
-        window.location.href = "/authentication/login";
+        // window.location.href = "/authentication/login";
         return Promise.reject(err);
       } finally {
         isRefreshing = false;

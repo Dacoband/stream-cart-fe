@@ -1,27 +1,126 @@
 "use client";
-import React from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { withRoleProtection } from "@/lib/requireRole";
-function ManagerOrders() {
+import { useState, useEffect } from "react";
+import { useAuth } from "@/lib/AuthContext";
+import { OrderList } from "@/app/customer/components/OrderList";
+import { getStatusesForTab, OrderTabValue } from "@/types/order/orderStatus";
+import { getCustomerOrders } from "@/services/api/order/customerOrder";
+import LoadingScreen from "@/components/common/LoadingScreen";
+
+// Có thể lấy count động từ API, ở đây demo cứng
+const ORDER_TABS = [
+  { label: "Tất cả", value: "all" },
+  { label: "Chờ thanh toán", value: "0", count: 0 },
+  { label: "Vận chuyển", value: "1", count: 0 },
+  { label: "Chờ giao hàng", value: "2", count: 0 },
+  { label: "Hoàn thành", value: "3", count: 0 },
+  { label: "Đã hủy", value: "4", count: 0 },
+  { label: "Trả hàng/Hoàn tiền", value: "5", count: 0 },
+];
+
+function ManageOrders() {
+  const { user, loading: authLoading } = useAuth();
+  const [tab, setTab] = useState<OrderTabValue>("all");
+  const [tabCounts, setTabCounts] = useState<Record<string, number>>({});
+  const [loadingCounts, setLoadingCounts] = useState(true);
+
+  // Fetch counts for each tab
+  useEffect(() => {
+    const fetchTabCounts = async () => {
+      if (!user?.id) return;
+      
+      setLoadingCounts(true);
+      const counts: Record<string, number> = {};
+      
+      try {
+        // Fetch count for all orders
+        const allOrdersResponse = await getCustomerOrders({
+          accountId: user.id,
+          PageIndex: 1,
+          PageSize: 1
+        });
+        counts['all'] = allOrdersResponse.totalCount;
+
+        // Fetch counts for each specific status tab
+        for (const orderTab of ORDER_TABS) {
+          if (orderTab.value !== 'all') {
+            const statuses = getStatusesForTab(orderTab.value as OrderTabValue);
+            let totalCount = 0;
+            
+            for (const status of statuses) {
+              try {
+                const response = await getCustomerOrders({
+                  accountId: user.id,
+                  PageIndex: 1,
+                  PageSize: 1,
+                  Status: status
+                });
+                totalCount += response.totalCount;
+              } catch (error) {
+                console.error(`Error fetching count for status ${status}:`, error);
+              }
+            }
+            
+            counts[orderTab.value] = totalCount;
+          }
+        }
+        
+        setTabCounts(counts);
+      } catch (error) {
+        console.error('Error fetching tab counts:', error);
+      } finally {
+        setLoadingCounts(false);
+      }
+    };
+
+    if (user?.id) {
+      fetchTabCounts();
+    }
+  }, [user?.id]);
+
+  if (authLoading || !user) {
+    return <LoadingScreen />;
+  }
+
   return (
-    <div className="w-full h-full ">
-      <Tabs defaultValue="account" className="w-full">
-        <TabsList>
-          <TabsTrigger value="all">Tất cả</TabsTrigger>
-          <TabsTrigger value="0">Chờ xác nhận</TabsTrigger>
-          <TabsTrigger value="1">Đóng gói</TabsTrigger>
-          <TabsTrigger value="2">Chờ giao hàng</TabsTrigger>
-          <TabsTrigger value="3">Hoàn thành</TabsTrigger>
-          <TabsTrigger value="4">Đã hủy</TabsTrigger>
-          <TabsTrigger value="5">Trả hàng/ Hoàn tiền</TabsTrigger>
+    <div className="container mx-auto px-4 py-6">
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-gray-900">Quản lý đơn hàng</h1>
+        <p className="text-gray-600 mt-1">Theo dõi và quản lý các đơn hàng của bạn</p>
+      </div>
+
+      <Tabs value={tab} onValueChange={(value) => setTab(value as OrderTabValue)} className="w-full rounded-none">
+        <TabsList className="grid grid-cols-7 w-full rounded-none h-fit border-b bg-white p-0 overflow-hidden shadow-none">
+          {ORDER_TABS.map(({ label, value }) => {
+            const count = loadingCounts ? 0 : (tabCounts[value] || 0);
+            return (
+              <TabsTrigger
+                key={value}
+                value={value}
+                className={`
+                  relative text-base py-3 px-3 rounded-none font-normal
+                  data-[state=active]:bg-[#B0F847]/40 data-[state=active]:text-[#65a406] data-[state=active]:font-normal cursor-pointer hover:text-lime-600
+                  flex items-center justify-center gap-1
+                `}
+              >
+                {label}
+                {count > 0 && !loadingCounts && <div>({count})</div>}
+                {loadingCounts && <div className="w-4 h-4 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin ml-1"></div>}
+              </TabsTrigger>
+            );
+          })}
         </TabsList>
-        <TabsContent value="account">
-          Make changes to your account here.
-        </TabsContent>
-        <TabsContent value="password">Change your password here.</TabsContent>
+
+        {ORDER_TABS.map(({ value }) => (
+          <TabsContent key={value} value={value} className="mt-4">
+            <OrderList tabValue={value as OrderTabValue} accountId={user.id} />
+          </TabsContent>
+        ))}
       </Tabs>
     </div>
   );
 }
 
-export default withRoleProtection(ManagerOrders, [1]);
+export default withRoleProtection(ManageOrders, [1]);

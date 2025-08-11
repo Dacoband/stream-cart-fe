@@ -47,7 +47,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { deletesModeratorById } from "@/services/api/auth/moderator";
 import { toast } from "sonner";
-
+import { useAuth } from "@/lib/AuthContext";
 interface TableModeratorProps {
   moderators: Moderator[];
   loading: boolean;
@@ -59,14 +59,14 @@ export function TableModerator({
   loading,
   fetchModerators,
 }: TableModeratorProps) {
+  const { user } = useAuth();
   const [openDialog, setOpenDialog] = React.useState(false);
   const [selectedModerator, setSelectedModerator] =
     React.useState<Moderator | null>(null);
   const [searchTerm, setSearchTerm] = React.useState("");
   const [loadingDelete, setLoadingDelete] = React.useState(false);
-  const [confirmDeleteId, setConfirmDeleteId] = React.useState<string | null>(
-    null
-  );
+  const [confirmDeleteModerator, setConfirmDeleteModerator] =
+    React.useState<Moderator | null>(null);
   const handleOpenDialog = (moderator: Moderator) => {
     setSelectedModerator(moderator);
     setOpenDialog(true);
@@ -75,24 +75,20 @@ export function TableModerator({
     moderator.fullname.toLowerCase().includes(searchTerm.toLowerCase())
   );
   const handleConfirmDelete = async () => {
-    if (!confirmDeleteId) return;
+    if (!confirmDeleteModerator) return;
     setLoadingDelete(true);
     try {
-      await deletesModeratorById(
-        confirmDeleteId,
-        selectedModerator?.shopId ?? ""
-      );
+      await deletesModeratorById(confirmDeleteModerator.id, user?.shopId ?? "");
       fetchModerators();
-      toast.success("Xóa nhân viên thành công!");
+      toast.success("Ngừng hoạt động tài khoản nhân viên thành công!");
     } catch (error) {
       console.error("Fetch Error delete Moderator:", error);
-      toast.error("Xóa nhân viên thất bại!");
+      toast.error("Ngừng hoạt động tài khoản thất bại!");
     } finally {
       setLoadingDelete(false);
-      setConfirmDeleteId(null);
+      setConfirmDeleteModerator(null);
     }
   };
-
   return (
     <Card className="bg-white py-5 px-8 min-h-[75vh]">
       <div className="flex items-center gap-3 py-4">
@@ -268,10 +264,10 @@ export function TableModerator({
                         </DropdownMenuItem>
                         <DropdownMenuItem
                           className="text-red-500"
-                          onClick={() => setConfirmDeleteId(moderator.id)}
+                          onClick={() => setConfirmDeleteModerator(moderator)}
                         >
                           <Trash2 size={18} className="text-red-500 mr-2" />
-                          Xóa
+                          Ngừng hoạt động
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -283,14 +279,15 @@ export function TableModerator({
         </Table>
       </div>
       <AlertDialog
-        open={!!confirmDeleteId}
-        onOpenChange={(open) => !open && setConfirmDeleteId(null)}
+        open={!!confirmDeleteModerator}
+        onOpenChange={(open) => !open && setConfirmDeleteModerator(null)}
       >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Xác nhận xóa</AlertDialogTitle>
             <AlertDialogDescription>
-              Bạn có chắc chắn muốn xóa nhân viên này không?
+              Bạn có chắc chắn muốn ngừng hoạt động nhân viên{" "}
+              {confirmDeleteModerator?.fullname} không?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -299,7 +296,7 @@ export function TableModerator({
               disabled={loadingDelete}
               onClick={handleConfirmDelete}
             >
-              Xóa
+              Xác nhận
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -23,7 +23,7 @@ import {
   ChevronDown,
   Search,
   MoreHorizontal,
-  CirclePlus,
+  // CirclePlus,
   ChevronRight,
 } from "lucide-react";
 import Image from "next/image";
@@ -64,10 +64,10 @@ type Props = {
 
 const TableCatgories: React.FC<Props> = ({
   categories,
-  loading,
-  page,
-  setPage,
-  totalPages,
+  // loading,
+  // page,
+  // setPage,
+  // totalPages,
   onSearch,
   onRefresh,
   statusFilter,
@@ -83,6 +83,7 @@ const TableCatgories: React.FC<Props> = ({
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [detailCategory, setDetailCategory] = useState<Category | null>(null);
   const [loadingDetail, setLoadingDetail] = useState(false);
+  // const [loadingDetail, setLoadingDetail] = useState(false);
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedParentCategory, setSelectedParentCategory] =
@@ -209,8 +210,8 @@ const TableCatgories: React.FC<Props> = ({
             </AlertDialogTitle>
             <AlertDialogDescription>
               Bạn có chắc chắn muốn{" "}
-              {selectedCategory?.isDeleted ? "khôi phục" : "xóa"} danh mục "
-              {selectedCategory?.name}" không? Hành động này không thể hoàn tác.
+              {selectedCategory?.isDeleted ? "khôi phục" : "xóa"} danh mục{" "}
+              {selectedCategory?.name} không? Hành động này không thể hoàn tác.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

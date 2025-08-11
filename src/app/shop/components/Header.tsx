@@ -7,6 +7,8 @@ import {
   CircleArrowOutDownRight,
   MessageCircleMore,
   UserRound,
+  Store,
+  ExternalLink,
 } from "lucide-react";
 import Image from "next/image";
 import React from "react";
@@ -99,15 +101,30 @@ function Header() {
 
               <NavigationMenuContent className="mt-16 py-2 rounded-md bg-white text-black shadow-xl">
                 <ul className="grid w-[200px] gap-4">
+                  {user?.shopId && (
+                    <li>
+                      <NavigationMenuLink asChild>
+                        <Link
+                          href={`/store/${user.shopId}`}
+                          target="_blank"
+                          className="flex items-center gap-2 px-4 py-2 hover:bg-gray-100 rounded"
+                        >
+                          <Store className="w-4 h-4" />
+                          <span>Xem Shop</span>
+                          <ExternalLink className="w-3 h-3 ml-auto" />
+                        </Link>
+                      </NavigationMenuLink>
+                    </li>
+                  )}
                   <li>
                     <NavigationMenuLink asChild>
                       <Link
                         href="/home"
-                        className="flex-row items-center gap-2"
+                        className="flex items-center gap-2 px-4 py-2 hover:bg-gray-100 rounded"
                         onClick={handleLogout}
                       >
-                        <CircleArrowOutDownRight />
-                        Đăng xuất
+                        <CircleArrowOutDownRight className="w-4 h-4" />
+                        <span>Đăng xuất</span>
                       </Link>
                     </NavigationMenuLink>
                   </li>

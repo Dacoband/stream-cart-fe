@@ -1,12 +1,14 @@
 "use client";
 import React, { createContext, useContext, useEffect, useState } from "react";
-import { getCart } from "@/services/api/cart/cart";
-import { useAuth } from "@/lib/AuthContext"; // thêm dòng này
+import { getCart, createCart } from "@/services/api/cart/cart";
+import { useAuth } from "@/lib/AuthContext";
+import { CreateCart } from "@/types/Cart/Cart";
 
 interface CartContextType {
   cartCount: number;
   refreshCart: () => Promise<void>;
   resetCart: () => void;
+  addToCart: (productId: string, quantity?: number) => Promise<boolean>;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -24,6 +26,23 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
+  const addToCart = async (productId: string, quantity: number = 1): Promise<boolean> => {
+    try {
+      const cartData: CreateCart = {
+        productId,
+        variantId: null, // Mặc định null nếu không có variant
+        quantity,
+      };
+
+      await createCart(cartData);
+      await refreshCart(); // Refresh để cập nhật số lượng
+      return true;
+    } catch (error) {
+      console.error("Lỗi khi thêm vào giỏ hàng:", error);
+      return false;
+    }
+  };
+
   useEffect(() => {
     if (!loading && user?.role === 1) {
       refreshCart();
@@ -33,7 +52,7 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
   const resetCart = () => setCartCount(0);
 
   return (
-    <CartContext.Provider value={{ cartCount, refreshCart, resetCart }}>
+    <CartContext.Provider value={{ cartCount, refreshCart, resetCart, addToCart }}>
       {children}
     </CartContext.Provider>
   );

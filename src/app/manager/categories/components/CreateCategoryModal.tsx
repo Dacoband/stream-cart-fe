@@ -42,6 +42,7 @@ import {
 import { Category, filterCategory } from "@/types/category/category";
 import { toast } from "sonner";
 import { Textarea } from "@/components/ui/textarea";
+import { AxiosError } from "axios";
 
 interface CreateCategoryModalProps {
   open: boolean;
@@ -75,7 +76,7 @@ const CreateCategoryModal: React.FC<CreateCategoryModalProps> = ({
     handleSubmit,
     reset,
     setValue,
-    watch,
+    // watch,
     formState: { isSubmitting },
   } = form;
 
@@ -83,7 +84,7 @@ const CreateCategoryModal: React.FC<CreateCategoryModalProps> = ({
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loadingCategories, setLoadingCategories] = useState(false);
-  const iconURL = watch("iconURL");
+  // const iconURL = watch("iconURL");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const fetchData = async () => {
     try {
@@ -93,14 +94,14 @@ const CreateCategoryModal: React.FC<CreateCategoryModalProps> = ({
         CategoryName: "",
         IsDeleted: false,
       };
-      var res = await getAllCategories(params);
+      const res = await getAllCategories(params);
       console.log(res.data.categories);
       setLoadingCategories(false);
       setCategories(res.data.categories);
       // setTotalPages(res.totalPages || 1)
     } catch (err) {
-      console.log(res);
-      toast.error(res.message || "Không thể tải danh mục");
+      console.log(err);
+      toast.error("Không thể tải danh mục");
       console.error("Failed to fetch categories:", err);
     } finally {
     }
@@ -118,7 +119,7 @@ const CreateCategoryModal: React.FC<CreateCategoryModalProps> = ({
         setValue("slug", initialData.slug || "");
         setValue(
           "parentCategoryID",
-          mode === "update" ? "" : (initialData as any)?.parentCategoryID ?? ""
+          mode === "update" ? "" : initialData?.parentCategoryID ?? ""
         );
       } else if (parentCategoryID) {
         setValue("parentCategoryID", parentCategoryID);
@@ -136,10 +137,13 @@ const CreateCategoryModal: React.FC<CreateCategoryModalProps> = ({
       console.log(res);
       setValue("iconURL", res.imageUrl, { shouldValidate: true });
       toast.success(res.message || "Tải ảnh lên thành công");
-    } catch (err: any) {
+    } catch (error: unknown) {
+      console.error(error);
+      const err = error as AxiosError<{ message?: string; errors?: string[] }>;
       const message =
-        err?.response?.data?.message || err?.message || "Tải ảnh thất bại";
-      setUploadError(message);
+        err?.response?.data?.errors?.[0] ||
+        err?.response?.data?.message ||
+        "Tải ảnh thất bại";
       toast.error(message);
     } finally {
       setUploading(false);
@@ -167,10 +171,12 @@ const CreateCategoryModal: React.FC<CreateCategoryModalProps> = ({
       onSuccess();
       onOpenChange(false);
       reset();
-    } catch (err: any) {
+    } catch (error: unknown) {
+      console.error("Create category failed:", error);
+      const err = error as AxiosError<{ message?: string; errors?: string[] }>;
       const message =
+        err?.response?.data?.errors?.[0] ||
         err?.response?.data?.message ||
-        err?.message ||
         (mode === "update"
           ? "Cập nhật danh mục thất bại. Vui lòng thử lại!"
           : "Tạo danh mục thất bại. Vui lòng thử lại!");

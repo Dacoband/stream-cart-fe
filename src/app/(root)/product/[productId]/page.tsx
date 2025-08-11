@@ -1,11 +1,11 @@
 "use client";
-
+import dynamic from "next/dynamic";
 import React, { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import BreadcrumbProduct from "./components/BreadcrumbProduct";
-import DescriptionProduct from "./components/DescriptionProduct";
-import InforShop from "./components/InforShop";
-import OperationProduct from "./components/OperationProduct";
+// import BreadcrumbProduct from "./components/BreadcrumbProduct";
+// import DescriptionProduct from "./components/DescriptionProduct";
+// import InforShop from "./components/InforShop";
+// import OperationProduct from "./components/OperationProduct";
 import { getProductDetailById } from "@/services/api/product/product";
 import { ProductDetail } from "@/types/product/product";
 import NotFound from "@/components/common/NotFound";
@@ -16,6 +16,28 @@ export default function ProductPage() {
 
   const [product, setProduct] = useState<ProductDetail | null>(null);
   const [loading, setLoading] = useState(true);
+
+  const BreadcrumbProduct = dynamic(
+    () => import("./components/BreadcrumbProduct"),
+    {
+      ssr: false,
+    }
+  );
+  const OperationProduct = dynamic(
+    () => import("./components/OperationProduct"),
+    {
+      ssr: false,
+    }
+  );
+  const InforShop = dynamic(() => import("./components/InforShop"), {
+    ssr: false,
+  });
+  const DescriptionProduct = dynamic(
+    () => import("./components/DescriptionProduct"),
+    {
+      ssr: false,
+    }
+  );
 
   useEffect(() => {
     const fetchProduct = async () => {

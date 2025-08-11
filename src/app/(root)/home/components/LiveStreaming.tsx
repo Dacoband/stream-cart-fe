@@ -1,81 +1,105 @@
-import React from "react";
-import Image from "next/image";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { fakeLiveStreams } from "@/fake data/LiveStream";
-import { Button } from "@/components/ui/button";
+"use client";
 
+import React, { useEffect, useState } from "react";
+import Image from "next/image";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { getLivestreamActive } from "@/services/api/livestream/livestream";
+import { ArrowRight, Play } from "lucide-react";
+import { Livestream } from "@/types/livestream/livestream";
+import LoadingCard from "./LoadingCard";
+import Link from "next/link";
 function LiveStreaming() {
+  const [liveStreamList, setLiveStreamList] = useState<Livestream[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchLive = async () => {
+      try {
+        const data = await getLivestreamActive();
+        setLiveStreamList(data);
+      } catch (err) {
+        console.error("Lỗi khi tải sản phẩm:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchLive();
+  }, []);
   return (
-    <div
-      className="flex flex-col px-10 py-5 w-full rounded-xl"
-      style={{
-        background:
-          "linear-gradient(to bottom, #BDF965 20%, #ffffff ,#ffffff )",
-        boxShadow: "0 0 20px rgba(148, 163, 184, 0.3)",
-      }}
-    >
-      <div className="flex justify-between">
-        <div className="flex text-gray-800 items-center text-2xl font-bold  gap-2 mb-4">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 24 24"
-            fill="currentColor"
-            className="size-8"
-          >
-            <path
-              fillRule="evenodd"
-              d="M14.615 1.595a.75.75 0 0 1 .359.852L12.982 9.75h7.268a.75.75 0 0 1 .548 1.262l-10.5 11.25a.75.75 0 0 1-1.272-.71l1.992-7.302H3.75a.75.75 0 0 1-.548-1.262l10.5-11.25a.75.75 0 0 1 .913-.143Z"
-              clipRule="evenodd"
-            />
-          </svg>
-          XEM LIVE SIÊU HỜI:
+    <div className="flex flex-col px-10 py-5 w-full bg-white rounded-xl shadow">
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center space-x-3">
+          <div className="w-12 h-12 bg-gradient-to-r from-[#f22020] to-[#d90303] rounded-xl flex items-center justify-center shadow-lg">
+            <Play className="w-6 h-6 text-white" />
+          </div>
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900">
+              🔴 Xem LiveStream
+            </h2>
+            <p className="text-gray-600 text-sm">
+              Xem trực tiếp các sản phẩm kèm theo deal hời
+            </p>
+          </div>
         </div>
-        <Button className="cursor-pointer rounded-md px-5 font-normal">
+        <Button className="bg-gradient-to-r from-[#f22020] to-[#d90303] hover:from-[#d90303] hover:to-[#f22020] text-white font-bold px-12 py-3 rounded-md shadow hover:shadow-lg transition-all cursor-pointer duration-300 transform hover:scale-105">
           Xem thêm
+          <ArrowRight className="w-4 h-4 ml-2" />
         </Button>
       </div>
 
-      <div className="grid grid-cols-4 justify-between pt-2 gap-2 mb-5">
-        {fakeLiveStreams.map((live, index) => (
-          <Card
-            key={index}
-            className=" p-0 hover:shadow-lg gap-2 transition-all duration-300 cursor-pointer hover:scale-102 shadow-none "
-          >
-            <CardHeader className="p-0 m-0 relative">
-              <Image
-                src={live.thumbnailUrl}
-                alt={live.title}
-                width={400}
-                height={200}
-                className="w-full h-72 object-cover rounded-t-xl"
-              />
-              <div className="absolute top-3 left-3 bg-red-500 text-white  px-3 py-1 rounded-full text-xs font-semibold flex items-center space-x-1 z-10 shadow">
-                <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
-                <span>LIVE</span>
-              </div>
-            </CardHeader>
-            <CardContent className="px-4 pt-1 pb-5 my-0 flex gap-2.5 items-center">
-              <div className="relative w-18 h-18 flex justify-center items-center">
-                <div className="absolute inset-0 w-full h-full  bg-[#e2f8c2] rounded-full animate-pulse z-0"></div>
+      {loading ? (
+        <div className="grid grid-cols-4 gap-x-5 gap-y-10 pt-2 mb-5">
+          {Array.from({ length: 4 }).map((_, index) => (
+            <LoadingCard key={index} />
+          ))}
+        </div>
+      ) : (
+        <>
+          {liveStreamList.length === 0 && (
+            <div className="text-center text-gray-500 mb-4">
+              Hiện không có phiên live nào
+            </div>
+          )}
 
-                <Image
-                  src={live.shopImage}
-                  alt={live.shopName}
-                  width={64}
-                  height={64}
-                  className="w-16 h-16 object-cover rounded-full z-10 relative border-[3px] border-[#aafa32]"
-                />
-              </div>
-              <div>
-                <div className="text-base font-medium ">{live.title}</div>
-                <span className="text-base  text-gray-600">
-                  {live.shopName}
-                </span>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+          <div className="grid grid-cols-5 justify-between pt-2 gap-2 mb-5">
+            {liveStreamList.map((live, index) => (
+              <Link href={`/live/${live.id}`} key={live.id}>
+                <Card
+                  key={index}
+                  className="p-0 hover:shadow-lg transition-all duration-300 cursor-pointer rounded-none hover:scale-102 shadow-none"
+                >
+                  <div className="aspect-square w-full relative overflow-hidden">
+                    <Image
+                      src={live.thumbnailUrl}
+                      alt={live.title}
+                      fill
+                      className="object-cover "
+                    />
+
+                    {/* LIVE Badge */}
+                    <div className="absolute top-3 left-3 bg-red-500 text-white px-3 py-1 rounded-full text-xs font-semibold flex items-center space-x-1 z-10 shadow">
+                      <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
+                      <span>LIVE</span>
+                    </div>
+
+                    {/* Text overlay (title + shop name) */}
+                    <div className="absolute bottom-0 left-0 w-full bg-gradient-to-t from-black/70 to-transparent px-3 py-2.5 text-white">
+                      <div className="text-base font-medium truncate">
+                        {live.shopName}
+                      </div>
+                      <div className="text-sm text-gray-200 truncate min-h-8">
+                        {live.title}
+                      </div>
+                    </div>
+                  </div>
+                </Card>
+              </Link>
+            ))}
+          </div>
+        </>
+      )}
     </div>
   );
 }

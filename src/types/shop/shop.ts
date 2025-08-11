@@ -26,7 +26,19 @@ export interface RegisterShop {
   description: string
   logoURL: string
   coverImageURL: string
+  street:string
+  ward:string
+  district:string
+  city:string
+  country:string
+  postalCode:string;
+  phoneNumber:string;
+  bankName: string,
+  bankNumber: string,
+  tax: string
 }
+
+
 
 export interface FilterShop {
   pageNumber: number

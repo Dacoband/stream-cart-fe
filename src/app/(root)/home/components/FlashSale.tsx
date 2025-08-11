@@ -73,7 +73,7 @@ function FlashSale() {
             </div>
           )}
           <div className="grid grid-cols-6 gap-x-5 gap-y-10 pt-2 mb-5">
-            {flashSaleList.map((saleItem, index) => {
+            {flashSaleList.slice(0, 6).map((saleItem, index) => {
               const product = productList[index];
               if (!product) return null;
 
@@ -85,19 +85,21 @@ function FlashSale() {
                   >
                     <CardContent className="p-0">
                       <div className="relative overflow-hidden">
-                        {product.primaryImageUrl ? (
-                          <Image
-                            src={product.primaryImageUrl}
-                            alt={product.productName}
-                            width={200}
-                            height={200}
-                            className="w-full h-52 object-cover object-center group-hover:scale-110 transition-transform duration-500"
-                          />
-                        ) : (
-                          <div className="bg-gray-200 w-full flex items-center justify-center h-52 text-gray-400">
-                            <ImageIcon size={50} />
-                          </div>
-                        )}
+                        <div className="aspect-square w-full relative overflow-hidden">
+                          {product.primaryImageUrl ? (
+                            <Image
+                              src={product.primaryImageUrl}
+                              alt={product.productName}
+                              width={200}
+                              height={200}
+                              className="w-full h-full object-cover object-center group-hover:scale-110 transition-transform duration-500"
+                            />
+                          ) : (
+                            <div className="bg-gray-200 w-full flex items-center justify-center h-full text-gray-400">
+                              <ImageIcon size={50} />
+                            </div>
+                          )}
+                        </div>
 
                         <div className="absolute top-2 left-2 bg-gradient-to-r from-red-500 to-orange-500 text-white px-2 py-1 rounded text-xs font-bold animate-pulse">
                           FLASH
