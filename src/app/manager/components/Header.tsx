@@ -103,11 +103,11 @@ function Header() {
                     <NavigationMenuLink asChild>
                       <Link
                         href="/home"
-                        className="flex-row items-center gap-2"
+                        className="flex items-center gap-2 px-4 py-2 hover:bg-gray-100 rounded"
                         onClick={handleLogout}
                       >
-                        <CircleArrowOutDownRight />
-                        Đăng xuất
+                        <CircleArrowOutDownRight className="w-4 h-4" />
+                        <span>Đăng xuất</span>
                       </Link>
                     </NavigationMenuLink>
                   </li>

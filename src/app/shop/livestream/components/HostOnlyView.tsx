@@ -12,18 +12,14 @@ export function HostOnlyView({ isFullscreen }: HostOnlyViewProps) {
   ]);
 
   return (
-    <div
-      className={`bg-black flex items-center justify-center ${
-        isFullscreen ? "fixed inset-0 z-50" : "w-full h-full"
-      }`}
-    >
+    <div className={`bg-black flex w-full h-full ${isFullscreen ? "" : ""}`}>
       {tracks.map((trackRef) => {
         if (!trackRef.publication) return null;
         return (
           <ParticipantTile
             key={trackRef.publication.trackSid}
             trackRef={trackRef}
-            className="hide-metadata"
+            className="hide-metadata w-full h-full"
           />
         );
       })}
