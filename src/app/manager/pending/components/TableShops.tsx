@@ -217,11 +217,7 @@ const TableShops: React.FC<Props> = ({
               shops.map((shop) => {
                 if (!shop || !shop.id) return null
 
-                const shopName =
-                  (shop as any).shopName ||
-                  (shop as any).name ||
-                  (shop as any).title ||
-                  'Không có tên'
+                const shopName = shop.shopName || 'Không có tên'
 
                 const shopAddress = shopAddresses[shop.id] as
                   | Address

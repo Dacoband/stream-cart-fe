@@ -86,7 +86,9 @@ export const TransactionHistory = ({
             {Object.entries(typeLabels).map(([key, label]) => (
               <DropdownMenuItem
                 key={key}
-                onClick={() => setFilterType(key as any)}
+                onClick={() =>
+                  setFilterType(key as 'ALL' | Transaction['type'])
+                }
               >
                 {label}
               </DropdownMenuItem>

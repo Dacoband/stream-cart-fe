@@ -19,8 +19,8 @@ type Props = {
   shop: Shop
   seller?: User | null
   address?: Address | null
-  shopOwner?: any
-  moderators?: any[]
+  shopOwner?: User | null
+  moderators?: User[]
 }
 
 export const ShopInfo = ({
@@ -139,7 +139,7 @@ export const ShopInfo = ({
                         </Avatar>
                         <div>
                           <p className="font-semibold text-gray-900">
-                            {moderator.fullname || moderator.fullName}
+                            {moderator.fullname}
                           </p>
                           <p className="text-sm text-gray-500">
                             {moderator.username}

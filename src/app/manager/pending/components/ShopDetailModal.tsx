@@ -48,8 +48,9 @@ const ShopDetailModal: React.FC<ShopDetailModalProps> = ({
       toast.success('Phê duyệt cửa hàng thành công!')
       onOpenChange(false)
       if (onRefresh) onRefresh()
-    } catch (err: any) {
-      toast.error(err?.message || 'Phê duyệt thất bại!')
+    } catch (err) {
+      console.error('Error approving shop:', err)
+      toast.error('Phê duyệt thất bại!')
     } finally {
       setLoadingApprove(false)
     }
@@ -68,8 +69,9 @@ const ShopDetailModal: React.FC<ShopDetailModalProps> = ({
       setShowRejectDialog(false)
       onOpenChange(false)
       if (onRefresh) onRefresh()
-    } catch (err: any) {
-      toast.error(err?.message || 'Từ chối thất bại!')
+    } catch (err) {
+      console.error('Error rejecting shop:', err)
+      toast.error('Từ chối thất bại!')
     } finally {
       setLoadingReject(false)
       setRejectReason('')

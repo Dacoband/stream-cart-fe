@@ -62,9 +62,9 @@ const PendingShopPage = () => {
       setShops(shopsData)
       setTotalPages(totalPagesData)
       setTotalCount(totalCountData)
-    } catch (error: any) {
-      const message = error?.message || 'Không thể tải danh sách cửa hàng'
-      toast.error(message)
+    } catch (error) {
+      console.error('Error fetching shops:', error)
+      toast.error('Không thể tải danh sách cửa hàng')
       setShops([])
     } finally {
       setLoading(false)

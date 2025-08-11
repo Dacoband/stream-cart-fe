@@ -172,14 +172,9 @@ const TableShops: React.FC<Props> = ({
               shops.map((shop) => {
                 if (!shop || !shop.id) return null
 
-                const shopName =
-                  (shop as any).shopName ||
-                  (shop as any).name ||
-                  (shop as any).title ||
-                  'Không có tên'
+                const shopName = shop.shopName || 'Không có tên'
 
-                const rating =
-                  (shop as any).ratingAverage || (shop as any).rating || 0
+                const rating = shop.ratingAverage || 0
 
                 return (
                   <TableRow
@@ -226,9 +221,7 @@ const TableShops: React.FC<Props> = ({
                       )}
                     </TableCell>
                     <TableCell className="text-center align-middle px-5">
-                      {(shop as any).status ||
-                      (shop as any).isActive ||
-                      (shop as any).active ? (
+                      {shop.status ? (
                         <span className="px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-600">
                           Đang hoạt động
                         </span>
@@ -239,10 +232,7 @@ const TableShops: React.FC<Props> = ({
                       )}
                     </TableCell>
                     <TableCell className="text-center align-middle px-5">
-                      {(shop as any).completeRate ||
-                        (shop as any).completionRate ||
-                        0}
-                      %
+                      {shop.completeRate || 0}%
                     </TableCell>
                     <TableCell className="text-center align-middle px-5">
                       <DropdownMenu>

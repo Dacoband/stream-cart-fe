@@ -1,13 +1,13 @@
-"use client";
+'use client'
 
-import React from "react";
+import React from 'react'
 import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { format } from "date-fns";
-import { vi } from "date-fns/locale";
+} from '@/components/ui/dialog'
+import { format } from 'date-fns'
+import { vi } from 'date-fns/locale'
 import {
   Table,
   TableBody,
@@ -15,20 +15,53 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
-import Image from "next/image";
-import { Badge } from "@/components/ui/badge";
-import { ScrollArea } from "@/components/ui/scroll-area";
+} from '@/components/ui/table'
+import Image from 'next/image'
+import { Badge } from '@/components/ui/badge'
+import { ScrollArea } from '@/components/ui/scroll-area'
 
-export const OrderDetailModal = ({ order }: { order: any }) => {
-  if (!order) return null;
+interface OrderItem {
+  id: string
+  productName: string
+  productImageUrl: string
+  quantity: number
+  unitPrice: number
+  totalPrice: number
+  discountAmount: number
+}
+
+interface ShippingAddress {
+  phone: string
+  addressLine1: string
+  ward: string
+  district: string
+  city: string
+}
+
+interface OrderDetail {
+  orderId: string
+  customerName: string
+  shippingAddress: ShippingAddress
+  customerNotes?: string
+  createdAt: string
+  estimatedDeliveryDate?: string
+  trackingCode?: string
+  status: string
+  items: OrderItem[]
+  shippingFee: number
+  discountAmount: number
+  finalAmount: number
+}
+
+export const OrderDetailModal = ({ order }: { order: OrderDetail }) => {
+  if (!order) return null
 
   const formatDate = (dateString?: string) => {
-    if (!dateString) return "Không xác định";
-    const date = new Date(dateString);
-    if (isNaN(date.getTime())) return "Không xác định";
-    return format(date, "dd/MM/yyyy HH:mm", { locale: vi });
-  };
+    if (!dateString) return 'Không xác định'
+    const date = new Date(dateString)
+    if (isNaN(date.getTime())) return 'Không xác định'
+    return format(date, 'dd/MM/yyyy HH:mm', { locale: vi })
+  }
 
   return (
     <DialogContent className="!max-w-4xl max-h-[90vh] overflow-y-auto">
@@ -48,7 +81,7 @@ export const OrderDetailModal = ({ order }: { order: any }) => {
             <strong>SĐT:</strong> {order.shippingAddress?.phone}
           </p>
           <p>
-            <strong>Địa chỉ giao hàng:</strong>{" "}
+            <strong>Địa chỉ giao hàng:</strong>{' '}
             <span className="block text-gray-700">
               {[
                 order.shippingAddress?.addressLine1,
@@ -57,13 +90,13 @@ export const OrderDetailModal = ({ order }: { order: any }) => {
                 order.shippingAddress?.city,
               ]
                 .filter(Boolean)
-                .join(", ")}
+                .join(', ')}
             </span>
           </p>
           <p>
-            <strong>Ghi chú:</strong>{" "}
+            <strong>Ghi chú:</strong>{' '}
             <span className="italic text-gray-600">
-              {order.customerNotes || "Không có"}
+              {order.customerNotes || 'Không có'}
             </span>
           </p>
         </div>
@@ -73,17 +106,17 @@ export const OrderDetailModal = ({ order }: { order: any }) => {
             <strong>Ngày đặt:</strong> {formatDate(order.createdAt)}
           </p>
           <p>
-            <strong>Ngày giao dự kiến:</strong>{" "}
+            <strong>Ngày giao dự kiến:</strong>{' '}
             {formatDate(order.estimatedDeliveryDate)}
           </p>
           <p>
-            <strong>Mã vận đơn:</strong>{" "}
+            <strong>Mã vận đơn:</strong>{' '}
             <span className="font-medium text-gray-700">
-              {order.trackingCode || "—"}
+              {order.trackingCode || '—'}
             </span>
           </p>
           <p>
-            <strong>Trạng thái:</strong>{" "}
+            <strong>Trạng thái:</strong>{' '}
             <Badge variant="outline" className="bg-slate-100 text-gray-800">
               {order.status}
             </Badge>
@@ -107,7 +140,7 @@ export const OrderDetailModal = ({ order }: { order: any }) => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {order.items.map((item: any) => (
+              {order.items.map((item: OrderItem) => (
                 <TableRow key={item.id}>
                   <TableCell>
                     <Image
@@ -121,13 +154,13 @@ export const OrderDetailModal = ({ order }: { order: any }) => {
                   <TableCell>{item.productName}</TableCell>
                   <TableCell className="text-center">{item.quantity}</TableCell>
                   <TableCell className="text-right">
-                    {item.unitPrice.toLocaleString("vi-VN")} đ
+                    {item.unitPrice.toLocaleString('vi-VN')} đ
                   </TableCell>
                   <TableCell className="text-right">
-                    {item.discountAmount.toLocaleString("vi-VN")} đ
+                    {item.discountAmount.toLocaleString('vi-VN')} đ
                   </TableCell>
                   <TableCell className="text-right font-medium">
-                    {item.totalPrice.toLocaleString("vi-VN")} đ
+                    {item.totalPrice.toLocaleString('vi-VN')} đ
                   </TableCell>
                 </TableRow>
               ))}
@@ -138,12 +171,12 @@ export const OrderDetailModal = ({ order }: { order: any }) => {
 
       {/* Tổng kết */}
       <div className="mt-6 space-y-1 text-sm text-right border-t pt-4">
-        <p>Phí vận chuyển: {order.shippingFee.toLocaleString("vi-VN")} đ</p>
-        <p>Giảm giá: {order.discountAmount.toLocaleString("vi-VN")} đ</p>
+        <p>Phí vận chuyển: {order.shippingFee.toLocaleString('vi-VN')} đ</p>
+        <p>Giảm giá: {order.discountAmount.toLocaleString('vi-VN')} đ</p>
         <p className="font-semibold text-base text-green-700">
-          Tổng tiền: {order.finalAmount.toLocaleString("vi-VN")} đ
+          Tổng tiền: {order.finalAmount.toLocaleString('vi-VN')} đ
         </p>
       </div>
     </DialogContent>
-  );
-};
+  )
+}
