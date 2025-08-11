@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import {
   Calendar,
   CirclePlus,
-  Edit,
+  LayoutList,
   MoreVertical,
   Search,
   Trash2,
@@ -15,8 +15,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
@@ -146,7 +144,7 @@ function LiveStreamPage() {
                       <TableCell>
                         <Skeleton className="h-4 w-20" />
                       </TableCell>
-                      s
+
                       <TableCell className="text-right">
                         <Skeleton className="h-4 w-20 ml-auto" />
                       </TableCell>
@@ -192,13 +190,12 @@ function LiveStreamPage() {
                             <p className="font-semibold text-base text-gray-900 line-clamp-2 break-words whitespace-normal max-w-[305px]">
                               {livestream.title}
                             </p>
+
                             <p>
-                              <p>
-                                <span>Lịch dự kiến: </span>
-                                {formatFullDateTimeVN(
-                                  livestream.scheduledStartTime
-                                )}
-                              </p>
+                              <span>Lịch dự kiến: </span>
+                              {formatFullDateTimeVN(
+                                livestream.scheduledStartTime
+                              )}
                             </p>
                           </div>
                         </div>
@@ -244,8 +241,15 @@ function LiveStreamPage() {
                           <Button
                             size="sm"
                             variant="outline"
-                            className="text-blue-600 border-blue-600 cursor-pointer hover:text-blue-400 hover:border-blue-400 hover:bg-white"
-                            onClick={() => handleStartLivestream(livestream.id)}
+                            className={
+                              livestream.actualEndTime
+                                ? "text-gray-700 border-gray-500 cursor-not-allowed bg-white"
+                                : "text-blue-600 border-blue-600 cursor-pointer hover:text-blue-400 hover:border-blue-400 hover:bg-white"
+                            }
+                            onClick={() =>
+                              !livestream.actualEndTime &&
+                              handleStartLivestream(livestream.id)
+                            }
                             disabled={!!livestream.actualEndTime}
                           >
                             {livestream.actualEndTime
@@ -267,20 +271,19 @@ function LiveStreamPage() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuLabel>Thao tác</DropdownMenuLabel>
-                            <DropdownMenuSeparator />
-
-                            <DropdownMenuItem className="text-blue-600">
-                              <Edit
+                            <DropdownMenuItem className="text-blue-600 hover:text-blue-600 cursor-pointer">
+                              <LayoutList
                                 size={18}
                                 className="text-blue-600 flex justify-start"
                               />
-                              Cập nhật
+                              Xem chi tiết
                             </DropdownMenuItem>
-                            <DropdownMenuItem className="text-red-500">
-                              <Trash2 size={18} className="text-red-500 mr-2" />
-                              Ngừng hoạt động
-                            </DropdownMenuItem>
+                            {!livestream.actualStartTime && (
+                              <DropdownMenuItem className="text-red-500 hover:text-red-500 cursor-pointer">
+                                <Trash2 size={18} className="text-red-500 " />
+                                Xóa LiveStream
+                              </DropdownMenuItem>
+                            )}
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </TableCell>

@@ -30,9 +30,14 @@ export function ViewerCount() {
 
   return (
     <div className="flex ml-2">
-      <Button className="bg-rose-600 text-white rounded-none hover:bg-rose-600">
+      <Button className="bg-rose-600 text-white rounded-none hover:bg-rose-600 flex items-center relative overflow-visible">
+        <span className="relative mr-2 flex items-center justify-center">
+          <span className="absolute h-4 w-4 rounded-full bg-white opacity-75 animate-ping" />
+          <span className="h-3 w-3 rounded-full bg-white" />
+        </span>
         Live
       </Button>
+
       <Button className="rounded-none">
         <UserRound />
         {filtered.length}

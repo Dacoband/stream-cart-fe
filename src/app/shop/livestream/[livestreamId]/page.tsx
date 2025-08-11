@@ -112,10 +112,10 @@ export default function SellerLiveStream() {
                 } bg-black relative`}
               >
                 <div className="bg-black w-full flex justify-between">
-                  <div className=" py-2">
+                  <div className=" py-4">
                     <ViewerCount />
                   </div>
-                  <div className="flex gap-2 py-2">
+                  <div className="flex gap-2 py-4">
                     <Button
                       className="cursor-pointer"
                       variant="secondary"
@@ -135,10 +135,20 @@ export default function SellerLiveStream() {
                   </div>
                 </div>
                 {isConnected ? (
-                  <>
+                  <div className="">
                     <HostOnlyView isFullscreen={isFullscreen} />
                     <RoomAudioRenderer />
-                  </>
+
+                    <div className=" w-full bg-gradient-to-t from-black/70 to-transparent p-4  text-white">
+                      <h3 className="text-3xl font-bold">{livestream.title}</h3>
+                      <p className="text-base  mb-5 opacity-80">
+                        {livestream.description}
+                      </p>
+                      <p className="text-sm bg-white text-black opacity-80 px-5 py-1 rounded-full w-fit">
+                        #{livestream.tags}
+                      </p>
+                    </div>
+                  </div>
                 ) : (
                   <div className="flex flex-col items-center justify-center text-white h-[70vh] p-4 text-center">
                     <h2 className="text-xl font-bold">

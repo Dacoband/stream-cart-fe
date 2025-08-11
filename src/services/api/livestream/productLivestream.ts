@@ -22,3 +22,27 @@ export const getProductByLiveStreamId = async (livestreamId: string) => {
     throw error;
   }
 };
+
+
+
+// export const PinProductLiveStream = async (productId: string) => {
+//   try {
+    
+//     const token = localStorage.getItem("token");
+//     if (!token) {
+//       throw new Error("Not found token.");
+//     }
+//   const response = await rootApi.get(
+//     `livestream-products/livestream/${livestreamId}`,
+//     {
+//       headers: {
+//         Authorization: `Bearer ${token}`,
+//       },
+//     }
+//   );
+//   return response.data.data;
+//   } catch (error) {
+//     console.error("Error fetching livestreams:", error);
+//     throw error;
+//   }
+// };

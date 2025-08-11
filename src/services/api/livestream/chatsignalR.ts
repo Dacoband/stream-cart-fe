@@ -9,8 +9,8 @@ export const joinChatLiveStream = async (Id: string) => {
     if (!token) {
       throw new Error("Not found token.");
     }
-  const response = await rootApi.get(
-    `/chatsignalr/livestream//${Id}/join`,
+  const response = await rootApi.post(
+    `/chatsignalr/livestream/${Id}/join`,
     {
       headers: {
         Authorization: `Bearer ${token}`,

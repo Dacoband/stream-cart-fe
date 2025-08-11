@@ -78,3 +78,23 @@ export const getProductHasFilter = async (data: filterProduct) => {
     throw error
   }
 }
+export const deleteProductById = async (productId:string) => {
+  try{
+ 
+const token = localStorage.getItem("token");
+    if (!token) {
+      throw new Error("Not found token.");
+    }
+
+  const response = await rootApi.delete(`products/${productId}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  })
+
+  return response.data}
+   catch (error) {
+    console.error("Error delete product:", error);
+    throw error;
+  }
+}
