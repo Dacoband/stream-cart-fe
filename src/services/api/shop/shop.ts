@@ -19,19 +19,18 @@ export const registerShop = async (data: RegisterShop) => {
   } catch (error) {
     console.error('Error registering shop:', error)
     throw error
-  }}
-
-export const getshopById = async (shopId:string) => {
-  try {
-    const response = await rootApi.get(`shops/${shopId}`);
-    return response.data;
-  } catch (error) {
-    console.error("Error fetching Shop detail:", error);
-    throw error;
   }
-};
+}
 
-
+export const getshopById = async (shopId: string) => {
+  try {
+    const response = await rootApi.get(`shops/${shopId}`)
+    return response.data
+  } catch (error) {
+    console.error('Error fetching Shop detail:', error)
+    throw error
+  }
+}
 
 export const getMyShop = async () => {
   try {
@@ -81,5 +80,65 @@ export const getShopDetail = async (id: string) => {
   } catch (error) {
     console.error('Error fetching shop detail:', error)
     throw new Error('Xảy ra lỗi trong quá trình tải thông tin cửa hàng')
+  }
+}
+export const getShopMembers = async (shopId: string) => {
+  try {
+    const token = localStorage.getItem('token')
+    if (!token) {
+      throw new Error('Not found token.')
+    }
+
+    const response = await rootApi.get(
+      `accounts/moderators/by-shop/${shopId}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    )
+    console.log('moderator', response)
+    return response.data
+  } catch (error) {
+    console.error('Error fetching shop members:', error)
+    throw new Error('Xảy ra lỗi trong quá trình tải danh sách thành viên')
+  }
+}
+export const approveShop = async (shopId: string) => {
+  try {
+    const token = localStorage.getItem('token')
+    if (!token) throw new Error('Không tìm thấy token.')
+
+    const response = await rootApi.post(`shops/${shopId}/approve`, null, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
+    console.log(response)
+    return response.data // ShopDto
+  } catch (error) {
+    console.error('Error approving shop:', error)
+    throw new Error('Xảy ra lỗi trong quá trình duyệt cửa hàng.')
+  }
+}
+export const rejectShop = async (shopId: string, reason: string) => {
+  try {
+    const token = localStorage.getItem('token')
+    if (!token) throw new Error('Không tìm thấy token.')
+
+    const response = await rootApi.post(
+      `shops/${shopId}/reject`,
+      { reason },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    )
+    console.log(response)
+    return response.data // ShopDto
+  } catch (error) {
+    console.error('Error rejecting shop:', error)
+    throw new Error('Xảy ra lỗi trong quá trình từ chối cửa hàng.')
   }
 }
