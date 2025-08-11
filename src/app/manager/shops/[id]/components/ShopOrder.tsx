@@ -1,16 +1,16 @@
-'use client'
+"use client";
 
-import React, { useState, useMemo } from 'react'
-import { format, isAfter, isBefore } from 'date-fns'
-import { vi } from 'date-fns/locale'
+import React, { useState, useMemo } from "react";
+import { format, isAfter, isBefore } from "date-fns";
+import { vi } from "date-fns/locale";
 import {
   Dialog,
   DialogTrigger,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
-import { Card } from '@/components/ui/card'
+  // DialogContent,
+  // DialogHeader,
+  // DialogTitle,
+} from "@/components/ui/dialog";
+import { Card } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -18,159 +18,160 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table'
-import { Button } from '@/components/ui/button'
+} from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
 
-import { Calendar } from '@/components/ui/calendar'
+import { Calendar } from "@/components/ui/calendar";
 import {
   Popover,
   PopoverTrigger,
   PopoverContent,
-} from '@/components/ui/popover'
-import { cn } from '@/lib/utils'
-import { Eye, CalendarIcon, CheckCircle, Clock, XCircle } from 'lucide-react'
-import { Label } from '@/components/ui/label'
-import { Input } from '@/components/ui/input'
-import {
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-} from '@radix-ui/react-select'
-import { Select } from '@/components/ui/select'
+} from "@/components/ui/popover";
+// import { cn } from '@/lib/utils'
+import { Eye, CalendarIcon, CheckCircle, Clock, XCircle } from "lucide-react";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+// import {
+//   SelectTrigger,
+//   SelectValue,
+//   SelectContent,
+//   SelectItem,
+// } from '@radix-ui/react-select'
+// import { Select } from '@/components/ui/select'
 import {
   DropdownMenu,
   DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuItem,
-} from '@/components/ui/dropdown-menu'
-import { OrderDetailModal } from './OrderDetailModal'
-import { getOrderDetail } from '@/fake data/shop'
+} from "@/components/ui/dropdown-menu";
+import { OrderDetailModal } from "./OrderDetailModal";
+import { getOrderDetail } from "@/fake data/shop";
 
 type Order = {
-  orderId: string
-  customerName: string
-  totalAmount: number
-  status: string
-  createdAt: string
-}
+  orderId: string;
+  customerName: string;
+  totalAmount: number;
+  status: string;
+  createdAt: string;
+};
 type OrderDetail = {
-  orderId: string
-  customerName: string
-  totalAmount: number
-  status: string
-  createdAt: string
-  orderCode: string
-  orderDate: string
-  paymentStatus: number
-  shippingFee: number
-  discountAmount: number
-  finalAmount: number
-  estimatedDeliveryDate: string
-  actualDeliveryDate: string
-  customerNotes: string
-  trackingCode: string
+  orderId: string;
+  customerName: string;
+  totalAmount: number;
+  status: string;
+  createdAt: string;
+  orderCode: string;
+  orderDate: string;
+  paymentStatus: number;
+  shippingFee: number;
+  discountAmount: number;
+  finalAmount: number;
+  estimatedDeliveryDate: string;
+  actualDeliveryDate: string;
+  customerNotes: string;
+  trackingCode: string;
   shippingAddress: {
-    fullName: string
-    phone: string
-    addressLine1: string
-    addressLine2: string
-    ward: string
-    district: string
-    city: string
-    province: string
-    postalCode: string
-    country: string
-    state: string
-    isDefault: boolean
-  }
+    fullName: string;
+    phone: string;
+    addressLine1: string;
+    addressLine2: string;
+    ward: string;
+    district: string;
+    city: string;
+    province: string;
+    postalCode: string;
+    country: string;
+    state: string;
+    isDefault: boolean;
+  };
   items: {
-    id: string
-    productName: string
-    quantity: number
-    unitPrice: number
-    discountAmount: number
-    totalPrice: number
-    productImageUrl: string
-    notes: string
-  }[]
-}
+    id: string;
+    productName: string;
+    quantity: number;
+    unitPrice: number;
+    discountAmount: number;
+    totalPrice: number;
+    productImageUrl: string;
+    notes: string;
+  }[];
+};
 const getOrderStatusInfo = (status: string) => {
   switch (status) {
-    case 'COMPLETED':
-    case 'Hoàn thành':
+    case "COMPLETED":
+    case "Hoàn thành":
       return {
-        label: 'Đã hoàn thành',
+        label: "Đã hoàn thành",
         icon: <CheckCircle className="w-4 h-4 text-green-500" />,
-        color: 'bg-green-100 text-green-600',
-      }
-    case 'PENDING':
-    case 'Đang xử lý':
+        color: "bg-green-100 text-green-600",
+      };
+    case "PENDING":
+    case "Đang xử lý":
       return {
-        label: 'Đang xử lý',
+        label: "Đang xử lý",
         icon: <Clock className="w-4 h-4 text-yellow-500" />,
-        color: 'bg-yellow-100 text-yellow-600',
-      }
-    case 'CANCELLED':
-    case 'Đã huỷ':
+        color: "bg-yellow-100 text-yellow-600",
+      };
+    case "CANCELLED":
+    case "Đã huỷ":
       return {
-        label: 'Đã huỷ',
+        label: "Đã huỷ",
         icon: <XCircle className="w-4 h-4 text-red-500" />,
-        color: 'bg-red-100 text-red-600',
-      }
+        color: "bg-red-100 text-red-600",
+      };
     default:
       return {
         label: status,
         icon: <Clock className="w-4 h-4 text-gray-400" />,
-        color: 'bg-gray-100 text-gray-600',
-      }
+        color: "bg-gray-100 text-gray-600",
+      };
   }
-}
+};
 
 export const ShopOrderList = ({ orders }: { orders: Order[] }) => {
-  const [searchId, setSearchId] = useState('')
-  const [statusFilter, setStatusFilter] = useState<string>('ALL')
-  const [fromDate, setFromDate] = useState<Date | undefined>()
-  const [toDate, setToDate] = useState<Date | undefined>()
+  const [searchId, setSearchId] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("ALL");
+  const [fromDate, setFromDate] = useState<Date | undefined>();
+  const [toDate, setToDate] = useState<Date | undefined>();
 
-  const [selectedId, setSelectedId] = useState<string | null>(null)
-  const [selectedDetail, setSelectedDetail] = useState<OrderDetail | null>(null)
-  const [loading, setLoading] = useState(false)
-
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedDetail, setSelectedDetail] = useState<OrderDetail | null>(
+    null
+  );
+  // const [loading, setLoading] = useState(false)
   const filteredOrders = useMemo(() => {
     return orders.filter((order) => {
       const matchId = order.orderId
         .toLowerCase()
-        .includes(searchId.toLowerCase())
+        .includes(searchId.toLowerCase());
       const matchStatus =
-        statusFilter === 'ALL' ||
+        statusFilter === "ALL" ||
         order.status === statusFilter ||
-        getOrderStatusInfo(order.status).label === statusFilter
-      const orderDate = new Date(order.createdAt)
+        getOrderStatusInfo(order.status).label === statusFilter;
+      const orderDate = new Date(order.createdAt);
       const matchFrom = fromDate
         ? isAfter(orderDate, fromDate) ||
           orderDate.getTime() === fromDate.getTime()
-        : true
+        : true;
       const matchTo = toDate
         ? isBefore(orderDate, toDate) ||
           orderDate.getTime() === toDate.getTime()
-        : true
-      return matchId && matchStatus && matchFrom && matchTo
-    })
-  }, [orders, searchId, statusFilter, fromDate, toDate])
+        : true;
+      return matchId && matchStatus && matchFrom && matchTo;
+    });
+  }, [orders, searchId, statusFilter, fromDate, toDate]);
 
   const handleViewDetail = async (id: string) => {
-    setSelectedId(id)
-    setLoading(true)
+    setSelectedId(id);
+    // setLoading(true);
     try {
-      const detail = await getOrderDetail(id)
-      setSelectedDetail(detail.data[0] || null)
+      const detail = await getOrderDetail(id);
+      setSelectedDetail(detail.data[0] || null);
     } catch (error) {
-      console.error('Lỗi khi lấy chi tiết đơn:', error)
+      console.error("Lỗi khi lấy chi tiết đơn:", error);
     } finally {
-      setLoading(false)
+      // setLoading(false);
     }
-  }
+  };
 
   return (
     <>
@@ -198,7 +199,7 @@ export const ShopOrderList = ({ orders }: { orders: Order[] }) => {
                   variant="outline"
                   className="w-full h-10 flex justify-between items-center"
                 >
-                  {statusFilter === 'ALL' ? 'Tất cả' : statusFilter}
+                  {statusFilter === "ALL" ? "Tất cả" : statusFilter}
                   <svg
                     className="w-4 h-4 ml-2"
                     fill="none"
@@ -218,18 +219,18 @@ export const ShopOrderList = ({ orders }: { orders: Order[] }) => {
                 align="start"
                 className="w-full min-w-[140px]"
               >
-                <DropdownMenuItem onClick={() => setStatusFilter('ALL')}>
+                <DropdownMenuItem onClick={() => setStatusFilter("ALL")}>
                   Tất cả
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setStatusFilter('Đang xử lý')}>
+                <DropdownMenuItem onClick={() => setStatusFilter("Đang xử lý")}>
                   Đang xử lý
                 </DropdownMenuItem>
                 <DropdownMenuItem
-                  onClick={() => setStatusFilter('Đã hoàn thành')}
+                  onClick={() => setStatusFilter("Đã hoàn thành")}
                 >
                   Đã hoàn thành
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setStatusFilter('Đã huỷ')}>
+                <DropdownMenuItem onClick={() => setStatusFilter("Đã huỷ")}>
                   Đã huỷ
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -244,7 +245,7 @@ export const ShopOrderList = ({ orders }: { orders: Order[] }) => {
                   className="w-full h-10 justify-start text-left"
                 >
                   <CalendarIcon className="w-4 h-4 mr-2" />
-                  {fromDate ? format(fromDate, 'dd/MM/yyyy') : 'Chọn ngày'}
+                  {fromDate ? format(fromDate, "dd/MM/yyyy") : "Chọn ngày"}
                 </Button>
               </PopoverTrigger>
               <PopoverContent>
@@ -265,7 +266,7 @@ export const ShopOrderList = ({ orders }: { orders: Order[] }) => {
                   className="w-full h-10 justify-start text-left"
                 >
                   <CalendarIcon className="w-4 h-4 mr-2" />
-                  {toDate ? format(toDate, 'dd/MM/yyyy') : 'Chọn ngày'}
+                  {toDate ? format(toDate, "dd/MM/yyyy") : "Chọn ngày"}
                 </Button>
               </PopoverTrigger>
               <PopoverContent>
@@ -281,10 +282,10 @@ export const ShopOrderList = ({ orders }: { orders: Order[] }) => {
             <Button
               variant="outline"
               onClick={() => {
-                setSearchId('')
-                setStatusFilter('ALL')
-                setFromDate(undefined)
-                setToDate(undefined)
+                setSearchId("");
+                setStatusFilter("ALL");
+                setFromDate(undefined);
+                setToDate(undefined);
               }}
             >
               Xoá lọc
@@ -312,11 +313,11 @@ export const ShopOrderList = ({ orders }: { orders: Order[] }) => {
                 <TableCell>{order.orderId}</TableCell>
                 <TableCell>{order.customerName}</TableCell>
                 <TableCell className="text-center">
-                  {order.totalAmount.toLocaleString('vi-VN')} đ
+                  {order.totalAmount.toLocaleString("vi-VN")} đ
                 </TableCell>
                 <TableCell className="text-center">
                   {(() => {
-                    const status = getOrderStatusInfo(order.status)
+                    const status = getOrderStatusInfo(order.status);
                     return (
                       <span
                         className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold ${status.color}`}
@@ -324,11 +325,11 @@ export const ShopOrderList = ({ orders }: { orders: Order[] }) => {
                         {status.icon}
                         {status.label}
                       </span>
-                    )
+                    );
                   })()}
                 </TableCell>
                 <TableCell className="text-center">
-                  {format(new Date(order.createdAt), 'dd/MM/yyyy', {
+                  {format(new Date(order.createdAt), "dd/MM/yyyy", {
                     locale: vi,
                   })}
                 </TableCell>
@@ -354,5 +355,5 @@ export const ShopOrderList = ({ orders }: { orders: Order[] }) => {
         </Table>
       </Card>
     </>
-  )
-}
+  );
+};

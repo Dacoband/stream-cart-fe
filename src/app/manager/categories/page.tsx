@@ -7,18 +7,19 @@ import { Category, filterCategory } from "@/types/category/category";
 import { getAllCategories } from "@/services/api/categories/categorys";
 import CreateCategoryModal from "./components/CreateCategoryModal";
 import { toast } from "sonner";
+import { AxiosError } from "axios";
 
-function page() {
+function Categorypage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [pageIndex, setPageIndex] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
+  const [pageSize] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(false);
   const [name, setName] = useState("");
   const [isDeleted, setIsDeleted] = useState<boolean | null>(null);
   const [showModal, setShowModal] = useState(false);
 
-  const fetchData = async () => {
+  const fetchData = React.useCallback(async () => {
     try {
       setLoading(true);
       const params: filterCategory = {
@@ -31,20 +32,22 @@ function page() {
       console.log(res.data.categories);
       setCategories(res.data.categories || []);
       setTotalPages(res.totalPages || 1);
-    } catch (err: any) {
+    } catch (error: unknown) {
+      console.error(error);
+      const err = error as AxiosError<{ message?: string; errors?: string[] }>;
       const message =
+        err?.response?.data?.errors?.[0] ||
         err?.response?.data?.message ||
-        err?.message ||
         "Không thể tải danh mục. Vui lòng thử lại!";
       toast.error(message);
     } finally {
       setLoading(false);
     }
-  };
+  }, [pageIndex, pageSize, name, isDeleted]);
 
   useEffect(() => {
     fetchData();
-  }, [pageIndex, pageSize, name, isDeleted]);
+  }, [fetchData]);
 
   const handleAddCategoryClick = () => {
     setShowModal(true);
@@ -89,4 +92,4 @@ function page() {
   );
 }
 
-export default page;
+export default Categorypage;

@@ -1,5 +1,5 @@
-'use client'
-import { Button } from '@/components/ui/button'
+"use client";
+import { Button } from "@/components/ui/button";
 import {
   ArrowLeft,
   Star,
@@ -10,11 +10,11 @@ import {
   CircleDot,
   CircleOff,
   Trash2,
-  Info,
-} from 'lucide-react'
-import Image from 'next/image'
-import { useRouter } from 'next/navigation'
-import React, { useState } from 'react'
+  // Info,
+} from "lucide-react";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
+import React, { useState } from "react";
 import {
   AlertDialog,
   AlertDialogTrigger,
@@ -23,24 +23,24 @@ import {
   AlertDialogFooter,
   AlertDialogCancel,
   AlertDialogAction,
-} from '@/components/ui/alert-dialog'
-import { toast } from 'sonner'
-import { Shop } from '@/types/shop/shop'
+} from "@/components/ui/alert-dialog";
+import { toast } from "sonner";
+import { Shop } from "@/types/shop/shop";
 
 type Props = {
-  shop: Shop
-}
+  shop: Shop;
+};
 
 const ShopHeader: React.FC<Props> = ({ shop }) => {
-  const router = useRouter()
-  const [open, setOpen] = useState(false)
+  const router = useRouter();
+  const [open, setOpen] = useState(false);
 
   const handleDelete = () => {
     // Simulate API call and show toast
-    toast.success('Đã xoá cửa hàng thành công!')
-    setOpen(false)
+    toast.success("Đã xoá cửa hàng thành công!");
+    setOpen(false);
     // TODO: gọi API xoá shop ở đây
-  }
+  };
 
   return (
     <div className="py-4 pb-14 bg-white px-5 mb-5 rounded-xl shadow ">
@@ -56,7 +56,7 @@ const ShopHeader: React.FC<Props> = ({ shop }) => {
       <div className="relative mb-20 w-95%">
         {/* Cover Image */}
         <Image
-          src={shop.coverImageURL || '/assets/nodata.png'}
+          src={shop.coverImageURL || "/assets/nodata.png"}
           alt="cover"
           width={750}
           height={300}
@@ -68,7 +68,7 @@ const ShopHeader: React.FC<Props> = ({ shop }) => {
         <div className="absolute left-12 -bottom-22 z-10 flex items-end w-[calc(100%-6rem)] justify-between pr-8">
           <div className="flex items-end">
             <Image
-              src={shop.logoURL || '/assets/nodata.png'}
+              src={shop.logoURL || "/assets/nodata.png"}
               alt={shop.shopName}
               width={140}
               height={140}
@@ -82,8 +82,8 @@ const ShopHeader: React.FC<Props> = ({ shop }) => {
                 <span
                   className={`flex items-center gap-1 px-2 py-1 text-xs rounded-full font-medium ${
                     shop.approvalStatus
-                      ? 'bg-green-100 text-green-600'
-                      : 'bg-yellow-100 text-yellow-600'
+                      ? "bg-green-100 text-green-600"
+                      : "bg-yellow-100 text-yellow-600"
                   }`}
                 >
                   {shop.approvalStatus ? (
@@ -91,15 +91,15 @@ const ShopHeader: React.FC<Props> = ({ shop }) => {
                   ) : (
                     <Clock className="w-4 h-4 mr-1" />
                   )}
-                  {shop.approvalStatus == 'Approved' ? 'Đã duyệt' : 'Chờ duyệt'}
+                  {shop.approvalStatus == "Approved" ? "Đã duyệt" : "Chờ duyệt"}
                 </span>
 
                 {/* Trạng thái hoạt động */}
                 <span
                   className={`flex items-center gap-1 px-2 py-1 text-xs rounded-full font-medium ${
                     shop.status
-                      ? 'bg-green-100 text-green-600'
-                      : 'bg-red-100 text-red-600'
+                      ? "bg-green-100 text-green-600"
+                      : "bg-red-100 text-red-600"
                   }`}
                 >
                   {shop.status ? (
@@ -107,7 +107,7 @@ const ShopHeader: React.FC<Props> = ({ shop }) => {
                   ) : (
                     <CircleOff className="w-4 h-4 mr-1" />
                   )}
-                  {shop.status ? 'Đang hoạt động' : 'Ngừng hoạt động'}
+                  {shop.status ? "Đang hoạt động" : "Ngừng hoạt động"}
                 </span>
               </div>
 
@@ -120,8 +120,8 @@ const ShopHeader: React.FC<Props> = ({ shop }) => {
                     key={i}
                     className={
                       i < Math.round(shop.ratingAverage)
-                        ? 'text-yellow-400 fill-yellow-400'
-                        : 'text-gray-300'
+                        ? "text-yellow-400 fill-yellow-400"
+                        : "text-gray-300"
                     }
                     size={10}
                   />
@@ -178,7 +178,7 @@ const ShopHeader: React.FC<Props> = ({ shop }) => {
         {shop.description}
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default ShopHeader
+export default ShopHeader;
