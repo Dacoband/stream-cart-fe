@@ -45,7 +45,7 @@ import {
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
 import { OrderDetailModal } from "./OrderDetailModal";
-import { getOrderDetail } from "@/fake data/shop";
+import { getOrderDetail } from "../../../../../fake data/shop";
 
 type Order = {
   orderId: string;
