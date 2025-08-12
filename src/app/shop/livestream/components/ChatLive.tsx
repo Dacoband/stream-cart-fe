@@ -22,7 +22,23 @@ function ChatLive({ livestreamId }: { livestreamId: string }) {
       <CardTitle className="border-b py-4 text-black text-center ">
         Chat Live
       </CardTitle>
-      <CardContent className="flex-1">ok</CardContent>
+      <CardContent className="flex-1">
+        <div className="flex flex-col gap-2">
+          {messages.length === 0 ? (
+            <span className="text-gray-500 text-sm">No messages yet.</span>
+          ) : (
+            messages.map((msg, idx) => (
+              <div
+                key={idx}
+                className="p-2 border rounded bg-gray-50 text-black text-sm"
+              >
+                {/* Replace 'content' with an existing property, e.g., 'message' */}
+                {msg.message}
+              </div>
+            ))
+          )}
+        </div>
+      </CardContent>
       <CardFooter className="py-4 border-t">
         <div className=" w-full  flex items-end gap-2">
           <textarea
