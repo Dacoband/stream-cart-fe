@@ -17,6 +17,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -24,6 +25,7 @@ import { useAuth } from "@/lib/AuthContext";
 import {
   getLivestreamByShopId,
   startLivestreamById,
+  deleteLivestream,
 } from "@/services/api/livestream/livestream";
 import { Livestream } from "@/types/livestream/livestream";
 import {
@@ -35,27 +37,32 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { formatFullDateTimeVN } from "@/components/common/formatFullDateTimeVN";
+import AlertDelete from "./components/AlertDeleteLive";
+import { toast } from "sonner";
 function LiveStreamPage() {
   const { user } = useAuth();
   const [loading, setLoading] = useState<boolean>(true);
   const [livestreams, setLivestreams] = useState<Livestream[]>([]);
   const [searchTerm, setSearchTerm] = useState<string>("");
+  const [confirmDeleteLivestream, setConfirmDeleteLivestream] =
+    useState<Livestream | null>(null);
+  const [loadingDelete, setLoadingDelete] = useState(false);
+  const router = useRouter();
+  const fetchLivestreams = React.useCallback(async () => {
+    try {
+      if (!user?.shopId) return;
+      const response = await getLivestreamByShopId(user.shopId);
+      setLivestreams(response);
+    } catch (error) {
+      console.error("Fetch Error List Livestreams:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, [user?.shopId]);
 
   useEffect(() => {
-    const fetchLiveStream = async () => {
-      try {
-        if (!user?.shopId) return;
-        const response = await getLivestreamByShopId(user.shopId);
-        setLivestreams(response);
-      } catch (error) {
-        console.error("Fetch Error List Livestreams:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchLiveStream();
-  }, [user?.shopId]);
+    fetchLivestreams();
+  }, [user?.shopId, fetchLivestreams]);
   const handleStartLivestream = async (id: string) => {
     try {
       await startLivestreamById(id);
@@ -78,7 +85,21 @@ function LiveStreamPage() {
   const filteredLivestreams = livestreams.filter((item) =>
     item.title?.toLowerCase().includes(searchTerm.toLowerCase())
   );
-
+  const handleConfirmDelete = async () => {
+    if (!confirmDeleteLivestream) return;
+    try {
+      setLoadingDelete(true);
+      await deleteLivestream(confirmDeleteLivestream.id);
+      toast.success("Đã xóa livestream thành công");
+      setConfirmDeleteLivestream(null);
+      fetchLivestreams();
+    } catch (error) {
+      console.error("Fetch Error delete livestream:", error);
+      toast.error("Xóa livestream thất bại");
+    } finally {
+      setLoadingDelete(false);
+    }
+  };
   return (
     <div className="flex flex-col gap-5 min-h-full">
       <div className="bg-white sticky top-0 z-10 h-fit w-full py-4 px-8 shadow flex justify-between items-center">
@@ -271,7 +292,14 @@ function LiveStreamPage() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem className="text-blue-600 hover:text-blue-600 cursor-pointer">
+                            <DropdownMenuItem
+                              onClick={() =>
+                                router.push(
+                                  `/shop/livestreams/${livestream.id}`
+                                )
+                              }
+                              className="text-blue-600 hover:text-blue-600 cursor-pointer"
+                            >
                               <LayoutList
                                 size={18}
                                 className="text-blue-600 flex justify-start"
@@ -279,7 +307,12 @@ function LiveStreamPage() {
                               Xem chi tiết
                             </DropdownMenuItem>
                             {!livestream.actualStartTime && (
-                              <DropdownMenuItem className="text-red-500 hover:text-red-500 cursor-pointer">
+                              <DropdownMenuItem
+                                className="text-red-500 hover:text-red-500 cursor-pointer"
+                                onClick={() =>
+                                  setConfirmDeleteLivestream(livestream)
+                                }
+                              >
                                 <Trash2 size={18} className="text-red-500 " />
                                 Xóa LiveStream
                               </DropdownMenuItem>
@@ -294,6 +327,13 @@ function LiveStreamPage() {
             </Table>
           </div>
         </Card>
+        <AlertDelete
+          open={!!confirmDeleteLivestream}
+          livestream={confirmDeleteLivestream}
+          loading={loadingDelete}
+          onCancel={() => setConfirmDeleteLivestream(null)}
+          onConfirm={handleConfirmDelete}
+        />
       </div>
     </div>
   );

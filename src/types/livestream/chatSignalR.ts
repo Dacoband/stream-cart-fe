@@ -16,3 +16,11 @@ replyToSenderName:string
 
 
 }
+export interface SendChatSignalR {
+
+livestreamId:string;
+message:string;
+messageType:number,
+replyToMessageId:string|null,
+
+}

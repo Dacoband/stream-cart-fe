@@ -135,9 +135,11 @@ export default function SellerLiveStream() {
                   </div>
                 </div>
                 {isConnected ? (
-                  <div className="">
-                    <HostOnlyView isFullscreen={isFullscreen} />
-                    <RoomAudioRenderer />
+                  <div className="flex flex-col">
+                    <div className="flex-1">
+                      <HostOnlyView isFullscreen={isFullscreen} />
+                      <RoomAudioRenderer />
+                    </div>
 
                     <div className=" w-full bg-gradient-to-t from-black/70 to-transparent p-4  text-white">
                       <h3 className="text-3xl font-bold">{livestream.title}</h3>
@@ -171,7 +173,7 @@ export default function SellerLiveStream() {
             <p className="mt-2">
               Bạn cần bắt đầu livestream để có thể phát sóng
             </p>
-            {/* Thêm nút Bắt đầu livestream nếu cần */}
+
             <Button
               variant="destructive"
               onClick={handleEndLivestream}

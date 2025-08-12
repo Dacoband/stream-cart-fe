@@ -25,6 +25,7 @@ import { useAuth } from "@/lib/AuthContext";
 import { toast } from "sonner";
 import { AxiosError } from "axios";
 import Image from "next/image";
+import { Card } from "@/components/ui/card";
 
 function Profile() {
   const { user, refreshUser } = useAuth();
@@ -105,7 +106,7 @@ function Profile() {
   };
 
   return (
-    <div className="flex flex-col py-8 px-10 bg-white">
+    <Card className="flex flex-col py-8 px-10 bg-white min-h-[calc(100vh-9rem)]">
       <div className="flex justify-between border-b pb-4">
         <div>
           <div className="text-xl font-semibold ">Hồ sơ của tôi:</div>
@@ -262,7 +263,7 @@ function Profile() {
           </Button>
         </div>
       </form>
-    </div>
+    </Card>
   );
 }
 

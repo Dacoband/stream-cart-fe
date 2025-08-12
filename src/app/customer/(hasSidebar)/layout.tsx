@@ -13,7 +13,7 @@ export default async function LayoutCustomerHasSicebar({
             <AppSidebar />
           </div>
 
-          <div className="flex-1  sticky top-28 pb-5  min-h-[calc(100vh-9rem)]  mb-8 rounded-lg  ">
+          <div className="flex-1  sticky top-28 pb-5  min-h-[calc(100vh-9rem)]   rounded-lg  ">
             {children}
           </div>
         </SidebarProvider>
