@@ -2,15 +2,10 @@
 "use client";
 import React from "react";
 import ScreenLive from "../components/ScreenLive";
+import { useParams } from "next/navigation";
 
-interface PageProps {
-  params: {
-    liveStreamId: string;
-  };
-}
-
-export default function Page({ params }: PageProps) {
-  const { liveStreamId } = params;
+export default function LivePage() {
+  const { liveStreamId } = useParams<{ liveStreamId: string }>();
 
   return (
     <div>
