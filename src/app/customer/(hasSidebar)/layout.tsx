@@ -1,6 +1,6 @@
 import { AppSidebar } from "../components/Sidebar";
 import { SidebarProvider } from "@/components/ui/sidebar";
-export default async function LayoutCustomer({
+export default async function LayoutCustomerHasSicebar({
   children,
 }: {
   children: React.ReactNode;
