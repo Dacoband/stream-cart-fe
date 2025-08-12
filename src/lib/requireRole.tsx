@@ -49,7 +49,7 @@ export function withRoleProtection<P extends object>(
   WrappedComponent: React.ComponentType<P>,
   allowedRoles: Array<0 | 1 | 2 | 3 | 4 | 5>
 ) {
-  const ProtectedComponent = (props: P) => {
+  const ProtectedComponent: React.FC<P> = (props) => {
     const { user, loading } = useAuth();
     const router = useRouter();
 
@@ -83,9 +83,6 @@ export function withRoleProtection<P extends object>(
     return <WrappedComponent {...props} />;
   };
 
-  ProtectedComponent.displayName = `withRoleProtection(${
-    WrappedComponent.displayName || WrappedComponent.name || "Component"
-  })`;
-
+  // Ép kiểu để Next.js nhận diện đây là function component hợp lệ
   return ProtectedComponent;
 }
