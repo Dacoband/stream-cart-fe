@@ -1,17 +1,17 @@
-'use client'
+"use client";
 
-import React, { useState, useMemo } from 'react'
-import { format } from 'date-fns'
-import { vi } from 'date-fns/locale'
-import { CheckCircle, Clock, XCircle, CalendarClock, Eye } from 'lucide-react'
+import React, { useState, useMemo } from "react";
+import { format } from "date-fns";
+import { vi } from "date-fns/locale";
+import { CheckCircle, Clock, XCircle, CalendarClock, Eye } from "lucide-react";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '@/components/ui/dialog'
-import { Card } from '@/components/ui/card'
+} from "@/components/ui/dialog";
+import { Card } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -19,79 +19,80 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table'
-import { Button } from '@/components/ui/button'
-import { DatePicker } from '@/components/ui/datepicker'
+} from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import { DatePicker } from "@/components/ui/datepicker";
 
 type Membership = {
-  membershipId: string
-  name: string
-  description?: string
-  price: number
-  startDate: string
-  endDate: string
-  duration?: string
-  maxProduct?: number
-  maxLivestream?: number
-  commission?: number
-  createdAt?: string
-  updatedAt?: string
-}
+  membershipId: string;
+  name: string;
+  description?: string;
+  price: number;
+  startDate: string;
+  endDate: string;
+  duration?: string;
+  maxProduct?: number;
+  maxLivestream?: number;
+  commission?: number;
+  createdAt?: string;
+  updatedAt?: string;
+};
 
 const getStatusInfo = (end: string) => {
-  const now = new Date()
-  const diff = (new Date(end).getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
+  const now = new Date();
+  const diff =
+    (new Date(end).getTime() - now.getTime()) / (1000 * 60 * 60 * 24);
   if (diff < 0)
     return {
-      label: 'Đã hết hạn',
+      label: "Đã hết hạn",
       icon: <XCircle className="w-5 h-5 text-red-500" />,
-      color: 'bg-red-100 text-red-600',
-    }
+      color: "bg-red-100 text-red-600",
+    };
   if (diff <= 7)
     return {
-      label: 'Sắp hết hạn',
+      label: "Sắp hết hạn",
       icon: <Clock className="w-5 h-5 text-yellow-500" />,
-      color: 'bg-yellow-100 text-yellow-600',
-    }
+      color: "bg-yellow-100 text-yellow-600",
+    };
   return {
-    label: 'Đang hoạt động',
+    label: "Đang hoạt động",
     icon: <CheckCircle className="w-5 h-5 text-green-500" />,
-    color: 'bg-green-100 text-green-600',
-  }
-}
+    color: "bg-green-100 text-green-600",
+  };
+};
 
 export const ShopMembership = ({ list }: { list: Membership[] }) => {
-  const [selected, setSelected] = useState<Membership | null>(null)
-  const [startFilter, setStartFilter] = useState<Date | null>(null)
-  const [endFilter, setEndFilter] = useState<Date | null>(null)
-  const now = new Date()
+  const [selected, setSelected] = useState<Membership | null>(null);
+  const [startFilter, setStartFilter] = useState<Date | null>(null);
+  const [endFilter, setEndFilter] = useState<Date | null>(null);
+  const now = new Date();
 
   const getStatus = (end: string) => {
     const diff =
-      (new Date(end).getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
-    if (diff < 0) return 'Đã hết hạn'
-    if (diff <= 7) return 'Sắp hết hạn'
-    return 'Đang hoạt động'
-  }
+      (new Date(end).getTime() - now.getTime()) / (1000 * 60 * 60 * 24);
+    if (diff < 0) return "Đã hết hạn";
+    if (diff <= 7) return "Sắp hết hạn";
+    return "Đang hoạt động";
+  };
 
   const current = useMemo(
     () => list.find((m) => new Date(m.endDate) > now),
     [list]
-  )
+  );
 
   const filteredList = useMemo(() => {
     return list.filter((m) => {
-      const s = new Date(m.startDate)
-      if (startFilter && s < startFilter) return false
-      if (endFilter && s > endFilter) return false
-      return true
-    })
-  }, [list, startFilter, endFilter])
+      const s = new Date(m.startDate);
+      if (startFilter && s < startFilter) return false;
+      if (endFilter && s > endFilter) return false;
+      return true;
+    });
+  }, [list, startFilter, endFilter]);
 
   const safeFormat = (dateStr?: string) =>
     dateStr && !isNaN(new Date(dateStr).getTime())
-      ? format(new Date(dateStr), 'dd/MM/yyyy')
-      : 'Không xác định'
+      ? format(new Date(dateStr), "dd/MM/yyyy")
+      : "Không xác định";
 
   return (
     <div className="space-y-6">
@@ -101,7 +102,7 @@ export const ShopMembership = ({ list }: { list: Membership[] }) => {
             <div>
               <h2 className="text-lg font-semibold mb-1 flex items-center gap-2">
                 {current.name}
-                {getStatus(current.endDate) === 'Sắp hết hạn' && (
+                {getStatus(current.endDate) === "Sắp hết hạn" && (
                   <span className="text-xs bg-yellow-100 text-yellow-600 px-2 py-0.5 rounded-full">
                     Sắp hết hạn
                   </span>
@@ -111,11 +112,11 @@ export const ShopMembership = ({ list }: { list: Membership[] }) => {
                 {current.description}
               </p>
               <p className="text-sm text-gray-600">
-                {format(new Date(current.startDate), 'dd/MM/yyyy', {
+                {format(new Date(current.startDate), "dd/MM/yyyy", {
                   locale: vi,
-                })}{' '}
-                →{' '}
-                {format(new Date(current.endDate), 'dd/MM/yyyy', {
+                })}{" "}
+                →{" "}
+                {format(new Date(current.endDate), "dd/MM/yyyy", {
                   locale: vi,
                 })}
               </p>
@@ -140,8 +141,8 @@ export const ShopMembership = ({ list }: { list: Membership[] }) => {
           <Button
             variant="outline"
             onClick={() => {
-              setStartFilter(null)
-              setEndFilter(null)
+              setStartFilter(null);
+              setEndFilter(null);
             }}
           >
             Xoá lọc
@@ -179,27 +180,27 @@ export const ShopMembership = ({ list }: { list: Membership[] }) => {
               >
                 <TableCell className="text-left">{m.name}</TableCell>
                 <TableCell className="text-center">
-                  {format(new Date(m.startDate), 'dd/MM/yyyy', { locale: vi })}
+                  {format(new Date(m.startDate), "dd/MM/yyyy", { locale: vi })}
                 </TableCell>
                 <TableCell className="text-center">
-                  {format(new Date(m.endDate), 'dd/MM/yyyy', { locale: vi })}
+                  {format(new Date(m.endDate), "dd/MM/yyyy", { locale: vi })}
                 </TableCell>
                 <TableCell className="text-center">
-                  {m.price.toLocaleString('vi-VN')} đ
+                  {m.price.toLocaleString("vi-VN")} đ
                 </TableCell>
                 <TableCell className="text-center">
                   {(() => {
-                    const status = getStatusInfo(m.endDate)
+                    const status = getStatusInfo(m.endDate);
                     return (
                       <span
                         className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[11px] font-semibold ${status.color}`}
                       >
                         {React.cloneElement(status.icon, {
-                          className: 'w-3 h-3',
+                          className: "w-3 h-3",
                         })}
                         {status.label}
                       </span>
-                    )
+                    );
                   })()}
                 </TableCell>
                 <TableCell className="text-right">
@@ -218,7 +219,7 @@ export const ShopMembership = ({ list }: { list: Membership[] }) => {
                       <DialogHeader>
                         <DialogTitle className="flex items-center gap-3 text-2xl">
                           <CalendarClock className="w-7 h-7 text-primary" />
-                          Chi tiết gói:{' '}
+                          Chi tiết gói:{" "}
                           <span className="text-primary">{selected?.name}</span>
                         </DialogTitle>
                       </DialogHeader>
@@ -242,7 +243,7 @@ export const ShopMembership = ({ list }: { list: Membership[] }) => {
                               Mô tả:
                             </span>
                             <span className="font-medium">
-                              {selected?.description || 'Không có'}
+                              {selected?.description || "Không có"}
                             </span>
                           </div>
                           <div>
@@ -250,7 +251,7 @@ export const ShopMembership = ({ list }: { list: Membership[] }) => {
                               Thời gian:
                             </span>
                             <span className="font-medium">
-                              {safeFormat(selected?.startDate)} →{' '}
+                              {safeFormat(selected?.startDate)} →{" "}
                               {safeFormat(selected?.endDate)}
                             </span>
                           </div>
@@ -259,7 +260,7 @@ export const ShopMembership = ({ list }: { list: Membership[] }) => {
                               Giá:
                             </span>
                             <span className="font-semibold text-primary text-lg">
-                              {Number(selected?.price).toLocaleString('vi-VN')}{' '}
+                              {Number(selected?.price).toLocaleString("vi-VN")}{" "}
                               đ
                             </span>
                           </div>
@@ -284,10 +285,10 @@ export const ShopMembership = ({ list }: { list: Membership[] }) => {
                               Chiết khấu:
                             </span>
                             <span className="font-medium">
-                              {typeof selected?.commission === 'number' &&
+                              {typeof selected?.commission === "number" &&
                               selected.commission > 0
                                 ? `${selected.commission}%`
-                                : 'Không áp dụng'}
+                                : "Không áp dụng"}
                             </span>
                           </div>
                         </div>
@@ -301,5 +302,5 @@ export const ShopMembership = ({ list }: { list: Membership[] }) => {
         </Table>
       </Card>
     </div>
-  )
-}
+  );
+};
