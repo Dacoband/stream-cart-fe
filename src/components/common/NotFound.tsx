@@ -11,7 +11,7 @@ interface LottieAnimationProps {
 const NotFound: React.FC<LottieAnimationProps> = ({
   loop = true,
   autoplay = true,
-  className = "w-1/3",
+  className = "w-[30%]",
 }) => {
   return (
     <Lottie

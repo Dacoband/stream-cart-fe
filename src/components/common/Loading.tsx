@@ -11,7 +11,7 @@ interface LottieAnimationProps {
 const LoadingAnimation: React.FC<LottieAnimationProps> = ({
   loop = true,
   autoplay = true,
-  className = "w-52",
+  className = "w-40",
 }) => {
   return (
     <Lottie
