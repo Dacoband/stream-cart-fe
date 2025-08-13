@@ -24,6 +24,8 @@ import Link from "next/link";
 import { Calendar, Clock, Info, Play, Store, Tag } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { formatFullDateTimeVN } from "@/components/common/formatFullDateTimeVN";
+import ChatLive from "./ChatLive";
+import ProductsLive from "./ProductsLive";
 interface ScreenLiveProps {
   liveStreamId: string;
 }
@@ -74,7 +76,7 @@ const CustomerVideoDisplay: React.FC<CustomerVideoDisplayProps> = ({
 
     if (videoTrack) {
       return (
-        <div className="flex flex-col items-center justify-center h-full text-white text-center p-4">
+        <div className="flex flex-col items-center justify-center h-full text-white text-center ">
           <VideoTrack
             trackRef={videoTrack}
             style={{
@@ -106,10 +108,10 @@ const CustomerVideoDisplay: React.FC<CustomerVideoDisplayProps> = ({
 
   if (remoteParticipants.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center h-full text-white text-center p-4">
+      <div className="flex flex-col items-center justify-center h-full text-white text-center ">
         <div>
           {participants?.length > 0
-            ? "Đang chờ seller bắt đầu stream..."
+            ? "Đang tải live stream..."
             : "Đang kết nối đến livestream..."}
         </div>
         <div color="rgba(255,255,255,0.7)">
@@ -124,7 +126,7 @@ const CustomerVideoDisplay: React.FC<CustomerVideoDisplayProps> = ({
   // Fallback: có participants nhưng chưa có video tracks
   return (
     <div className="flex flex-col items-center justify-center h-full text-white text-center p-4">
-      <div>🎥 Seller đã vào room!</div>
+      <div className="text-white">🎥 Seller đã vào room!</div>
       <div color="rgba(255,255,255,0.7)">
         Đang chờ seller bật camera... ({remoteParticipants.length} người trong
         room)
@@ -319,195 +321,175 @@ export default function ScreenLive({ liveStreamId }: ScreenLiveProps) {
   }
 
   return (
-    <div>
-      <div>
-        <div>
-          <div>
-            {connectionError && (
-              <div
-                style={{
-                  position: "absolute",
-                  top: 10,
-                  left: 10,
-                  right: 10,
-                  zIndex: 1000,
-                  backgroundColor: "rgba(255, 152, 0, 0.9)",
-                  color: "white",
-                  padding: 1,
-                  borderRadius: 1,
-                  textAlign: "center",
-                }}
-              >
-                <div>{connectionError}</div>
-              </div>
-            )}
-            <div
-              style={{
-                backgroundColor: "black",
-                height: "70vh",
-                position: "relative",
-              }}
-            >
-              {viewerToken ? (
-                <LiveKitRoom
-                  audio={false}
-                  video={false}
-                  serverUrl="wss://livekitserver.dacoban.studio"
-                  token={viewerToken}
-                  connect={true}
-                  connectOptions={{
-                    autoSubscribe: true,
-
-                    rtcConfig: {
-                      iceTransportPolicy: "all",
-                      iceServers: [
-                        { urls: "stun:stun.l.google.com:19302" },
-                        { urls: "stun:stun1.l.google.com:19302" },
-                      ],
-                      iceCandidatePoolSize: 10,
-                    },
-                  }}
-                  onConnected={() => {
-                    console.log("Customer connected to LiveKit");
-                    setConnectionError(null);
-                    setIsConnecting(false);
-                    setReconnectAttempts(0); // Reset on successful connection
-                  }}
-                  onDisconnected={(reason) => {
-                    console.log("Customer disconnected from LiveKit:", reason);
-                    setIsConnecting(false);
-
-                    // Reason code meanings:
-                    // 0 = manual disconnect
-                    // 1 = duplicate identity
-                    // 2 = server initiated (room closed, etc)
-                    // 3 = participant removed
-                    // 4 = room deleted
-                    // 5 = state mismatch
-
-                    if (reason === 2 || reason === 4) {
-                      setConnectionError(
-                        "Livestream đã kết thúc hoặc bị gián đoạn. Vui lòng thử tải trang."
-                      );
-                      return;
-                    }
-
-                    // Chỉ retry nếu không phải manual disconnect và chưa quá 3 lần
-                    if (
-                      reason !== DisconnectReason.CLIENT_INITIATED &&
-                      reconnectAttempts < 3
-                    ) {
-                      setReconnectAttempts((prev) => prev + 1);
-                      setConnectionError(
-                        `Mất kết nối. Đang thử kết nối lại... (${
-                          reconnectAttempts + 1
-                        }/3)`
-                      );
-
-                      // Clear any existing timeout
-                      if (reconnectTimeoutRef.current) {
-                        clearTimeout(reconnectTimeoutRef.current);
-                      }
-
-                      // Retry sau 5 giây thay vì reload ngay
-                      reconnectTimeoutRef.current = setTimeout(() => {
-                        if (reconnectAttempts >= 2) {
-                          setConnectionError(
-                            "Không thể kết nối. Livestream có thể đã kết thúc. Vui lòng refresh trang."
-                          );
-                        }
-                      }, 5000);
-                    } else if (reconnectAttempts >= 3) {
-                      setConnectionError(
-                        "Không thể kết nối sau 3 lần thử. Livestream có thể đã kết thúc."
-                      );
-                    }
-                  }}
-                  onError={(error) => {
-                    console.error("Customer LiveKit error:", error);
-                    setIsConnecting(false);
-
-                    if (
-                      error.message &&
-                      error.message.includes(
-                        "could not establish pc connection"
-                      )
-                    ) {
-                      setConnectionError(
-                        "Lỗi kết nối mạng. Vui lòng kiểm tra internet."
-                      );
-                    } else if (
-                      error.message &&
-                      error.message.includes(
-                        "could not createOffer with closed peer connection"
-                      )
-                    ) {
-                      setConnectionError(
-                        "Connection bị đóng. Đang thử kết nối lại..."
-                      );
-                    } else {
-                      setConnectionError(
-                        "Lỗi kết nối LiveKit. Vui lòng thử lại."
-                      );
-                    }
-                  }}
-                >
-                  {isConnecting ? (
-                    <div
-                      style={{
-                        display: "flex",
-                        flexDirection: "column",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        height: "100%",
-                        color: "white",
-                        textAlign: "center",
-                      }}
-                    >
-                      <div>Đang kết nối đến livestream...</div>
-                    </div>
-                  ) : (
-                    <CustomerVideoDisplay
-                      onParticipantCountChange={setParticipantCount}
-                    />
-                  )}
-                </LiveKitRoom>
-              ) : (
-                <div
-                  style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    height: "100%",
-                    color: "white",
-                    textAlign: "center",
-                  }}
-                >
-                  <div>📺 Đang tải livestream...</div>
-                </div>
-              )}
-            </div>
-
-            <div>
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "flex-start",
-                }}
-              >
-                <div>{livestream.title}</div>
-
-                <div>
-                  <div>{participantCount} người xem</div>
-                </div>
-              </div>
-
-              <div>{livestream.description}</div>
-            </div>
-          </div>
+    <div className="w-full h-full">
+      {connectionError && (
+        <div
+          style={{
+            position: "absolute",
+            top: 10,
+            left: 10,
+            right: 10,
+            zIndex: 1000,
+            backgroundColor: "rgba(255, 152, 0, 0.9)",
+            color: "white",
+            padding: 1,
+            borderRadius: 1,
+            textAlign: "center",
+          }}
+        >
+          <div>{connectionError}</div>
         </div>
+      )}
+      <div className=" w-full h-full rounded-none overflow-hidden relative ">
+        {viewerToken ? (
+          <LiveKitRoom
+            audio={false}
+            video={false}
+            serverUrl="wss://livekitserver.dacoban.studio"
+            token={viewerToken}
+            connect={true}
+            connectOptions={{
+              autoSubscribe: true,
+
+              rtcConfig: {
+                iceTransportPolicy: "all",
+                iceServers: [
+                  { urls: "stun:stun.l.google.com:19302" },
+                  { urls: "stun:stun1.l.google.com:19302" },
+                ],
+                iceCandidatePoolSize: 10,
+              },
+            }}
+            onConnected={() => {
+              console.log("Customer connected to LiveKit");
+              setConnectionError(null);
+              setIsConnecting(false);
+              setReconnectAttempts(0); // Reset on successful connection
+            }}
+            onDisconnected={(reason) => {
+              console.log("Customer disconnected from LiveKit:", reason);
+              setIsConnecting(false);
+
+              // Reason code meanings:
+              // 0 = manual disconnect
+              // 1 = duplicate identity
+              // 2 = server initiated (room closed, etc)
+              // 3 = participant removed
+              // 4 = room deleted
+              // 5 = state mismatch
+
+              if (reason === 2 || reason === 4) {
+                setConnectionError(
+                  "Livestream đã kết thúc hoặc bị gián đoạn. Vui lòng thử tải trang."
+                );
+                return;
+              }
+
+              // Chỉ retry nếu không phải manual disconnect và chưa quá 3 lần
+              if (
+                reason !== DisconnectReason.CLIENT_INITIATED &&
+                reconnectAttempts < 3
+              ) {
+                setReconnectAttempts((prev) => prev + 1);
+                setConnectionError(
+                  `Mất kết nối. Đang thử kết nối lại... (${
+                    reconnectAttempts + 1
+                  }/3)`
+                );
+
+                // Clear any existing timeout
+                if (reconnectTimeoutRef.current) {
+                  clearTimeout(reconnectTimeoutRef.current);
+                }
+
+                // Retry sau 5 giây thay vì reload ngay
+                reconnectTimeoutRef.current = setTimeout(() => {
+                  if (reconnectAttempts >= 2) {
+                    setConnectionError(
+                      "Không thể kết nối. Livestream có thể đã kết thúc. Vui lòng refresh trang."
+                    );
+                  }
+                }, 5000);
+              } else if (reconnectAttempts >= 3) {
+                setConnectionError(
+                  "Không thể kết nối sau 3 lần thử. Livestream có thể đã kết thúc."
+                );
+              }
+            }}
+            onError={(error) => {
+              console.error("Customer LiveKit error:", error);
+              setIsConnecting(false);
+
+              if (
+                error.message &&
+                error.message.includes("could not establish pc connection")
+              ) {
+                setConnectionError(
+                  "Lỗi kết nối mạng. Vui lòng kiểm tra internet."
+                );
+              } else if (
+                error.message &&
+                error.message.includes(
+                  "could not createOffer with closed peer connection"
+                )
+              ) {
+                setConnectionError(
+                  "Connection bị đóng. Đang thử kết nối lại..."
+                );
+              } else {
+                setConnectionError("Lỗi kết nối LiveKit. Vui lòng thử lại.");
+              }
+            }}
+          >
+            <div className="flex h-full">
+              <div className="w-[20%] h-full ">
+                <ProductsLive />
+              </div>
+              <div className="w-[60%] bg-black h-full ">
+                <div className="bg-black w-full flex justify-between">
+                  <div className=" py-4">
+                    <div>{participantCount} người xem</div>
+                  </div>
+                </div>
+                {isConnecting ? (
+                  <div className="flex flex-col items-center justify-center text-white h-[70vh] p-4 text-center">
+                    <h2 className="text-xl font-bold">
+                      🔴 Đang kết nối livestream
+                    </h2>
+                    <p className="mt-2">Vui lòng đợi trong giây lát...</p>
+                  </div>
+                ) : (
+                  <div className="flex flex-col h-full">
+                    <div className="flex-1">
+                      <CustomerVideoDisplay
+                        onParticipantCountChange={setParticipantCount}
+                      />
+                    </div>
+
+                    <div className=" w-full bg-gradient-to-t from-black/70 to-transparent p-4  text-white">
+                      <h3 className="text-2xl font-bold mb-3 ">
+                        {livestream.title}
+                      </h3>
+                      <p className="text-base  mb-5 opacity-80">
+                        {livestream.description}
+                      </p>
+                      <p className="text-sm bg-white text-black opacity-80 px-5 py-1 rounded-full w-fit">
+                        #{livestream.tags}
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+              <div className="w-[20%] ">
+                <ChatLive livestreamId={livestream.id} />
+              </div>
+            </div>
+          </LiveKitRoom>
+        ) : (
+          <div>
+            <div>📺 Đang tải livestream...</div>
+          </div>
+        )}
       </div>
     </div>
   );

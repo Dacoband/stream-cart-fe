@@ -8,18 +8,26 @@ import {
   getChatLiveStream,
   SendMessageLiveStream,
 } from "@/services/api/livestream/chatsignalR";
-import { Card, CardContent, CardFooter, CardTitle } from "@/components/ui/card";
+import { CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Send, Store, UserRound } from "lucide-react";
 import Image from "next/image";
 
-function ChatLive({ livestreamId }: { livestreamId: string }) {
+interface ChatCommonProps {
+  livestreamId?: string; // Optional: if not provided, component shows placeholder
+  heightClass?: string; // allow override height
+}
+
+const ChatCommon: React.FC<ChatCommonProps> = ({
+  livestreamId,
+  heightClass = "h-[400px]",
+}) => {
   const [newMessage, setNewMessage] = React.useState("");
   const [messages, setMessages] = React.useState<LivestreamMessagePayload[]>(
     []
   );
+  const [loading, setLoading] = React.useState(false);
 
-  const [loading, setLoading] = React.useState(true);
   const listRef = React.useRef<HTMLDivElement | null>(null);
 
   // Always scroll to bottom when messages change
@@ -29,13 +37,13 @@ function ChatLive({ livestreamId }: { livestreamId: string }) {
     el.scrollTop = el.scrollHeight;
   }, [messages]);
 
-  // Initial fetch (REST) + join hub
   React.useEffect(() => {
+    if (!livestreamId) return; // wait until id available
     let mounted = true;
     (async () => {
       try {
         setLoading(true);
-        // Load existing history via REST (paginated wrapper: { currentPage, items: [] })
+
         interface HistoryItem {
           id: string;
           livestreamId: string;
@@ -43,31 +51,20 @@ function ChatLive({ livestreamId }: { livestreamId: string }) {
           senderName: string;
           senderType?: string;
           message: string;
-          messageType?: number;
-          replyToMessageId?: string | null;
-          isModerated?: boolean;
           sentAt?: string;
           createdAt?: string;
-          senderAvatarUrl?: string;
-          replyToMessage?: string;
-          replyToSenderName?: string;
           timestamp?: string;
+          senderAvatarUrl?: string;
         }
         interface HistoryPage {
-          currentPage: number;
-          pageSize: number;
-          totalCount: number;
-          totalPages: number;
-          hasPrevious: boolean;
-          hasNext: boolean;
           items: HistoryItem[];
         }
         const historyWrapper: HistoryPage | null = await getChatLiveStream(
           livestreamId
         ).catch(() => null);
-        if (mounted && historyWrapper && Array.isArray(historyWrapper.items)) {
-          const mapped: LivestreamMessagePayload[] = historyWrapper.items.map(
-            (h: HistoryItem) => ({
+        if (mounted && historyWrapper?.items) {
+          const mapped: LivestreamMessagePayload[] = historyWrapper.items
+            .map((h) => ({
               senderId: h.senderId || "",
               senderName: h.senderName || "Anonymous",
               message: h.message || "",
@@ -78,35 +75,23 @@ function ChatLive({ livestreamId }: { livestreamId: string }) {
                 h.createdAt ||
                 h.timestamp ||
                 new Date().toISOString(),
-            })
-          );
-          // Ensure chronological order if backend returns newest first
-          mapped.sort(
-            (a, b) =>
-              new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
-          );
+            }))
+            .sort(
+              (a, b) =>
+                new Date(a.timestamp).getTime() -
+                new Date(b.timestamp).getTime()
+            );
           setMessages(mapped);
-
-          // Scroll xuống cuối sau khi load lịch sử
-          requestAnimationFrame(() => {
-            if (listRef.current) {
-              listRef.current.scrollTop = listRef.current.scrollHeight;
-            }
-          });
         }
-
         await chatHubService.ensureStarted();
-        // Optional: mark as viewer if you want seller UI to also contribute to stats
+        // Mark this client as an active viewer for stats
         await chatHubService.startViewingLivestream(livestreamId);
         await chatHubService.joinLivestream(livestreamId);
-
         chatHubService.onReceiveLivestreamMessage((payload) => {
           setMessages((prev) => [...prev, payload]);
-          // Auto scroll
           requestAnimationFrame(() => {
-            if (listRef.current) {
+            if (listRef.current)
               listRef.current.scrollTop = listRef.current.scrollHeight;
-            }
           });
         });
       } catch (e) {
@@ -123,11 +108,11 @@ function ChatLive({ livestreamId }: { livestreamId: string }) {
   }, [livestreamId]);
 
   const handleMessageSend = async () => {
+    if (!livestreamId) return;
     if (!newMessage.trim()) return;
     const text = newMessage.trim();
     try {
       await chatHubService.sendLivestreamMessage(livestreamId, text);
-      // Optional REST persistence (fire and forget)
       const data: SendChatSignalR = {
         livestreamId,
         message: text,
@@ -135,27 +120,31 @@ function ChatLive({ livestreamId }: { livestreamId: string }) {
         replyToMessageId: null,
       };
       SendMessageLiveStream(livestreamId, data).catch(() => {});
-      // Clear input only after successful send so UI waits for realtime event to render message
       setNewMessage("");
     } catch (e) {
       console.error("Send message failed", e);
     }
   };
 
+  if (!livestreamId) {
+    return (
+      <div className="flex flex-col items-center justify-center text-xs text-gray-500 py-4">
+        Chưa có livestream đang mở
+      </div>
+    );
+  }
+
   return (
-    <Card className="bg-white border  flex flex-col h-full rounded-none py-0 gap-0">
-      <CardTitle className="border-b py-4 text-black text-center">
-        Chat Live
-      </CardTitle>
+    <div className="flex flex-col w-full">
       <CardContent className="p-0 flex-1 overflow-hidden">
-        <div className="flex flex-col h-full">
+        <div className={`flex flex-col ${heightClass}`}>
           <div
             ref={listRef}
-            className="flex-1 overflow-y-auto w-full  overflow-x-hidden px-3 py-2 space-y-3.5 text-sm"
+            className="flex-1 overflow-y-auto w-full overflow-x-hidden px-3 py-2 space-y-3.5 text-sm"
           >
             {loading && (
               <div className="text-center text-gray-400 text-xs">
-                Đang tải đoạn chat...
+                Đang tải...
               </div>
             )}
             {!loading && messages.length === 0 && (
@@ -209,20 +198,21 @@ function ChatLive({ livestreamId }: { livestreamId: string }) {
                 handleMessageSend();
               }
             }}
-            className="w-full pb-5 border rounded-md p-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-gray-400"
+            className="w-full pr-20 border rounded-md p-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-gray-400"
           />
           <Button
             type="button"
             onClick={handleMessageSend}
             aria-label="Gửi tin nhắn"
             className="absolute bottom-2 right-1 bg-white hover:bg-white text-lime-600 cursor-pointer p-0 flex items-center justify-center"
+            disabled={!newMessage.trim()}
           >
             <Send size={32} />
           </Button>
         </div>
       </CardFooter>
-    </Card>
+    </div>
   );
-}
+};
 
-export default ChatLive;
+export default ChatCommon;

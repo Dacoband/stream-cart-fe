@@ -98,7 +98,7 @@ export default function SellerLiveStream() {
             audio
             video
           >
-            <div className="flex w-full  h-full">
+            <div className="flex w-full bg-black  h-full">
               {!isFullscreen && (
                 <div className="w-[20%]">
                   <ProductLiveStream livestreamId={livestream.id} />
@@ -109,11 +109,11 @@ export default function SellerLiveStream() {
               <div
                 className={`${
                   isFullscreen ? "flex-1" : "w-[60%]"
-                } bg-black relative`}
+                } bg-black relative mb-28`}
               >
                 <div className="bg-black w-full flex justify-between">
                   <div className=" py-4">
-                    <ViewerCount />
+                    <ViewerCount livestreamId={livestream.id} />
                   </div>
                   <div className="flex gap-2 py-4">
                     <Button
@@ -135,15 +135,15 @@ export default function SellerLiveStream() {
                   </div>
                 </div>
                 {isConnected ? (
-                  <div className="flex flex-col">
-                    <div className="flex-1">
-                      <HostOnlyView isFullscreen={isFullscreen} />
-                      <RoomAudioRenderer />
-                    </div>
+                  <div className="flex-1 relative h-full ">
+                    <HostOnlyView isFullscreen={isFullscreen} />
+                    <RoomAudioRenderer />
 
-                    <div className=" w-full bg-gradient-to-t from-black/70 to-transparent p-4  text-white">
-                      <h3 className="text-3xl font-bold">{livestream.title}</h3>
-                      <p className="text-base  mb-5 opacity-80">
+                    <div className="absolute bottom-0 left-0 w-full bg-gradient-to-t from-black/70 to-transparent p-4 text-white">
+                      <h3 className="text-2xl font-bold mb-3">
+                        {livestream.title}
+                      </h3>
+                      <p className="text-base mb-5 opacity-80">
                         {livestream.description}
                       </p>
                       <p className="text-sm bg-white text-black opacity-80 px-5 py-1 rounded-full w-fit">

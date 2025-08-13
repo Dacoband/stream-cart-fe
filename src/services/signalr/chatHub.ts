@@ -5,7 +5,9 @@ export interface LivestreamMessagePayload {
   senderId: string;
   senderName: string;
   message: string;
-  timestamp: string; // ISO string from server
+  timestamp: string;
+  senderType?: string; // e.g., 'Shop' | 'User' | 'Moderator'
+  senderAvatarUrl?: string;
 }
 
 export interface UserPresencePayload {
@@ -79,17 +81,46 @@ class ChatHubService {
     return this.connecting;
   }
 
-  async ensureStarted() {
-    const conn = await this.getConnection();
-    if (conn.state === HubConnectionState.Disconnected) {
-      await conn.start();
+  private sleep(ms: number) { return new Promise<void>(res => setTimeout(res, ms)); }
+
+  private async waitForConnected(maxWaitMs = 8000): Promise<HubConnection> {
+    let conn = await this.getConnection();
+    const start = Date.now();
+    while (true) {
+      if (conn.state === HubConnectionState.Connected) return conn;
+      if (conn.state === HubConnectionState.Disconnected) {
+        try { await conn.start(); } catch { /* swallow and retry below */ }
+      }
+      if (Date.now() - start > maxWaitMs) {
+        throw new Error('SignalR connection not connected within timeout');
+      }
+      await this.sleep(200);
+      // refresh ref
+      conn = this.connection ?? conn;
     }
-    return conn;
+  }
+
+  async ensureStarted() {
+    return this.waitForConnected(8000);
+  }
+
+  private async invokeWhenConnected<T = unknown>(method: string, ...args: unknown[]): Promise<T> {
+    const conn = await this.waitForConnected(8000);
+    // Type cast is safe as invoke is generic
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return (conn.invoke as any)(method, ...args);
   }
 
   async joinLivestream(livestreamId: string) {
-    const conn = await this.ensureStarted();
-    await conn.invoke('JoinLivestreamChatRoom', livestreamId);
+    await this.invokeWhenConnected('JoinLivestreamChatRoom', livestreamId);
+  }
+
+  async startViewingLivestream(livestreamId: string) {
+    await this.invokeWhenConnected('StartViewingLivestream', livestreamId);
+  }
+
+  async stopViewingLivestream(livestreamId: string) {
+    try { await this.invokeWhenConnected('StopViewingLivestream', livestreamId); } catch { /* ignore */ }
   }
 
   async leaveLivestream(livestreamId: string) {
@@ -100,13 +131,32 @@ class ChatHubService {
   }
 
   async sendLivestreamMessage(livestreamId: string, message: string) {
-    const conn = await this.ensureStarted();
-    await conn.invoke('SendMessageToLivestream', livestreamId, message);
+    await this.invokeWhenConnected('SendMessageToLivestream', livestreamId, message);
   }
 
   onReceiveLivestreamMessage(cb: (payload: LivestreamMessagePayload) => void) {
     this.connection?.off('ReceiveLivestreamMessage');
-    this.connection?.on('ReceiveLivestreamMessage', cb);
+    type RawMsg = {
+      senderId: string;
+      senderName: string;
+      message: string;
+      timestamp: string;
+      senderType?: string; SenderType?: string;
+      senderRole?: string; SenderRole?: string;
+      senderAvatarUrl?: string; SenderAvatarUrl?: string;
+      avatarUrl?: string; AvatarUrl?: string;
+    };
+    this.connection?.on('ReceiveLivestreamMessage', (raw: RawMsg) => {
+      const payload: LivestreamMessagePayload = {
+        senderId: raw.senderId,
+        senderName: raw.senderName,
+        message: raw.message,
+        timestamp: raw.timestamp,
+        senderType: raw.senderType ?? raw.SenderType ?? raw.senderRole ?? raw.SenderRole,
+        senderAvatarUrl: raw.senderAvatarUrl ?? raw.SenderAvatarUrl ?? raw.avatarUrl ?? raw.AvatarUrl,
+      };
+      cb(payload);
+    });
   }
 
   onUserJoined(cb: (payload: UserPresencePayload) => void) {
@@ -121,7 +171,22 @@ class ChatHubService {
 
   onViewerStats(cb: (payload: ViewerStatsPayload) => void) {
     this.connection?.off('ReceiveViewerStats');
-    this.connection?.on('ReceiveViewerStats', cb);
+    type RawStats = {
+      livestreamId?: string; LivestreamId?: string;
+      totalViewers?: number; TotalViewers?: number;
+      viewersByRole?: Record<string, number>; ViewersByRole?: Record<string, number>;
+      timestamp?: string; Timestamp?: string;
+    };
+    this.connection?.on('ReceiveViewerStats', (raw: RawStats) => {
+      // Normalize server casing (LivestreamId, TotalViewers, ViewersByRole, Timestamp) -> camelCase
+      const normalized: ViewerStatsPayload = {
+        livestreamId: (raw?.livestreamId ?? raw?.LivestreamId ?? '').toString(),
+        totalViewers: Number(raw?.totalViewers ?? raw?.TotalViewers ?? 0),
+        viewersByRole: (raw?.viewersByRole ?? raw?.ViewersByRole ?? {}) as Record<string, number>,
+        timestamp: (raw?.timestamp ?? raw?.Timestamp ?? new Date().toISOString()).toString(),
+      };
+      cb(normalized);
+    });
   }
 }
 
