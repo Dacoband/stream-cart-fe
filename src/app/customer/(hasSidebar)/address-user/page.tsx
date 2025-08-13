@@ -27,6 +27,7 @@ import {
   AlertDialogTitle,
 } from "@radix-ui/react-alert-dialog";
 import DialogUpdateAddress from "../../components/DialogUpdateAddress";
+import { Card } from "@/components/ui/card";
 function AddressUser() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [loadingDelete, setLoadingDelete] = useState(false);
@@ -77,7 +78,7 @@ function AddressUser() {
     }
   };
   return (
-    <div className="flex flex-col w-full h-full overflow-auto ">
+    <Card className="flex flex-col py-8 px-10 w-full h-full overflow-auto min-h-[calc(100vh-9rem)]">
       <div className="flex justify-between items-center border-b pb-4 mb-5">
         <div>
           <div className="text-xl font-semibold">Địa chỉ của bạn:</div>
@@ -199,7 +200,7 @@ function AddressUser() {
             </div>
           ))
       )}
-    </div>
+    </Card>
   );
 }
 

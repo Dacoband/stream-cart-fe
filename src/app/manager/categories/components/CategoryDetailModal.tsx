@@ -1,8 +1,8 @@
-"use client";
+'use client'
 
-import React, { useState, useEffect } from "react";
-import { Category } from "@/types/category/category";
-import { Button } from "@/components/ui/button";
+import React, { useState, useEffect } from 'react'
+import { Category } from '@/types/category/category'
+import { Button } from '@/components/ui/button'
 import {
   Table,
   TableBody,
@@ -10,7 +10,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
+} from '@/components/ui/table'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,30 +18,31 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from '@/components/ui/dropdown-menu'
 import {
   Dialog,
   DialogContent,
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
+} from '@/components/ui/dialog'
 import {
   deleteCategory,
   getDetailCategory,
-} from "@/services/api/categories/categorys";
-import { toast } from "sonner";
-import Image from "next/image";
-import { MoreHorizontal, Trash2, Undo2, CirclePlus } from "lucide-react";
-import CreateCategoryModal from "./CreateCategoryModal";
+} from '@/services/api/categories/categorys'
+import { toast } from 'sonner'
+import Image from 'next/image'
+import { MoreHorizontal, Trash2, Undo2, CirclePlus } from 'lucide-react'
+import CreateCategoryModal from './CreateCategoryModal'
+import { AxiosError } from 'axios'
 
 interface CategoryDetailModalProps {
-  category: Category | null;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onRefresh: () => void;
-  level?: number;
-  parentPath?: string;
+  category: Category | null
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  onRefresh: () => void
+  level?: number
+  parentPath?: string
 }
 
 const CategoryDetailModal: React.FC<CategoryDetailModalProps> = ({
@@ -50,93 +51,97 @@ const CategoryDetailModal: React.FC<CategoryDetailModalProps> = ({
   onOpenChange,
   onRefresh,
   level = 0,
-  parentPath = "",
+  parentPath = '',
 }) => {
-  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false)
   const [selectedCategory, setSelectedCategory] = useState<{
-    id: string;
-    name: string;
-    isDeleted: boolean;
-  } | null>(null);
-  const [showSubcategoryModal, setShowSubcategoryModal] = useState(false);
+    id: string
+    name: string
+    isDeleted: boolean
+  } | null>(null)
+  const [showSubcategoryModal, setShowSubcategoryModal] = useState(false)
   const [selectedSubcategory, setSelectedSubcategory] =
-    useState<Category | null>(null);
-  const [showCreateModal, setShowCreateModal] = useState(false);
+    useState<Category | null>(null)
+  const [showCreateModal, setShowCreateModal] = useState(false)
   const [selectedParentCategoryID, setSelectedParentCategoryID] =
-    useState<string>("");
-  const [showUpdateModal, setShowUpdateModal] = useState(false);
+    useState<string>('')
+  const [showUpdateModal, setShowUpdateModal] = useState(false)
   const [selectedCategoryForUpdate, setSelectedCategoryForUpdate] =
-    useState<Category | null>(null);
+    useState<Category | null>(null)
   const [categoryDetail, setCategoryDetail] = useState<Category | null>(
     category
-  );
+  )
 
   useEffect(() => {
-    setCategoryDetail(category);
-  }, [category]);
+    setCategoryDetail(category)
+  }, [category])
 
   const handleDeleteCategory = (
     categoryId: string,
     categoryName: string,
     isDeleted: boolean
   ) => {
-    setSelectedCategory({ id: categoryId, name: categoryName, isDeleted });
-    setShowConfirmDialog(true);
-  };
+    setSelectedCategory({ id: categoryId, name: categoryName, isDeleted })
+    setShowConfirmDialog(true)
+  }
 
   const reloadCategoryDetail = async (id: string) => {
     try {
-      const detail = await getDetailCategory(id);
-      if (detail && detail.data) setCategoryDetail(detail.data);
-    } catch (e) {
+      const detail = await getDetailCategory(id)
+      if (detail && detail.data) setCategoryDetail(detail.data)
+    } catch (error) {
+      console.log(error)
       /* handle error if needed */
     }
-  };
+  }
 
   const confirmDelete = async () => {
-    if (!selectedCategory) return;
-    const actionText = selectedCategory.isDeleted ? "Khôi phục" : "Xóa";
+    if (!selectedCategory) return
+    const actionText = selectedCategory.isDeleted ? 'Khôi phục' : 'Xóa'
     try {
-      await deleteCategory(selectedCategory.id);
+      await deleteCategory(selectedCategory.id)
       toast.success(
         `${actionText} danh mục "${selectedCategory.name}" thành công!`
-      );
-      onRefresh();
-      setShowConfirmDialog(false);
-      setSelectedCategory(null);
+      )
+      onRefresh()
+      setShowConfirmDialog(false)
+      setSelectedCategory(null)
       // reload detail in modal
-      reloadCategoryDetail(selectedCategory.id);
-    } catch (error: any) {
+      reloadCategoryDetail(selectedCategory.id)
+    } catch (error) {
+      console.error('Create user failed:', error)
+      const err = error as AxiosError<{ message?: string; errors?: string[] }>
       const message =
-        error?.response?.data?.message ||
-        error?.message ||
-        `Không thể ${actionText.toLowerCase()} danh mục. Vui lòng thử lại!`;
-      toast.error(message);
+        err?.response?.data?.errors?.[0] ||
+        err?.response?.data?.message ||
+        `Không thể ${actionText.toLowerCase()} danh mục. Vui lòng thử lại!`
+      toast.error(message)
+      toast.error(message)
     }
-  };
+  }
 
   const handleViewSubcategoryDetail = (subcategory: Category) => {
-    setSelectedSubcategory(subcategory);
-    setShowSubcategoryModal(true);
-  };
+    setSelectedSubcategory(subcategory)
+    setShowSubcategoryModal(true)
+  }
 
   const handleUpdateCategory = (category: Category) => {
-    setSelectedCategoryForUpdate(category);
-    setShowUpdateModal(true);
-  };
+    setSelectedCategoryForUpdate(category)
+    setShowUpdateModal(true)
+  }
 
   const handleUpdateModalClose = () => {
-    setShowUpdateModal(false);
-    setSelectedCategoryForUpdate(null);
-  };
+    setShowUpdateModal(false)
+    setSelectedCategoryForUpdate(null)
+  }
 
   const getBreadcrumbPath = () => {
-    if (!categoryDetail) return "";
-    if (!parentPath) return categoryDetail.categoryName;
-    return `${parentPath} > ${categoryDetail.categoryName}`;
-  };
+    if (!categoryDetail) return ''
+    if (!parentPath) return categoryDetail.categoryName
+    return `${parentPath} > ${categoryDetail.categoryName}`
+  }
 
-  if (!categoryDetail) return null;
+  if (!categoryDetail) return null
 
   return (
     <>
@@ -201,7 +206,7 @@ const CategoryDetailModal: React.FC<CategoryDetailModalProps> = ({
                     Slug
                   </label>
                   <p className="text-base mt-1">
-                    {categoryDetail.slug || "N/A"}
+                    {categoryDetail.slug || 'N/A'}
                   </p>
                 </div>
                 <div>
@@ -209,7 +214,7 @@ const CategoryDetailModal: React.FC<CategoryDetailModalProps> = ({
                     Mô tả
                   </label>
                   <p className="text-base mt-1">
-                    {categoryDetail.description || "Không có mô tả"}
+                    {categoryDetail.description || 'Không có mô tả'}
                   </p>
                 </div>
               </div>
@@ -228,8 +233,8 @@ const CategoryDetailModal: React.FC<CategoryDetailModalProps> = ({
                   className="flex items-center gap-1 px-2 py-1 text-green-600 hover:text-green-700"
                   disabled={categoryDetail.isDeleted}
                   onClick={() => {
-                    setSelectedParentCategoryID(categoryDetail.categoryId);
-                    setShowCreateModal(true);
+                    setSelectedParentCategoryID(categoryDetail.categoryId)
+                    setShowCreateModal(true)
                   }}
                 >
                   <CirclePlus className="w-4 h-4 mr-1" /> Thêm danh mục con
@@ -319,8 +324,8 @@ const CategoryDetailModal: React.FC<CategoryDetailModalProps> = ({
                                     onClick={() => {
                                       setSelectedParentCategoryID(
                                         sub.categoryId
-                                      );
-                                      setShowCreateModal(true);
+                                      )
+                                      setShowCreateModal(true)
                                     }}
                                   >
                                     Thêm danh mục con
@@ -337,7 +342,7 @@ const CategoryDetailModal: React.FC<CategoryDetailModalProps> = ({
                                     )
                                   }
                                 >
-                                  {sub.isDeleted ? "Khôi phục" : "Xóa"}
+                                  {sub.isDeleted ? 'Khôi phục' : 'Xóa'}
                                 </DropdownMenuItem>
                               </DropdownMenuContent>
                             </DropdownMenu>
@@ -378,13 +383,13 @@ const CategoryDetailModal: React.FC<CategoryDetailModalProps> = ({
           <DialogHeader>
             <DialogTitle>
               {selectedCategory?.isDeleted
-                ? "Khôi phục danh mục"
-                : "Xóa danh mục"}
+                ? 'Khôi phục danh mục'
+                : 'Xóa danh mục'}
             </DialogTitle>
             <p>
-              Bạn có chắc chắn muốn{" "}
-              {selectedCategory?.isDeleted ? "khôi phục" : "xóa"} danh mục "
-              {selectedCategory?.name}" không? Hành động này không thể hoàn tác.
+              Bạn có chắc chắn muốn{' '}
+              {selectedCategory?.isDeleted ? 'khôi phục' : 'xóa'} danh mục{' '}
+              {selectedCategory?.name} không? Hành động này không thể hoàn tác.
             </p>
           </DialogHeader>
           <DialogFooter>
@@ -398,7 +403,7 @@ const CategoryDetailModal: React.FC<CategoryDetailModalProps> = ({
               className="bg-red-500 hover:bg-red-600 text-white"
               onClick={confirmDelete}
             >
-              {selectedCategory?.isDeleted ? "Khôi phục" : "Xóa"}
+              {selectedCategory?.isDeleted ? 'Khôi phục' : 'Xóa'}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -419,13 +424,13 @@ const CategoryDetailModal: React.FC<CategoryDetailModalProps> = ({
       <CreateCategoryModal
         open={showCreateModal}
         onOpenChange={(open) => {
-          setShowCreateModal(open);
-          if (!open) setSelectedParentCategoryID("");
+          setShowCreateModal(open)
+          if (!open) setSelectedParentCategoryID('')
         }}
         onSuccess={() => {
-          setShowCreateModal(false);
-          setSelectedParentCategoryID("");
-          onRefresh();
+          setShowCreateModal(false)
+          setSelectedParentCategoryID('')
+          onRefresh()
         }}
         parentCategoryID={selectedParentCategoryID}
       />
@@ -435,15 +440,15 @@ const CategoryDetailModal: React.FC<CategoryDetailModalProps> = ({
         open={showUpdateModal}
         onOpenChange={handleUpdateModalClose}
         onSuccess={() => {
-          setShowUpdateModal(false);
-          setSelectedCategoryForUpdate(null);
-          onRefresh();
+          setShowUpdateModal(false)
+          setSelectedCategoryForUpdate(null)
+          onRefresh()
         }}
         mode="update"
         initialData={selectedCategoryForUpdate}
       />
     </>
-  );
-};
+  )
+}
 
-export default CategoryDetailModal;
+export default CategoryDetailModal

@@ -1,18 +1,18 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Package, ShoppingCart, Store, Timer } from "lucide-react";
-import React from "react";
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Package, ShoppingCart, Store, Timer } from 'lucide-react'
+import React from 'react'
 
-import { PreviewOrder } from "@/types/Cart/Cart";
-import Image from "next/image";
-import { Separator } from "@radix-ui/react-dropdown-menu";
-import PriceTag from "@/components/common/PriceTag";
-import { PreviewDeliveriesResponse } from "@/types/deliveries/deliveries";
+import { PreviewOrder } from '@/types/Cart/Cart'
+import Image from 'next/image'
+import { Separator } from '@radix-ui/react-dropdown-menu'
+import PriceTag from '@/components/common/PriceTag'
+import { PreviewDeliveriesResponse } from '@/types/deliveries/deliveries'
 
 interface ProductsOrderProps {
-  orderProduct: PreviewOrder | null;
-  shopNotes: { [shopId: string]: string };
-  onNoteChange: (shopId: string, note: string) => void;
-  deliveryInfo: PreviewDeliveriesResponse | null;
+  orderProduct: PreviewOrder | null
+  shopNotes: { [shopId: string]: string }
+  onNoteChange: (shopId: string, note: string) => void
+  deliveryInfo: PreviewDeliveriesResponse | null
 }
 
 function ProductsOrder({
@@ -26,7 +26,7 @@ function ProductsOrder({
       <CardHeader className="bg-gradient-to-r from-blue-50 via-cyan-50 to-blue-50 border-b-1 border-blue-200">
         <CardTitle
           className=" text-lg  mt-2.5 mb-1.5 rounded-none shadow-none grid items-center "
-          style={{ gridTemplateColumns: " 6fr 2fr 2fr 2fr" }}
+          style={{ gridTemplateColumns: ' 6fr 2fr 2fr 2fr' }}
         >
           <div className="text-left font-semibold flex items-center">
             <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-md flex items-center justify-center mr-4">
@@ -60,11 +60,11 @@ function ProductsOrder({
               <div className="flex-col" key={product.cartItemId}>
                 <div
                   className="rounded-none shadow-none grid items-center w-full mb-5 py-0 "
-                  style={{ gridTemplateColumns: " 6fr 2fr 2fr 2fr " }}
+                  style={{ gridTemplateColumns: ' 6fr 2fr 2fr 2fr ' }}
                 >
                   <div className="text-left gap-2 flex">
                     <Image
-                      src={product.primaryImage || "/placeholder.svg"}
+                      src={product.primaryImage || '/placeholder.svg'}
                       alt={product.productName}
                       width={70}
                       height={75}
@@ -83,7 +83,7 @@ function ProductsOrder({
                             <span>
                               {Object.entries(product.attributes)
                                 .map(([key, value]) => `${key}: ${value}`)
-                                .join(", ")}
+                                .join(', ')}
                             </span>
                           </div>
                         )}
@@ -116,7 +116,7 @@ function ProductsOrder({
                 </label>
                 <input
                   type="text"
-                  value={shopNotes[shop.shopId] || ""}
+                  value={shopNotes[shop.shopId] || ''}
                   onChange={(e) => onNoteChange(shop.shopId, e.target.value)}
                   placeholder="Lưu ý cho Người bán..."
                   className="w-full border px-3 py-2 text-sm focus:outline-none focus:ring bg-white rounded-none"
@@ -125,7 +125,7 @@ function ProductsOrder({
               {orderProduct?.listCartItem.map((shop) => {
                 const deliveryForShop = deliveryInfo?.serviceResponses?.find(
                   (res) => res.shopId === shop.shopId
-                );
+                )
 
                 return (
                   <div
@@ -145,13 +145,13 @@ function ProductsOrder({
                             </span>
                           </div>
                           <div className="text-sm mt-0.5 flex gap-1 text-teal-600">
-                            <Timer size={18} /> Thời gian dự kiến:{" "}
+                            <Timer size={18} /> Thời gian dự kiến:{' '}
                             <span className="font-medium">
                               {deliveryForShop?.expectedDeliveryDate
                                 ? new Date(
                                     deliveryForShop.expectedDeliveryDate
-                                  ).toLocaleDateString("vi-VN")
-                                : "Vui lòng nhập địa chỉ"}
+                                  ).toLocaleDateString('vi-VN')
+                                : 'Vui lòng nhập địa chỉ'}
                             </span>
                           </div>
                         </div>
@@ -168,14 +168,14 @@ function ProductsOrder({
                       </div>
                     </div>
                   </div>
-                );
+                )
               })}
             </div>
           </div>
         ))}
       </CardContent>
     </Card>
-  );
+  )
 }
 
-export default ProductsOrder;
+export default ProductsOrder

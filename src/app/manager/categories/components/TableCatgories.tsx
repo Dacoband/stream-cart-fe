@@ -23,9 +23,9 @@ import {
   ChevronDown,
   Search,
   MoreHorizontal,
-  CirclePlus,
   ChevronRight,
 } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import Image from "next/image";
 
 import React, { useEffect, useState } from "react";
@@ -64,10 +64,10 @@ type Props = {
 
 const TableCatgories: React.FC<Props> = ({
   categories,
-  loading,
-  page,
-  setPage,
-  totalPages,
+  // loading,
+  // page,
+  // setPage,
+  // totalPages,
   onSearch,
   onRefresh,
   statusFilter,
@@ -82,7 +82,9 @@ const TableCatgories: React.FC<Props> = ({
   } | null>(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [detailCategory, setDetailCategory] = useState<Category | null>(null);
+  // const [loadingDetail, setLoadingDetail] = useState(false)
   const [loadingDetail, setLoadingDetail] = useState(false);
+
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedParentCategory, setSelectedParentCategory] =
@@ -105,12 +107,11 @@ const TableCatgories: React.FC<Props> = ({
       console.log(detail);
       setDetailCategory(detail.data);
       setShowDetailModal(true);
-    } catch (error: any) {
-      const message =
-        error?.response?.data?.message ||
-        error?.message ||
-        "Không thể tải thông tin chi tiết danh mục. Vui lòng thử lại!";
-      toast.error(message);
+    } catch (error) {
+      console.error("Error loading category detail:", error);
+      toast.error(
+        "Không thể tải thông tin chi tiết danh mục. Vui lòng thử lại!"
+      );
     } finally {
       setLoadingDetail(false);
     }
@@ -166,12 +167,9 @@ const TableCatgories: React.FC<Props> = ({
         `${actionText} danh mục "${selectedCategory.name}" thành công!`
       );
       onRefresh(); // Refresh the data after successful action
-    } catch (error: any) {
-      const message =
-        error?.response?.data?.message ||
-        error?.message ||
-        `Không thể ${action} danh mục. Vui lòng thử lại!`;
-      toast.error(message);
+    } catch (error) {
+      console.error("Error deleting category:", error);
+      toast.error(`Không thể ${action} danh mục. Vui lòng thử lại!`);
     } finally {
       setShowConfirmModal(false);
       setSelectedCategory(null);
@@ -209,8 +207,8 @@ const TableCatgories: React.FC<Props> = ({
             </AlertDialogTitle>
             <AlertDialogDescription>
               Bạn có chắc chắn muốn{" "}
-              {selectedCategory?.isDeleted ? "khôi phục" : "xóa"} danh mục "
-              {selectedCategory?.name}" không? Hành động này không thể hoàn tác.
+              {selectedCategory?.isDeleted ? "khôi phục" : "xóa"} danh mục{" "}
+              {selectedCategory?.name} không? Hành động này không thể hoàn tác.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -313,7 +311,31 @@ const TableCatgories: React.FC<Props> = ({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {categories.length === 0 ? (
+              {loadingDetail ? (
+                Array.from({ length: 4 }).map((_, i) => (
+                  <TableRow key={`sk-${i}`}>
+                    <TableCell className="px-5">
+                      <div className="flex items-center gap-2">
+                        <Skeleton className="h-4 w-4" />
+                        <Skeleton className="h-5 w-40" />
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <div className="flex justify-center">
+                        <Skeleton className="h-10 w-10 rounded" />
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <Skeleton className="h-6 w-24 mx-auto rounded-full" />
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <div className="flex justify-center">
+                        <Skeleton className="h-8 w-8 rounded" />
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : categories.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={4}>
                     <div className="flex flex-col items-center justify-center py-10">

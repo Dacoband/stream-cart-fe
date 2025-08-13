@@ -1,324 +1,238 @@
 'use client'
-import React, { useState, useEffect } from 'react'
-import { useParams, useRouter } from 'next/navigation'
-import { Shop } from '@/types/shop/shop'
-import { getShopDetail } from '@/services/api/shop/shop'
-import Image from 'next/image'
-import { Button } from '@/components/ui/button'
+import React, { useEffect, useState } from 'react'
+import { useParams } from 'next/navigation'
+// import { Button } from "@/components/ui/button";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
+import { getShopDetail, getShopMembers } from '@/services/api/shop/shop'
+import { getAddressByShopId } from '@/services/api/address/address'
+import { getUserById } from '@/services/api/auth/account'
+import { getPagedProducts } from '@/services/api/product/product'
+import { ShopInfo } from '@/app/manager/shops/[id]/components/ShopInfo'
+import { ShopProductList } from '@/app/manager/shops/[id]/components/ShopProduct'
+import { TransactionHistory } from '@/app/manager/shops/[id]/components/TransactionHistory'
+// import Image from 'next/image'
 import {
-  ArrowLeft,
-  Mail,
-  Star,
-  Trash2,
-  CheckCircle,
-  XCircle,
+  // Star,
+  // ArrowLeft,
+  Info,
+  ShoppingCart,
+  // Activity,
+  Boxes,
+  CreditCard,
+  CalendarClock,
 } from 'lucide-react'
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from '@/components/ui/alert-dialog'
 import { toast } from 'sonner'
+import type { Shop } from '@/types/shop/shop' // adjust path if needed
+import type { Product } from '@/types/product/product' // adjust path if needed
+import type { User } from '@/types/auth/user'
+import type { Address } from '@/types/address/address'
+import ShopHeader from './components/ShopHeader'
+import { ShopMembership } from './components/ShopMembership'
+import { ShopOrderList } from './components/ShopOrder'
 
+type Transaction = {
+  transactionId: string
+  type: 'PAYMENT' | 'REFUND' | 'WITHDRAW' | 'DEPOSIT'
+  amount: number
+  description: string
+  status: 'PENDING' | 'COMPLETED' | 'FAILED'
+  createdAt: string
+  orderId?: string
+  refundId?: string
+}
+
+type Membership = {
+  membershipId: string
+  name: string
+  description?: string
+  price: number
+  startDate: string
+  endDate: string
+  duration?: string
+  maxProduct?: number
+  maxLivestream?: number
+  commission: number // <-- ensure this is number, not boolean or optional
+  createdAt?: string
+  updatedAt?: string
+}
+type Order = {
+  orderId: string
+  customerName: string
+  totalAmount: number
+  status: string
+  createdAt: string
+}
 const ShopDetailPage = () => {
   const params = useParams()
-  const router = useRouter()
+  // const router = useRouter();
   const [shop, setShop] = useState<Shop | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const [products, setProducts] = useState<Product[]>([])
 
-  const [actionType, setActionType] = useState<
-    'approve' | 'reject' | 'delete' | null
-  >(null)
+  const [loading, setLoading] = useState(true)
+  const [seller, setSeller] = useState<User | null>(null)
+  const [address, setAddress] = useState<Address | null>(null)
+  const [transactions, setTransactions] = useState<Transaction[]>([])
+  const [memberships, setMemberships] = useState<Membership[]>([])
+  const [orders, setOrders] = useState<Order[]>([])
+  const [shopOwner, setShopOwner] = useState<User | null>(null)
+  const [moderators, setModerators] = useState<User[]>([])
 
   useEffect(() => {
-    const fetchShopDetail = async () => {
-      if (!params.id) return
+    const fetchAll = async () => {
+      if (typeof params.id !== 'string') {
+        toast.error('Không tìm thấy ID shop')
+        setLoading(false)
+        return
+      }
 
       try {
-        setLoading(true)
-        setError(null)
+        const id = params.id
 
-        const response = await getShopDetail(params.id as string)
-        console.log('Shop detail response:', response)
+        // Fetch shop detail
+        const shopRes = await getShopDetail(id)
+        setShop(shopRes.data || shopRes)
 
-        if (response && response.data) {
-          setShop(response.data)
-        } else if (response) {
-          setShop(response)
-        } else {
-          throw new Error('Không tìm thấy thông tin cửa hàng')
+        // Fetch address
+        try {
+          const addressRes = await getAddressByShopId(id)
+          setAddress(addressRes)
+        } catch (error) {
+          console.error('Error fetching address:', error)
+          setAddress(null)
         }
-      } catch (err: any) {
-        const message = err?.message || 'Không thể tải thông tin cửa hàng'
-        setError(message)
-        toast.error(message)
+
+        // Fetch shop owner and moderators
+        try {
+          const shopData = shopRes.data || shopRes
+          if (shopData?.createdBy) {
+            const owner = await getUserById(shopData.createdBy)
+            setShopOwner(owner)
+          }
+        } catch (error) {
+          console.error('Error fetching shop owner:', error)
+        }
+
+        try {
+          const members = await getShopMembers(id)
+          console.log('member', members)
+          setModerators(Array.isArray(members) ? members : [])
+        } catch (error) {
+          console.error('Error fetching moderators:', error)
+          setModerators([])
+        }
+
+        // Fetch products for the shop
+        try {
+          const productsRes = await getPagedProducts({
+            shopId: id,
+            pageNumber: 1,
+            pageSize: 50,
+            activeOnly: false,
+          })
+          setProducts(Array.isArray(productsRes) ? productsRes : [])
+        } catch (error) {
+          console.error('Error fetching products:', error)
+          setProducts([])
+        }
+
+        // Set empty arrays for other data that doesn't have real APIs yet
+        setTransactions([])
+        setSeller(null)
+        setMemberships([])
+        setOrders([])
+      } catch (error) {
+        console.log(error)
+        toast.error('Không thể tải dữ liệu')
       } finally {
         setLoading(false)
       }
     }
 
-    fetchShopDetail()
+    fetchAll()
   }, [params.id])
 
-  const handleConfirmAction = () => {
-    if (!shop) return
-
-    switch (actionType) {
-      case 'approve':
-        console.log('✅ Phê duyệt shop:', shop.id)
-        toast.success('Đã phê duyệt cửa hàng thành công!')
-        break
-      case 'reject':
-        console.log('❌ Từ chối shop:', shop.id)
-        toast.success('Đã từ chối cửa hàng!')
-        break
-      case 'delete':
-        console.log('🗑️ Xóa shop:', shop.id)
-        toast.success('Đã xóa cửa hàng!')
-        break
-      default:
-        break
-    }
-
-    setActionType(null)
-  }
-
-  const handleSendMail = () => {
-    if (!shop) return
-    console.log('📧 Gửi email tới shop:', shop.id)
-    toast.success('Đã gửi email thành công!')
-  }
-
-  if (loading) {
+  if (loading) return <div className="p-8 text-center">Đang tải...</div>
+  if (!shop)
     return (
-      <div className="max-w-5xl mx-auto p-8 bg-white rounded-lg shadow mt-8">
-        <div className="flex items-center justify-center py-20">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500"></div>
-          <span className="ml-4 text-lg">Đang tải thông tin cửa hàng...</span>
-        </div>
-      </div>
+      <div className="p-8 text-center text-red-500">Không tìm thấy shop</div>
     )
-  }
-
-  if (error || !shop) {
-    return (
-      <div className="max-w-5xl mx-auto p-8 bg-white rounded-lg shadow mt-8">
-        <Button variant="ghost" className="mb-4" onClick={() => router.back()}>
-          <ArrowLeft className="mr-2 w-4 h-4" /> Quay lại
-        </Button>
-        <div className="text-center py-20">
-          <div className="text-red-500 text-lg mb-2">
-            {error || 'Không tìm thấy cửa hàng'}
-          </div>
-          <Button onClick={() => router.back()}>Quay lại danh sách</Button>
-        </div>
-      </div>
-    )
-  }
 
   return (
-    <div className="max-w-5xl mx-auto p-8 bg-white rounded-lg shadow mt-8">
-      {/* Back button */}
-      <Button variant="ghost" className="mb-4" onClick={() => router.back()}>
-        <ArrowLeft className="mr-2 w-4 h-4" /> Quay lại
-      </Button>
+    <div className="max-w-6xl mx-auto p-6">
+      <ShopHeader shop={shop} />
+      <Tabs defaultValue="info" className="w-full">
+        <TabsList className="grid grid-cols-5 w-full bg-gray-100 rounded-lg shadow mb-6 overflow-hidden h-12">
+          <TabsTrigger
+            value="info"
+            className="flex items-center justify-center gap-2 h-full px-4 text-sm md:text-base font-medium text-gray-700 leading-none transition-all duration-200 ease-in-out data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow"
+          >
+            <Info className="w-4 h-4" />
+            Thông tin
+          </TabsTrigger>
+          <TabsTrigger
+            value="products"
+            className="flex items-center justify-center gap-2 h-full px-4 text-sm md:text-base font-medium text-gray-700 leading-none transition-all duration-200 ease-in-out data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow"
+          >
+            <Boxes className="w-4 h-4" />
+            Sản phẩm
+          </TabsTrigger>
+          <TabsTrigger
+            value="transaction"
+            className="flex items-center justify-center gap-2 h-full px-4 text-sm md:text-base font-medium text-gray-700 leading-none transition-all duration-200 ease-in-out data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow"
+          >
+            <CreditCard className="w-4 h-4" />
+            Giao dịch
+          </TabsTrigger>
+          <TabsTrigger
+            value="membership"
+            className="flex items-center justify-center gap-2 h-full px-4 text-sm md:text-base font-medium text-gray-700 leading-none transition-all duration-200 ease-in-out data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow"
+          >
+            <CalendarClock className="w-4 h-4" />
+            Gói thành viên
+          </TabsTrigger>
+          <TabsTrigger
+            value="order"
+            className="flex items-center justify-center gap-2 h-full px-4 text-sm md:text-base font-medium text-gray-700 leading-none transition-all duration-200 ease-in-out data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow"
+          >
+            <ShoppingCart className="w-4 h-4" />
+            Đơn hàng
+          </TabsTrigger>
+        </TabsList>
 
-      {/* Header */}
-      <div className="flex gap-6 items-center mb-6">
-        <Image
-          src={shop.logoURL || '/assets/nodata.png'}
-          alt={shop.shopName}
-          width={80}
-          height={80}
-          className="rounded-full object-cover"
-        />
-        <div className="flex flex-col">
-          <h1 className="text-2xl font-bold">{shop.shopName}</h1>
-          <div className="flex items-center gap-2 mt-1">
-            <span className="font-medium text-lg">
-              {shop.ratingAverage.toFixed(1)}
-            </span>
-            {Array.from({ length: 5 }).map((_, i) => (
-              <Star
-                key={i}
-                className={
-                  i < Math.round(shop.ratingAverage)
-                    ? 'text-yellow-400 fill-yellow-400'
-                    : 'text-gray-300'
-                }
-                size={18}
-              />
-            ))}
-            <span className="ml-4 text-sm text-gray-500">
-              ({shop.totalAverage} đánh giá)
-            </span>
+        <TabsContent value="info">
+          <div className="">
+            <ShopInfo
+              shop={shop}
+              seller={seller}
+              address={address}
+              shopOwner={shopOwner}
+              moderators={moderators}
+            />
           </div>
-        </div>
-      </div>
+        </TabsContent>
 
-      {/* Cover */}
-      <div className="mb-6">
-        <Image
-          src={shop.coverImageURL || '/assets/nodata.png'}
-          alt="cover"
-          width={800}
-          height={200}
-          className="rounded-lg object-cover w-full h-48"
-        />
-      </div>
-
-      {/* Status + Action Buttons */}
-      <div className="flex flex-wrap gap-4 mb-6 justify-between items-center">
-        <div className="flex gap-4 flex-wrap">
-          <div>
-            {shop.approvalStatus === 'approved' ? (
-              <span className="px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-600">
-                Đã duyệt
-              </span>
-            ) : shop.approvalStatus === 'pending' ? (
-              <span className="px-3 py-1 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-600">
-                Chờ duyệt
-              </span>
-            ) : (
-              <span className="px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-600">
-                Từ chối
-              </span>
-            )}
+        <TabsContent value="products">
+          <div className="">
+            <ShopProductList products={products} />
           </div>
-          <div>
-            {shop.status ? (
-              <span className="px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-600">
-                Đang hoạt động
-              </span>
-            ) : (
-              <span className="px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-600">
-                Dừng hoạt động
-              </span>
-            )}
+        </TabsContent>
+
+        <TabsContent value="transaction">
+          <div className="">
+            <TransactionHistory transactions={transactions} />
           </div>
-        </div>
-
-        {/* Action Buttons */}
-        <div className="flex gap-2 flex-wrap">
-          {shop.approvalStatus === 'pending' && (
-            <>
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button onClick={() => setActionType('approve')}>
-                    <CheckCircle className="w-4 h-4 mr-2" />
-                    Phê duyệt
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Xác nhận phê duyệt?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      Bạn có chắc chắn muốn phê duyệt cửa hàng này?
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Hủy</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleConfirmAction}>
-                      Đồng ý
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button
-                    onClick={() => setActionType('reject')}
-                    variant="destructive"
-                  >
-                    <XCircle className="w-4 h-4 mr-2" />
-                    Từ chối
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Xác nhận từ chối?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      Hành động này sẽ từ chối cửa hàng và không thể hoàn tác.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Hủy</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleConfirmAction}>
-                      Từ chối
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            </>
-          )}
-
-          <Button variant="secondary" onClick={handleSendMail}>
-            <Mail className="w-4 h-4 mr-2" />
-            Gửi email
-          </Button>
-
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button onClick={() => setActionType('delete')} variant="outline">
-                <Trash2 className="w-4 h-4 mr-2 text-red-500" />
-                Xóa shop
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Bạn chắc chắn muốn xóa?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  Cửa hàng này sẽ bị xóa vĩnh viễn khỏi hệ thống.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Hủy</AlertDialogCancel>
-                <AlertDialogAction onClick={handleConfirmAction}>
-                  Xóa
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-        </div>
-      </div>
-
-      {/* Info Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
-        {[
-          ['Mô tả', shop.description],
-          ['Gói thành viên', (shop as any).memberPackage || 'Cơ bản'],
-          ['Tỉ lệ hoàn thành', `${shop.completeRate}%`],
-          ['Tổng sản phẩm', shop.totalProduct],
-          [
-            'Ngày đăng ký',
-            new Date(shop.registrationDate).toLocaleDateString('vi-VN'),
-          ],
-          [
-            'Tài khoản ngân hàng',
-            `${shop.bankAccountNumber} - ${shop.bankName}`,
-          ],
-          ['Mã số thuế', shop.taxNumber],
-          ['Người tạo', shop.createdBy],
-          ['Ngày tạo', new Date(shop.createdAt).toLocaleDateString('vi-VN')],
-          [
-            'Ngày sửa',
-            new Date(shop.lastModifiedAt).toLocaleDateString('vi-VN'),
-          ],
-        ].map(([label, value], index) => (
-          <div key={index}>
-            <div className="mb-1 text-gray-500 text-sm">{label}</div>
-            <div className="font-medium break-words">{value}</div>
+        </TabsContent>
+        <TabsContent value="membership">
+          <div className="">
+            <ShopMembership list={memberships} />
           </div>
-        ))}
-      </div>
+        </TabsContent>
+        <TabsContent value="order">
+          <div className="">
+            <ShopOrderList orders={orders} />
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   )
 }

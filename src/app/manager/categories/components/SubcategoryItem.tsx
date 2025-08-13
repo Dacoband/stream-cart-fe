@@ -1,16 +1,16 @@
-'use client'
+"use client";
 
-import React, { useState } from 'react'
-import { Category } from '@/types/category/category'
-import { Button } from '@/components/ui/button'
+import React, { useState } from "react";
+import { Category } from "@/types/category/category";
+import { Button } from "@/components/ui/button";
 import {
-  Table,
-  TableBody,
+  // Table,
+  // TableBody,
   TableCell,
-  TableHead,
-  TableHeader,
+  // TableHead,
+  // TableHeader,
   TableRow,
-} from '@/components/ui/table'
+} from "@/components/ui/table";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,21 +18,21 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
-import { ChevronRight, ChevronDown, MoreHorizontal } from 'lucide-react'
-import Image from 'next/image'
+} from "@/components/ui/dropdown-menu";
+import { ChevronRight, ChevronDown, MoreHorizontal } from "lucide-react";
+import Image from "next/image";
 
 interface SubcategoryItemProps {
-  subCategory: Category
+  subCategory: Category;
   onDeleteCategory: (
     categoryId: string,
     categoryName: string,
     isDeleted: boolean
-  ) => void
-  onViewDetail: (categoryId: string) => void
-  onAddSubcategory: (parentCategory: Category) => void
-  onUpdateCategory: (category: Category) => void
-  level?: number
+  ) => void;
+  onViewDetail: (categoryId: string) => void;
+  onAddSubcategory: (parentCategory: Category) => void;
+  onUpdateCategory: (category: Category) => void;
+  level?: number;
 }
 
 const SubcategoryItem: React.FC<SubcategoryItemProps> = ({
@@ -43,12 +43,12 @@ const SubcategoryItem: React.FC<SubcategoryItemProps> = ({
   onUpdateCategory,
   level = 1, // bắt đầu từ 1 để thụt lề đẹp hơn
 }) => {
-  const [expanded, setExpanded] = useState(false)
+  const [expanded, setExpanded] = useState(false);
 
   const hasSubcategories = (category: Category) =>
-    category.subCategories && category.subCategories.length > 0
+    category.subCategories && category.subCategories.length > 0;
 
-  const toggleExpanded = () => setExpanded((prev) => !prev)
+  const toggleExpanded = () => setExpanded((prev) => !prev);
 
   return (
     <>
@@ -66,8 +66,8 @@ const SubcategoryItem: React.FC<SubcategoryItemProps> = ({
                 variant="ghost"
                 size="sm"
                 onClick={(e) => {
-                  e.stopPropagation()
-                  toggleExpanded()
+                  e.stopPropagation();
+                  toggleExpanded();
                 }}
                 className="p-1 h-4 w-4"
               >
@@ -185,7 +185,7 @@ const SubcategoryItem: React.FC<SubcategoryItemProps> = ({
           />
         ))}
     </>
-  )
-}
+  );
+};
 
-export default SubcategoryItem
+export default SubcategoryItem;

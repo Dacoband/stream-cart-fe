@@ -1,108 +1,109 @@
-'use client'
-import React, { useState, useEffect } from 'react'
-import TableShops from './components/TableShops'
-import { Shop, FilterShop } from '@/types/shop/shop'
-import { getAllShops } from '@/services/api/shop/shop'
-import { toast } from 'sonner'
+"use client";
+import React, { useState, useEffect } from "react";
+import TableShops from "./components/TableShops";
+import { Shop, FilterShop } from "@/types/shop/shop";
+import { getAllShops } from "@/services/api/shop/shop";
+import { toast } from "sonner";
 
 const ShopPage = () => {
-  const [shops, setShops] = useState<Shop[]>([])
-  const [loading, setLoading] = useState(false)
-  const [pageNumber, setPageNumber] = useState(1)
-  const [pageSize, setPageSize] = useState(10)
-  const [totalPages, setTotalPages] = useState(1)
-  const [totalCount, setTotalCount] = useState(0)
-  const [searchTerm, setSearchTerm] = useState('')
-  const [statusFilter, setStatusFilter] = useState<string>('')
-  const [approvalStatusFilter, setApprovalStatusFilter] = useState<string>('')
+  const [shops, setShops] = useState<Shop[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [pageNumber, setPageNumber] = useState(1);
+  // const [pageSize, setPageSize] = useState(10)
+  const [pageSize] = useState(10);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("");
+  const [approvalStatusFilter, setApprovalStatusFilter] = useState<string>("");
 
   const fetchShops = async () => {
     try {
-      setLoading(true)
+      setLoading(true);
       const filter: FilterShop = {
         pageNumber,
         pageSize,
         status: statusFilter,
-        approvalStatus: approvalStatusFilter,
+        approvalStatus: "Approved",
         searchTerm,
-        sortBy: 'shopName',
+        sortBy: "shopName",
         ascending: true,
-      }
+      };
 
-      const response = await getAllShops(filter)
-      console.log('Shops response:', response)
-      console.log('Shops data structure:', JSON.stringify(response, null, 2))
+      const response = await getAllShops(filter);
+      console.log("Shops response:", response);
+      console.log("Shops data structure:", JSON.stringify(response, null, 2));
 
       // Kiểm tra các cấu trúc response có thể có
-      let shopsData = []
-      let totalPagesData = 1
-      let totalCountData = 0
+      let shopsData = [];
+      let totalPagesData = 1;
+      let totalCountData = 0;
 
       if (response) {
         if (response.items) {
-          shopsData = response.items
-          totalPagesData = response.totalPages || 1
-          totalCountData = response.totalCount || 0
+          shopsData = response.items;
+          totalPagesData = response.totalPages || 1;
+          totalCountData = response.totalCount || 0;
         } else if (response.data && response.data.items) {
-          shopsData = response.data.items
-          totalPagesData = response.data.totalPages || 1
-          totalCountData = response.data.totalCount || 0
+          shopsData = response.data.items;
+          totalPagesData = response.data.totalPages || 1;
+          totalCountData = response.data.totalCount || 0;
         } else if (response.data && Array.isArray(response.data)) {
-          shopsData = response.data
+          shopsData = response.data;
         } else if (Array.isArray(response)) {
-          shopsData = response
+          shopsData = response;
         } else if (response.shops) {
-          shopsData = response.shops
+          shopsData = response.shops;
         } else if (response.categories) {
-          shopsData = response.categories
+          shopsData = response.categories;
         }
       }
 
-      console.log('Extracted shops data:', shopsData)
-      console.log('First shop item:', shopsData[0])
+      console.log("Extracted shops data:", shopsData);
+      console.log("First shop item:", shopsData[0]);
 
-      setShops(shopsData)
-      setTotalPages(totalPagesData)
-      setTotalCount(totalCountData)
-    } catch (error: any) {
-      const message = error?.message || 'Không thể tải danh sách cửa hàng'
-      toast.error(message)
-      setShops([])
+      setShops(shopsData);
+      setTotalPages(totalPagesData);
+      setTotalCount(totalCountData);
+    } catch (error) {
+      console.error("Error fetching shops:", error);
+      toast.error("Không thể tải danh sách cửa hàng");
+      setShops([]);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   useEffect(() => {
-    fetchShops()
-  }, [pageNumber, pageSize, statusFilter, approvalStatusFilter])
+    fetchShops();
+  }, [pageNumber, pageSize, statusFilter, approvalStatusFilter]);
 
   // Debounced search
   useEffect(() => {
     const timeout = setTimeout(() => {
-      setPageNumber(1) // Reset to first page when searching
-      fetchShops()
-    }, 500)
-    return () => clearTimeout(timeout)
-  }, [searchTerm])
+      setPageNumber(1); // Reset to first page when searching
+      fetchShops();
+    }, 500);
+    return () => clearTimeout(timeout);
+  }, [searchTerm]);
 
   const handleSearch = (value: string) => {
-    setSearchTerm(value)
-  }
+    setSearchTerm(value);
+  };
 
   const handleStatusFilter = (status: string) => {
-    setStatusFilter(status)
-    setPageNumber(1)
-  }
+    setStatusFilter(status);
+    setPageNumber(1);
+  };
 
   const handleApprovalStatusFilter = (status: string) => {
-    setApprovalStatusFilter(status)
-    setPageNumber(1)
-  }
+    setApprovalStatusFilter(status);
+    setPageNumber(1);
+  };
 
   const handleRefresh = () => {
-    fetchShops()
-  }
+    fetchShops();
+  };
 
   return (
     <div className="flex flex-col gap-5 min-h-full">
@@ -127,7 +128,7 @@ const ShopPage = () => {
         />
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default ShopPage
+export default ShopPage;

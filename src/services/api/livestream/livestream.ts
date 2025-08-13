@@ -150,7 +150,7 @@ export const deleteLivestream = async (Id: string) => {
     if (!token) {
       throw new Error("Not found token.");
     }
-    const response = await rootApi.delete(`/livestreams/${Id}/start`, {
+    const response = await rootApi.delete(`/livestreams/${Id}`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },

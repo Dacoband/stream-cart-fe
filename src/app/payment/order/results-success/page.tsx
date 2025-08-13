@@ -7,26 +7,16 @@ import { ShoppingCart } from "lucide-react";
 import Link from "next/link";
 import { withRoleProtection } from "@/lib/requireRole";
 
-interface LottieAnimationProps {
-  loop?: boolean;
-  autoplay?: boolean;
-  className?: string;
-}
-
-const PaymentSuccess: React.FC<LottieAnimationProps> = ({
-  loop = false,
-  autoplay = true,
-  className = "w-36",
-}) => {
+const PaymentSuccess = () => {
   return (
     <Card className="w-[60vw]  py-14  gap-0 flex items-center ">
       <CardContent className="w-[65%] flex justify-center flex-col items-center mx-auto">
         <div className="h-36 mx-auto">
           <Lottie
             animationData={successAnimation}
-            loop={loop}
-            autoplay={autoplay}
-            className={className}
+            loop={false}
+            autoplay={true}
+            className="w-36"
           />
         </div>
         <h1 className="text-2xl font-bold text-gray-900 mb-2">

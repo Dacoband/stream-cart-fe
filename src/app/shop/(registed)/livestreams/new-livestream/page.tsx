@@ -8,7 +8,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { AxiosError } from "axios";
 import { Calendar } from "@/components/ui/calendar";
-
+import { useRouter } from "next/navigation";
 import {
   Popover,
   PopoverTrigger,
@@ -43,7 +43,7 @@ import { CreateLivestreamProduct } from "@/types/livestream/livestream";
 function Page() {
   const [loadingbt, setLoadingbt] = useState(false);
   const [products, setProducts] = useState<CreateLivestreamProduct[]>([]);
-
+  const router = useRouter();
   const [thumbnailUrlPreview, setthumbnailUrlPreview] = useState<string | null>(
     null
   );
@@ -92,6 +92,7 @@ function Page() {
       });
 
       toast.success("Tạo livestream thành công!");
+      router.push(`/shop/livestreams`);
       form.reset();
       setthumbnailUrlPreview(null);
     } catch (error: unknown) {
@@ -159,7 +160,7 @@ function Page() {
                             onChange={(e) => {
                               const file = e.target.files?.[0];
                               if (file) {
-                                field.onChange(file); // Gửi file vào hook form
+                                field.onChange(file);
                                 setthumbnailUrlPreview(
                                   URL.createObjectURL(file)
                                 );
@@ -303,7 +304,7 @@ function Page() {
             {/* Nút hành động */}
             <div className="bg-white sticky bottom-0 z-10 h-fit w-full py-3 px-5 shadow border flex justify-between items-center">
               <div className="w-[90%] flex justify-end mx-auto gap-5">
-                <Link href={"/shop/manager-products"}>
+                <Link href={"/shop/livestreams"}>
                   <Button
                     type="button"
                     className="px-8 font-normal py-2 h-full bg-white hover:bg-white border-2 text-black hover:text-black/50 text-base cursor-pointer"

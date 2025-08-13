@@ -32,8 +32,13 @@ const items = [
     icon: ShieldCheck,
   },
   {
-    title: 'Quản lý cửa hàng',
+    title: 'Cửa hàng đang hoạt động',
     url: '/manager/shops',
+    icon: Store,
+  },
+  {
+    title: 'Cửa hàng chờ duyệt',
+    url: '/manager/pending',
     icon: Store,
   },
   {

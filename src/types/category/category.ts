@@ -6,6 +6,8 @@ export interface Category {
   slug: string
   isDeleted: boolean
   subCategories?: Category[]
+  // fix deployce
+    parentCategoryID?: string | null
 }export interface listCategory {
   totalItem: number
   categories: Category[]

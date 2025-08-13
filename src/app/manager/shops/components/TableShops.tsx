@@ -1,9 +1,9 @@
-'use client'
+"use client";
 
-import React, { useState, useEffect } from 'react'
-import Image from 'next/image'
+import React, { useState, useEffect } from "react";
+import Image from "next/image";
 
-import { Card } from '@/components/ui/card'
+import { Card } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -11,15 +11,15 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table'
+} from "@/components/ui/table";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
-import { Button } from '@/components/ui/button'
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
 import {
   Eye,
   CheckCircle,
@@ -30,51 +30,51 @@ import {
   ChevronDown,
   ChevronLeft,
   ChevronRight,
-} from 'lucide-react'
-import { Shop } from '@/types/shop/shop'
-import { Input } from '@/components/ui/input'
-import { useRouter } from 'next/navigation'
+} from "lucide-react";
+import { Shop } from "@/types/shop/shop";
+import { Input } from "@/components/ui/input";
+import { useRouter } from "next/navigation";
 
 type Props = {
-  shops: Shop[]
-  loading: boolean
-  onSearch: (value: string) => void
-  onStatusFilter: (status: string) => void
-  onApprovalStatusFilter: (status: string) => void
-  onRefresh: () => void
-  pageNumber: number
-  setPageNumber: (page: number) => void
-  totalPages: number
-  totalCount: number
-}
+  shops: Shop[];
+  loading: boolean;
+  onSearch: (value: string) => void;
+  onStatusFilter: (status: string) => void;
+  onApprovalStatusFilter: (status: string) => void;
+  onRefresh: () => void;
+  pageNumber: number;
+  setPageNumber: (page: number) => void;
+  totalPages: number;
+  totalCount: number;
+};
 
 const TableShops: React.FC<Props> = ({
   shops,
   loading,
   onSearch,
   onStatusFilter,
-  onApprovalStatusFilter,
-  onRefresh,
+  // onApprovalStatusFilter,
+  // onRefresh,
   pageNumber,
   setPageNumber,
   totalPages,
   totalCount,
 }) => {
-  const router = useRouter()
-  const [searchValue, setSearchValue] = useState('')
+  const router = useRouter();
+  const [searchValue, setSearchValue] = useState("");
 
   useEffect(() => {
     const timeout = setTimeout(() => {
-      onSearch(searchValue)
-    }, 500)
-    return () => clearTimeout(timeout)
-  }, [searchValue, onSearch])
+      onSearch(searchValue);
+    }, 500);
+    return () => clearTimeout(timeout);
+  }, [searchValue, onSearch]);
 
   const handlePageChange = (newPage: number) => {
     if (newPage >= 1 && newPage <= totalPages) {
-      setPageNumber(newPage)
+      setPageNumber(newPage);
     }
-  }
+  };
 
   return (
     <Card className="bg-white py-5 px-8 overflow-x-auto">
@@ -105,13 +105,13 @@ const TableShops: React.FC<Props> = ({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
-              <DropdownMenuItem onClick={() => onStatusFilter('')}>
+              <DropdownMenuItem onClick={() => onStatusFilter("")}>
                 Tất cả
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => onStatusFilter('active')}>
+              <DropdownMenuItem onClick={() => onStatusFilter("active")}>
                 Đang hoạt động
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => onStatusFilter('inactive')}>
+              <DropdownMenuItem onClick={() => onStatusFilter("inactive")}>
                 Dừng hoạt động
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -170,16 +170,11 @@ const TableShops: React.FC<Props> = ({
               </TableRow>
             ) : (
               shops.map((shop) => {
-                if (!shop || !shop.id) return null
+                if (!shop || !shop.id) return null;
 
-                const shopName =
-                  (shop as any).shopName ||
-                  (shop as any).name ||
-                  (shop as any).title ||
-                  'Không có tên'
+                const shopName = shop.shopName || "Không có tên";
 
-                const rating =
-                  (shop as any).ratingAverage || (shop as any).rating || 0
+                const rating = shop.ratingAverage || 0;
 
                 return (
                   <TableRow
@@ -216,8 +211,8 @@ const TableShops: React.FC<Props> = ({
                               key={`star-${shop.id}-${i}`}
                               className={
                                 i < Math.round(rating)
-                                  ? 'text-yellow-400 fill-yellow-400'
-                                  : 'text-gray-300'
+                                  ? "text-yellow-400 fill-yellow-400"
+                                  : "text-gray-300"
                               }
                               size={16}
                             />
@@ -226,9 +221,7 @@ const TableShops: React.FC<Props> = ({
                       )}
                     </TableCell>
                     <TableCell className="text-center align-middle px-5">
-                      {(shop as any).status ||
-                      (shop as any).isActive ||
-                      (shop as any).active ? (
+                      {shop.status ? (
                         <span className="px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-600">
                           Đang hoạt động
                         </span>
@@ -239,10 +232,7 @@ const TableShops: React.FC<Props> = ({
                       )}
                     </TableCell>
                     <TableCell className="text-center align-middle px-5">
-                      {(shop as any).completeRate ||
-                        (shop as any).completionRate ||
-                        0}
-                      %
+                      {shop.completeRate || 0}%
                     </TableCell>
                     <TableCell className="text-center align-middle px-5">
                       <DropdownMenu>
@@ -277,7 +267,7 @@ const TableShops: React.FC<Props> = ({
                       </DropdownMenu>
                     </TableCell>
                   </TableRow>
-                )
+                );
               })
             )}
           </TableBody>
@@ -288,8 +278,8 @@ const TableShops: React.FC<Props> = ({
       {totalPages > 1 && (
         <div className="flex items-center justify-between mt-6">
           <div className="text-sm text-gray-500">
-            Hiển thị {(pageNumber - 1) * 10 + 1} -{' '}
-            {Math.min(pageNumber * 10, totalCount)} trong tổng số {totalCount}{' '}
+            Hiển thị {(pageNumber - 1) * 10 + 1} -{" "}
+            {Math.min(pageNumber * 10, totalCount)} trong tổng số {totalCount}{" "}
             cửa hàng
           </div>
           <div className="flex items-center gap-2">
@@ -316,7 +306,7 @@ const TableShops: React.FC<Props> = ({
         </div>
       )}
     </Card>
-  )
-}
+  );
+};
 
-export default TableShops
+export default TableShops;

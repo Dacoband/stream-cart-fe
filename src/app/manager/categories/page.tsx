@@ -1,54 +1,57 @@
-"use client";
-import { Button } from "@/components/ui/button";
-import { CirclePlus } from "lucide-react";
-import TableCategories from "./components/TableCatgories";
-import React, { useEffect, useState } from "react";
-import { Category, filterCategory } from "@/types/category/category";
-import { getAllCategories } from "@/services/api/categories/categorys";
-import CreateCategoryModal from "./components/CreateCategoryModal";
-import { toast } from "sonner";
+'use client'
+import { Button } from '@/components/ui/button'
+import { CirclePlus } from 'lucide-react'
+import TableCategories from './components/TableCatgories'
+import React, { useEffect, useState } from 'react'
+import { Category, filterCategory } from '@/types/category/category'
+import { getAllCategories } from '@/services/api/categories/categorys'
+import CreateCategoryModal from './components/CreateCategoryModal'
+import { toast } from 'sonner'
+import { AxiosError } from 'axios'
 
-function page() {
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [pageIndex, setPageIndex] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
-  const [totalPages, setTotalPages] = useState(1);
-  const [loading, setLoading] = useState(false);
-  const [name, setName] = useState("");
-  const [isDeleted, setIsDeleted] = useState<boolean | null>(null);
-  const [showModal, setShowModal] = useState(false);
+function Categorypage() {
+  const [categories, setCategories] = useState<Category[]>([])
+  const [pageIndex, setPageIndex] = useState(1)
+  const [pageSize] = useState(10)
+  const [totalPages, setTotalPages] = useState(1)
+  const [loading, setLoading] = useState(false)
+  const [name, setName] = useState('')
+  const [isDeleted, setIsDeleted] = useState<boolean | null>(null)
+  const [showModal, setShowModal] = useState(false)
 
-  const fetchData = async () => {
+  const fetchData = React.useCallback(async () => {
     try {
-      setLoading(true);
+      setLoading(true)
       const params: filterCategory = {
         PageIndex: pageIndex,
         PageSize: pageSize,
         CategoryName: name,
         IsDeleted: isDeleted,
-      };
-      const res = await getAllCategories(params);
-      console.log(res.data.categories);
-      setCategories(res.data.categories || []);
-      setTotalPages(res.totalPages || 1);
-    } catch (err: any) {
+      }
+      const res = await getAllCategories(params)
+      console.log(res.data.categories)
+      setCategories(res.data.categories || [])
+      setTotalPages(res.totalPages || 1)
+    } catch (error) {
+      console.error(error)
+      const err = error as AxiosError<{ message?: string; errors?: string[] }>
       const message =
+        err?.response?.data?.errors?.[0] ||
         err?.response?.data?.message ||
-        err?.message ||
-        "Không thể tải danh mục. Vui lòng thử lại!";
-      toast.error(message);
+        'Không thể tải danh mục. Vui lòng thử lại!'
+      toast.error(message)
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }, [pageIndex, pageSize, name, isDeleted])
 
   useEffect(() => {
-    fetchData();
-  }, [pageIndex, pageSize, name, isDeleted]);
+    fetchData()
+  }, [fetchData])
 
   const handleAddCategoryClick = () => {
-    setShowModal(true);
-  };
+    setShowModal(true)
+  }
 
   return (
     <div className="flex flex-col gap-5 min-h-full">
@@ -86,7 +89,7 @@ function page() {
         />
       </div>
     </div>
-  );
+  )
 }
 
-export default page;
+export default Categorypage
