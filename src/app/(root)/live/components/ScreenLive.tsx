@@ -27,6 +27,7 @@ import { formatFullDateTimeVN } from "@/components/common/formatFullDateTimeVN";
 import ChatLive from "./ChatLive";
 import ProductsLive from "./ProductsLive";
 import { ViewerCount } from "@/app/shop/livestream/components/ViewCount";
+import PinProduct from "./PinProduct";
 interface ScreenLiveProps {
   liveStreamId: string;
 }
@@ -406,24 +407,6 @@ export default function ScreenLive({ liveStreamId }: ScreenLiveProps) {
 
   return (
     <div className="w-full h-full">
-      {connectionError && (
-        <div
-          style={{
-            position: "absolute",
-            top: 10,
-            left: 10,
-            right: 10,
-            zIndex: 1000,
-            backgroundColor: "rgba(255, 152, 0, 0.9)",
-            color: "white",
-            padding: 1,
-            borderRadius: 1,
-            textAlign: "center",
-          }}
-        >
-          <div>{connectionError}</div>
-        </div>
-      )}
       <div className=" w-full h-full rounded-none overflow-hidden relative ">
         {viewerToken ? (
           <LiveKitRoom
@@ -529,7 +512,7 @@ export default function ScreenLive({ liveStreamId }: ScreenLiveProps) {
               <div className="w-[20%] h-full ">
                 <ProductsLive livestreamId={livestream.id} />
               </div>
-              <div className="w-[60%] bg-black h-full relative mb-28">
+              <div className="w-[60%] bg-black h-full pb-20">
                 {isConnecting ? (
                   <div className="flex flex-col items-center justify-center text-white h-[70vh] p-4 text-center">
                     <h2 className="text-xl font-bold">
@@ -546,6 +529,9 @@ export default function ScreenLive({ liveStreamId }: ScreenLiveProps) {
                       <CustomerVideoDisplay
                         thumbnailUrl={livestream.thumbnailUrl || undefined}
                       />
+                      <div>
+                        <PinProduct livestreamId={livestream.id} />
+                      </div>
                       <div className="absolute bottom-0 left-0 w-full bg-gradient-to-t from-black/70 to-transparent p-4 text-white">
                         <h3 className="text-2xl font-bold mb-3">
                           {livestream.title}
@@ -558,6 +544,11 @@ export default function ScreenLive({ liveStreamId }: ScreenLiveProps) {
                         </p>
                       </div>
                     </div>
+                  </div>
+                )}
+                {connectionError && (
+                  <div className="absolute bottom-0 left-[10px] right-[10px] z-10 bg-black text-white p-1 rounded text-center">
+                    <div>{connectionError}</div>
                   </div>
                 )}
               </div>

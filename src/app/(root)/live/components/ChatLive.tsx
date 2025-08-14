@@ -13,9 +13,13 @@ const ChatLive: React.FC<ChatLiveProps> = ({ livestreamId }) => {
     <Card className="bg-white border  h-[calc(100vh-8vh)] rounded-none py-0 gap-0">
       <Tabs defaultValue="live" className="w-full h-full">
         <CardTitle className="border-b  w-full text-black text-center">
-          <TabsList className="w-full ">
-            <TabsTrigger value="live">Chat Live</TabsTrigger>
-            <TabsTrigger value="ai">Chat AI</TabsTrigger>
+          <TabsList className="w-full p-0 ">
+            <TabsTrigger value="live" className="rounded-none ">
+              Chat Live
+            </TabsTrigger>
+            <TabsTrigger value="ai" className="rounded-none ">
+              Chat AI
+            </TabsTrigger>
           </TabsList>
         </CardTitle>
 

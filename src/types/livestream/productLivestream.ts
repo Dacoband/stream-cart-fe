@@ -3,7 +3,7 @@ export interface ProductLiveStream{
    livestreamId:string;
    productId:string;
    variantId:string;
-   isPinned:boolean;
+   isPin:boolean;
    price:number;
    stock:number;
    createAt:Date;

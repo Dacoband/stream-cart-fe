@@ -22,7 +22,6 @@ function ProductsLive({ livestreamId }: { livestreamId: string }) {
     fetchProducts();
   }, [livestreamId]);
 
-  // Lọc sản phẩm theo tên
   const filteredProducts = products.filter((p) =>
     p.productName?.toLowerCase().includes(search.toLowerCase())
   );
@@ -48,7 +47,7 @@ function ProductsLive({ livestreamId }: { livestreamId: string }) {
       <CardContent className="overflow-y-auto flex-1 mt-5 px-2 space-y-3">
         {filteredProducts.length > 0 ? (
           filteredProducts.map((product) => (
-            <Card key={product.id} className="py-3 px-3 rounded-sm">
+            <Card key={product.id} className="py-3 px-3 rounded-none">
               <div className="flex gap-3">
                 <div>
                   {product.productImageUrl ? (
@@ -68,11 +67,11 @@ function ProductsLive({ livestreamId }: { livestreamId: string }) {
 
                 <div className="flex flex-col justify-between flex-1 min-w-0">
                   <div>
-                    <h3 className="font-medium text-sm line-clamp-1">
+                    <h3 className="font-medium text-sm mb-1 line-clamp-1">
                       {product.productName}
                     </h3>
                     {product.variantName && (
-                      <p className="text-xs text-gray-500">
+                      <p className="text-xs text-gray-500 line-clamp-1">
                         Phân loại: {product.variantName}
                       </p>
                     )}{" "}
@@ -89,7 +88,7 @@ function ProductsLive({ livestreamId }: { livestreamId: string }) {
                     </p>
                     <Button
                       size="sm"
-                      className="text-[12px] py-0.5 px-2 rounded-none bg-gradient-to-r from-orange-500 to-red-500 hover:bg-[#B0F847]/80 font-semibold text-white"
+                      className="text-[12px] py-1 cursor-pointer px-2 rounded-none h-fit bg-gradient-to-r from-orange-500 to-red-500 hover:bg-[#B0F847]/80 font-semibold text-white"
                     >
                       Mua ngay
                     </Button>

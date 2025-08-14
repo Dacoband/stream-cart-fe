@@ -14,6 +14,7 @@ import {
   endLivestreamById,
 } from "@/services/api/livestream/livestream";
 import { Livestream } from "@/types/livestream/livestream";
+import type { ProductLiveStream as ProductLS } from "@/types/livestream/productLivestream";
 import { useParams, useRouter } from "next/navigation";
 import LoadingScreen from "@/components/common/LoadingScreen";
 
@@ -22,6 +23,7 @@ import { HostOnlyView } from "../components/HostOnlyView";
 import { ControlButtons } from "../components/ControlButtons";
 import ChatLive from "../components/ChatLive";
 import ProductLiveStream from "../components/ProductLiveStream";
+import PinProduct from "../components/PinProduct";
 
 export default function SellerLiveStream() {
   const { livestreamId } = useParams<{ livestreamId: string }>();
@@ -36,6 +38,8 @@ export default function SellerLiveStream() {
   const [devicesChecked, setDevicesChecked] = useState(false);
   const [hasCamera, setHasCamera] = useState(true);
   const [hasMic, setHasMic] = useState(true);
+  const [pinned, setPinned] = useState<ProductLS | null>(null);
+  const [refreshPin, setRefreshPin] = useState(false);
 
   useEffect(() => {
     const fetchLivestreamData = async () => {
@@ -173,7 +177,11 @@ export default function SellerLiveStream() {
               <div className="flex w-full bg-black  h-full">
                 {!isFullscreen && (
                   <div className="w-[20%]">
-                    <ProductLiveStream livestreamId={livestream.id} />
+                    <ProductLiveStream
+                      livestreamId={livestream.id}
+                      onPinnedChange={setPinned}
+                      refreshFlag={refreshPin}
+                    />
                   </div>
                 )}
 
@@ -210,8 +218,14 @@ export default function SellerLiveStream() {
                     <div className="flex-1 relative h-full ">
                       <HostOnlyView isFullscreen={isFullscreen} />
                       <RoomAudioRenderer />
+                      <div className="top-10 left-4  absolute z-10">
+                        <PinProduct
+                          pinned={pinned}
+                          onUnpinned={() => setRefreshPin((f) => !f)}
+                        />
+                      </div>
 
-                      <div className="absolute bottom-0 left-0 w-full bg-gradient-to-t from-black/70 to-transparent p-4 text-white">
+                      <div className="absolute bottom-0 left-0 px-4 w-full bg-gradient-to-t from-black/70 to-transparent py-4 text-white">
                         <h3 className="text-2xl font-bold mb-3">
                           {livestream.title}
                         </h3>

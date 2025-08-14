@@ -39,7 +39,7 @@ export function ViewerCount({ livestreamId }: ViewerCountProps) {
     if (!stats) return null;
     const roleMap = stats.viewersByRole || {};
     // Exclude shop-like roles
-    const excludeKeys = ["Shop", "Seller", "Host", "Owner"];
+    const excludeKeys = ["Shop", "2", "Host", "Owner"];
     const viewers = Object.entries(roleMap)
       .filter(([role]) => !excludeKeys.includes(role))
       .reduce((sum, [, count]) => sum + (count || 0), 0);
