@@ -165,9 +165,9 @@ export interface filterProduct {
 export interface GetPagedProductsParams {
   pageNumber: number
   pageSize: number
-  sortOption: number
+  sortOption: number | null
   activeOnly: boolean
   shopId: string
-  categoryId: string
-  inStockOnly: boolean
+  categoryId: string | null
+  inStockOnly: boolean | null
 }
