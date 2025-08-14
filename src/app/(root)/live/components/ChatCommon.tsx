@@ -12,21 +12,20 @@ import { CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Send, Store, UserRound } from "lucide-react";
 import Image from "next/image";
+import { getLivestreamById } from "@/services/api/livestream/livestream";
 
 interface ChatCommonProps {
   livestreamId?: string; // Optional: if not provided, component shows placeholder
   heightClass?: string; // allow override height
 }
 
-const ChatCommon: React.FC<ChatCommonProps> = ({
-  livestreamId,
-  heightClass = "h-[400px]",
-}) => {
+const ChatCommon: React.FC<ChatCommonProps> = ({ livestreamId }) => {
   const [newMessage, setNewMessage] = React.useState("");
   const [messages, setMessages] = React.useState<LivestreamMessagePayload[]>(
     []
   );
   const [loading, setLoading] = React.useState(false);
+  const [sellerId, setSellerId] = React.useState<string | null>(null);
 
   const listRef = React.useRef<HTMLDivElement | null>(null);
 
@@ -43,6 +42,11 @@ const ChatCommon: React.FC<ChatCommonProps> = ({
     (async () => {
       try {
         setLoading(true);
+        // Fetch sellerId once to tag shop messages in realtime even if senderType is missing
+        try {
+          const live = await getLivestreamById(livestreamId);
+          if (mounted) setSellerId(live?.sellerId || live?.shopId || null);
+        } catch {}
 
         interface HistoryItem {
           id: string;
@@ -135,12 +139,12 @@ const ChatCommon: React.FC<ChatCommonProps> = ({
   }
 
   return (
-    <div className="flex flex-col w-full">
-      <CardContent className="p-0 flex-1 overflow-hidden">
-        <div className={`flex flex-col ${heightClass}`}>
+    <div className="flex flex-col h-full w-full min-h-0">
+      <CardContent className="p-0 flex-1 overflow-hidden min-h-0">
+        <div className={`flex flex-col h-full min-h-0`}>
           <div
             ref={listRef}
-            className="flex-1 overflow-y-auto w-full overflow-x-hidden px-3 py-2 space-y-3.5 text-sm"
+            className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden  custom-scroll w-full  px-3 py-2 space-y-3.5 text-sm"
           >
             {loading && (
               <div className="text-center text-gray-400 text-xs">
@@ -155,7 +159,8 @@ const ChatCommon: React.FC<ChatCommonProps> = ({
             {messages.map((m, idx) => (
               <div key={idx} className="flex items-start gap-2">
                 {/* Avatar / Icon */}
-                {m.senderType === "Shop" ? (
+                {m.senderType === "Shop" ||
+                (sellerId && m.senderId === sellerId) ? (
                   <div className="h-6 w-6 flex items-center justify-center rounded-full bg-lime-100 overflow-hidden shrink-0">
                     <Store className="h-4 w-4 text-lime-500" />
                   </div>
@@ -185,7 +190,7 @@ const ChatCommon: React.FC<ChatCommonProps> = ({
           </div>
         </div>
       </CardContent>
-      <CardFooter className="py-4 border-t h-fit">
+      <CardFooter className="py-4 border-t h-fit mt-auto sticky bottom-0 bg-white">
         <div className="relative w-full">
           <textarea
             rows={3}

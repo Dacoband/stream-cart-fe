@@ -12,8 +12,10 @@ import { Card, CardContent, CardFooter, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Send, Store, UserRound } from "lucide-react";
 import Image from "next/image";
+import { useAuth } from "@/lib/AuthContext";
 
 function ChatLive({ livestreamId }: { livestreamId: string }) {
+  const { user } = useAuth();
   const [newMessage, setNewMessage] = React.useState("");
   const [messages, setMessages] = React.useState<LivestreamMessagePayload[]>(
     []
@@ -96,8 +98,7 @@ function ChatLive({ livestreamId }: { livestreamId: string }) {
         }
 
         await chatHubService.ensureStarted();
-        // Optional: mark as viewer if you want seller UI to also contribute to stats
-        await chatHubService.startViewingLivestream(livestreamId);
+        // Seller should not be counted as a viewer
         await chatHubService.joinLivestream(livestreamId);
 
         chatHubService.onReceiveLivestreamMessage((payload) => {
@@ -117,7 +118,6 @@ function ChatLive({ livestreamId }: { livestreamId: string }) {
     })();
     return () => {
       mounted = false;
-      chatHubService.stopViewingLivestream(livestreamId);
       chatHubService.leaveLivestream(livestreamId);
     };
   }, [livestreamId]);
@@ -166,7 +166,8 @@ function ChatLive({ livestreamId }: { livestreamId: string }) {
             {messages.map((m, idx) => (
               <div key={idx} className="flex items-start gap-2">
                 {/* Avatar / Icon */}
-                {m.senderType === "Shop" ? (
+                {m.senderType === "Shop" ||
+                (user?.id && m.senderId === user.id) ? (
                   <div className="h-6 w-6 flex items-center justify-center rounded-full bg-lime-100 overflow-hidden shrink-0">
                     <Store className="h-4 w-4 text-lime-500" />
                   </div>

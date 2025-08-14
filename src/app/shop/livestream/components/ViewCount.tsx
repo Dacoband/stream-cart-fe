@@ -35,6 +35,17 @@ export function ViewerCount({ livestreamId }: ViewerCountProps) {
     return !isSharingScreen;
   });
 
+  const viewerOnlyFromStats = React.useMemo(() => {
+    if (!stats) return null;
+    const roleMap = stats.viewersByRole || {};
+    // Exclude shop-like roles
+    const excludeKeys = ["Shop", "Seller", "Host", "Owner"];
+    const viewers = Object.entries(roleMap)
+      .filter(([role]) => !excludeKeys.includes(role))
+      .reduce((sum, [, count]) => sum + (count || 0), 0);
+    return viewers;
+  }, [stats]);
+
   React.useEffect(() => {
     if (!livestreamId) return;
     let mounted = true;
@@ -72,7 +83,7 @@ export function ViewerCount({ livestreamId }: ViewerCountProps) {
 
       <Button className="rounded-none">
         <UserRound />
-        {stats?.totalViewers ?? filtered.length}
+        {viewerOnlyFromStats ?? filtered.length}
       </Button>
     </div>
   );

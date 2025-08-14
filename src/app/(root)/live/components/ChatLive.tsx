@@ -10,18 +10,19 @@ interface ChatLiveProps {
 
 const ChatLive: React.FC<ChatLiveProps> = ({ livestreamId }) => {
   return (
-    <Card className="bg-white border h-full rounded-none py-0 gap-0">
-      <Tabs defaultValue="live" className="w-full">
+    <Card className="bg-white border  h-[calc(100vh-8vh)] rounded-none py-0 gap-0">
+      <Tabs defaultValue="live" className="w-full h-full">
         <CardTitle className="border-b  w-full text-black text-center">
-          <TabsList className="w-full h-full ">
+          <TabsList className="w-full ">
             <TabsTrigger value="live">Chat Live</TabsTrigger>
             <TabsTrigger value="ai">Chat AI</TabsTrigger>
           </TabsList>
         </CardTitle>
-        <TabsContent value="live">
+
+        <TabsContent value="live" className="h-full">
           <ChatCommon livestreamId={livestreamId} />
         </TabsContent>
-        <TabsContent value="ai">
+        <TabsContent value="ai" className="h-full">
           <ChatwithAI />
         </TabsContent>
       </Tabs>

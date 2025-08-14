@@ -33,6 +33,9 @@ export default function SellerLiveStream() {
 
   const [isConnected, setIsConnected] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [devicesChecked, setDevicesChecked] = useState(false);
+  const [hasCamera, setHasCamera] = useState(true);
+  const [hasMic, setHasMic] = useState(true);
 
   useEffect(() => {
     const fetchLivestreamData = async () => {
@@ -49,6 +52,61 @@ export default function SellerLiveStream() {
 
     fetchLivestreamData();
   }, [livestreamId]);
+
+  // Detect available media devices before connecting to LiveKit to avoid NotFoundError
+  useEffect(() => {
+    let mounted = true;
+    async function detectDevices() {
+      try {
+        if (
+          typeof window === "undefined" ||
+          !navigator?.mediaDevices?.enumerateDevices
+        ) {
+          if (mounted) {
+            setHasCamera(true);
+            setHasMic(true);
+            setDevicesChecked(true);
+          }
+          return;
+        }
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const cams = devices.filter((d) => d.kind === "videoinput");
+        const mics = devices.filter((d) => d.kind === "audioinput");
+        if (mounted) {
+          setHasCamera(cams.length > 0);
+          setHasMic(mics.length > 0);
+          setDevicesChecked(true);
+        }
+      } catch {
+        if (mounted) {
+          // Fall back to enabling both; LiveKit will surface errors which we handle in onError
+          setHasCamera(true);
+          setHasMic(true);
+          setDevicesChecked(true);
+        }
+      }
+    }
+    detectDevices();
+    const handleChange = () => detectDevices();
+    if (
+      typeof navigator !== "undefined" &&
+      navigator.mediaDevices?.addEventListener
+    ) {
+      navigator.mediaDevices.addEventListener("devicechange", handleChange);
+    }
+    return () => {
+      mounted = false;
+      if (
+        typeof navigator !== "undefined" &&
+        navigator.mediaDevices?.removeEventListener
+      ) {
+        navigator.mediaDevices.removeEventListener(
+          "devicechange",
+          handleChange
+        );
+      }
+    };
+  }, []);
 
   const handleEndLivestream = async () => {
     if (window.confirm("Bạn có chắc chắn muốn kết thúc buổi phát sóng?")) {
@@ -85,86 +143,101 @@ export default function SellerLiveStream() {
     <div className="w-full h-[92vh] flex bg-[#F5F5F5] ">
       <div className=" w-full h-full rounded-none overflow-hidden relative ">
         {livestream.joinToken ? (
-          <LiveKitRoom
-            serverUrl="wss://livekitserver.dacoban.studio"
-            token={livestream.joinToken}
-            connect
-            connectOptions={{
-              autoSubscribe: false,
-            }}
-            onConnected={() => setIsConnected(true)}
-            onDisconnected={() => setIsConnected(false)}
-            onError={(error) => console.error("LiveKit error:", error)}
-            audio
-            video
-          >
-            <div className="flex w-full bg-black  h-full">
-              {!isFullscreen && (
-                <div className="w-[20%]">
-                  <ProductLiveStream livestreamId={livestream.id} />
-                </div>
-              )}
-
-              {/* <VideoConference /> */}
-              <div
-                className={`${
-                  isFullscreen ? "flex-1" : "w-[60%]"
-                } bg-black relative mb-28`}
-              >
-                <div className="bg-black w-full flex justify-between">
-                  <div className=" py-4">
-                    <ViewerCount livestreamId={livestream.id} />
-                  </div>
-                  <div className="flex gap-2 py-4">
-                    <Button
-                      className="cursor-pointer"
-                      variant="secondary"
-                      onClick={() => setIsFullscreen(!isFullscreen)}
-                    >
-                      {isFullscreen ? <ZoomOut /> : <ZoomIn />}
-                    </Button>
-                    <ControlButtons />
-                    <Button
-                      variant="destructive"
-                      onClick={handleEndLivestream}
-                      className="mr-2 cursor-pointer"
-                    >
-                      <StopCircle className="h-4 w-4" />
-                      Kết thúc
-                    </Button>
-                  </div>
-                </div>
-                {isConnected ? (
-                  <div className="flex-1 relative h-full ">
-                    <HostOnlyView isFullscreen={isFullscreen} />
-                    <RoomAudioRenderer />
-
-                    <div className="absolute bottom-0 left-0 w-full bg-gradient-to-t from-black/70 to-transparent p-4 text-white">
-                      <h3 className="text-2xl font-bold mb-3">
-                        {livestream.title}
-                      </h3>
-                      <p className="text-base mb-5 opacity-80">
-                        {livestream.description}
-                      </p>
-                      <p className="text-sm bg-white text-black opacity-80 px-5 py-1 rounded-full w-fit">
-                        #{livestream.tags}
-                      </p>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-center justify-center text-white h-[70vh] p-4 text-center">
-                    <h2 className="text-xl font-bold">
-                      🔴 Đang kết nối livestream
-                    </h2>
-                    <p className="mt-2">Vui lòng đợi trong giây lát...</p>
+          // Wait until we check devices to decide initial audio/video flags
+          devicesChecked && (
+            <LiveKitRoom
+              serverUrl="wss://livekitserver.dacoban.studio"
+              token={livestream.joinToken}
+              connect
+              connectOptions={{
+                autoSubscribe: false,
+              }}
+              onConnected={() => setIsConnected(true)}
+              onDisconnected={() => setIsConnected(false)}
+              onError={(error) => {
+                console.error("LiveKit error:", error);
+                // Gracefully handle missing devices
+                const msg = String(error?.message || "");
+                if (
+                  msg.includes("Requested device not found") ||
+                  msg.includes("NotFoundError")
+                ) {
+                  // Turn off the missing device to avoid repeated errors
+                  setHasCamera((prev) => prev && false);
+                  setHasMic((prev) => prev && false);
+                }
+              }}
+              audio={hasMic}
+              video={hasCamera}
+            >
+              <div className="flex w-full bg-black  h-full">
+                {!isFullscreen && (
+                  <div className="w-[20%]">
+                    <ProductLiveStream livestreamId={livestream.id} />
                   </div>
                 )}
+
+                {/* <VideoConference /> */}
+                <div
+                  className={`${
+                    isFullscreen ? "flex-1" : "w-[60%]"
+                  } bg-black relative mb-28`}
+                >
+                  <div className="bg-black w-full flex justify-between">
+                    <div className=" py-4">
+                      <ViewerCount livestreamId={livestream.id} />
+                    </div>
+                    <div className="flex gap-2 py-4">
+                      <Button
+                        className="cursor-pointer"
+                        variant="secondary"
+                        onClick={() => setIsFullscreen(!isFullscreen)}
+                      >
+                        {isFullscreen ? <ZoomOut /> : <ZoomIn />}
+                      </Button>
+                      <ControlButtons />
+                      <Button
+                        variant="destructive"
+                        onClick={handleEndLivestream}
+                        className="mr-2 cursor-pointer"
+                      >
+                        <StopCircle className="h-4 w-4" />
+                        Kết thúc
+                      </Button>
+                    </div>
+                  </div>
+                  {isConnected ? (
+                    <div className="flex-1 relative h-full ">
+                      <HostOnlyView isFullscreen={isFullscreen} />
+                      <RoomAudioRenderer />
+
+                      <div className="absolute bottom-0 left-0 w-full bg-gradient-to-t from-black/70 to-transparent p-4 text-white">
+                        <h3 className="text-2xl font-bold mb-3">
+                          {livestream.title}
+                        </h3>
+                        <p className="text-base mb-5 opacity-80">
+                          {livestream.description}
+                        </p>
+                        <p className="text-sm bg-white text-black opacity-80 px-5 py-1 rounded-full w-fit">
+                          #{livestream.tags}
+                        </p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center text-white h-[70vh] p-4 text-center">
+                      <h2 className="text-xl font-bold">
+                        🔴 Đang kết nối livestream
+                      </h2>
+                      <p className="mt-2">Vui lòng đợi trong giây lát...</p>
+                    </div>
+                  )}
+                </div>
+                <div className="w-[20%] ">
+                  <ChatLive livestreamId={livestream.id} />
+                </div>
               </div>
-              <div className="w-[20%] ">
-                <ChatLive livestreamId={livestream.id} />
-              </div>
-            </div>
-          </LiveKitRoom>
+            </LiveKitRoom>
+          )
         ) : (
           <div className="flex flex-col items-center justify-center text-white h-[70vh] p-4 text-center">
             <h2 className="text-xl font-bold">

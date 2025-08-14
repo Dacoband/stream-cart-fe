@@ -26,16 +26,19 @@ import { Card, CardContent } from "@/components/ui/card";
 import { formatFullDateTimeVN } from "@/components/common/formatFullDateTimeVN";
 import ChatLive from "./ChatLive";
 import ProductsLive from "./ProductsLive";
+import { ViewerCount } from "@/app/shop/livestream/components/ViewCount";
 interface ScreenLiveProps {
   liveStreamId: string;
 }
 
 interface CustomerVideoDisplayProps {
   onParticipantCountChange?: (count: number) => void;
+  thumbnailUrl?: string;
 }
 
 const CustomerVideoDisplay: React.FC<CustomerVideoDisplayProps> = ({
   onParticipantCountChange,
+  thumbnailUrl,
 }) => {
   const participants = useParticipants();
   const videoTracks = useTracks([
@@ -68,42 +71,124 @@ const CustomerVideoDisplay: React.FC<CustomerVideoDisplayProps> = ({
   // Lọc ra seller (remote participants)
   const remoteParticipants = participants?.filter((p) => !p?.isLocal) || [];
 
-  // Nếu có remote participants và video tracks
-  if (remoteParticipants.length > 0 && videoTracks?.length > 0) {
-    const videoTrack = videoTracks.find(
-      (t): t is TrackReference => t.publication !== undefined
+  // Determine remote media state
+  const remoteVideoTracks = (videoTracks || []).filter(
+    (t): t is TrackReference => {
+      if (!t.publication || t.participant.isLocal) return false;
+      const pub = t.publication;
+      const track = pub.track as
+        | { isMuted?: boolean; mediaStreamTrack?: MediaStreamTrack }
+        | undefined;
+      // Treat video as available only when there's an attached track, it's not muted, and the stream is live
+      const hasLiveTrack =
+        !!track && track.mediaStreamTrack?.readyState === "live";
+      const notMuted = pub.isMuted === false && track?.isMuted !== true;
+      return hasLiveTrack && notMuted;
+    }
+  );
+  const remoteAudioTracks = (audioTracks || []).filter(
+    (t): t is TrackReference => !!t.publication && !t.participant.isLocal
+  );
+
+  const hasRemoteParticipants = remoteParticipants.length > 0;
+  const hasVideo = remoteVideoTracks.length > 0;
+  const micOff =
+    remoteAudioTracks.length === 0 ||
+    remoteAudioTracks.every(
+      (t) => t.publication?.isMuted || t.publication?.track?.isMuted
     );
 
-    if (videoTrack) {
-      return (
-        <div className="flex flex-col items-center justify-center h-full text-white text-center ">
-          <VideoTrack
-            trackRef={videoTrack}
-            style={{
-              height: "100%",
-              width: "100%",
-              objectFit: "contain",
-            }}
+  // If seller has video on: render live video and show mic-off badge if needed
+  if (hasRemoteParticipants && hasVideo) {
+    const videoTrack = remoteVideoTracks[0];
+    return (
+      <div className="relative flex flex-col items-center justify-center h-full text-white text-center ">
+        <VideoTrack
+          trackRef={videoTrack}
+          // style={{
+          //   height: "100%",
+          //   width: "100%",
+          //   objectFit: "contain",
+          // }}
+        />
+        {/* Hidden audio elements for remote participants so viewer hears sound */}
+        <div style={{ display: "none" }}>
+          {remoteAudioTracks.map((t) => (
+            <AudioTrack
+              key={t.publication?.trackSid || t.participant.identity + "-audio"}
+              trackRef={t}
+            />
+          ))}
+        </div>
+
+        {micOff && (
+          <div className="absolute top-2 right-2 bg-black/60 text-white text-xs px-2 py-1 rounded-full flex items-center gap-1">
+            <span role="img" aria-label="mic-off">
+              🎤
+            </span>
+            Tắt mic
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // If seller present but camera is off: show thumbnail fallback and mic/cam badges
+  if (hasRemoteParticipants && !hasVideo) {
+    return (
+      <div className="relative h-full w-full bg-black">
+        {thumbnailUrl ? (
+          <Image
+            src={thumbnailUrl}
+            alt="Thumbnail"
+            width={500}
+            height={500}
+            className="object-cover object-center w-full h-[70vh] "
           />
-          {/* Render hidden audio elements for remote participants so viewer hears sound */}
-          <div style={{ display: "none" }}>
-            {audioTracks
-              .filter(
-                (t): t is TrackReference =>
-                  !!t.publication && !t.participant.isLocal
-              )
-              .map((t) => (
-                <AudioTrack
-                  key={
-                    t.publication?.trackSid || t.participant.identity + "-audio"
-                  }
-                  trackRef={t}
-                />
-              ))}
+        ) : (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="w-full h-full bg-gray-800/40 rounded-lg" />
+          </div>
+        )}
+
+        {/* Dark overlay with message */}
+        <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+          <div className="text-center text-white">
+            <div className="text-sm md:text-base font-medium">
+              Cửa hàng đang tắt camera
+            </div>
           </div>
         </div>
-      );
-    }
+
+        {/* Badges */}
+        <div className="absolute top-2 right-2 flex gap-2 text-white text-xs">
+          <div className="bg-black/60 px-2 py-1 rounded-full flex items-center gap-1">
+            <span role="img" aria-label="video-off">
+              🎥
+            </span>
+            Tắt cam
+          </div>
+          {micOff && (
+            <div className="bg-black/60 px-2 py-1 rounded-full flex items-center gap-1">
+              <span role="img" aria-label="mic-off">
+                🎤
+              </span>
+              Tắt mic
+            </div>
+          )}
+        </div>
+
+        {/* Keep audio playing if available */}
+        <div style={{ display: "none" }}>
+          {remoteAudioTracks.map((t) => (
+            <AudioTrack
+              key={t.publication?.trackSid || t.participant.identity + "-audio"}
+              trackRef={t}
+            />
+          ))}
+        </div>
+      </div>
+    );
   }
 
   if (remoteParticipants.length === 0) {
@@ -156,7 +241,6 @@ export default function ScreenLive({ liveStreamId }: ScreenLiveProps) {
   const [reconnectAttempts, setReconnectAttempts] = useState(0);
   const [livestream, setLivestream] = useState<Livestream | null>(null);
   const [viewerToken, setViewerToken] = useState<string | null>(null);
-  const [participantCount, setParticipantCount] = useState(0);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const fetchLivestreamData = useCallback(async () => {
     try {
@@ -443,14 +527,9 @@ export default function ScreenLive({ liveStreamId }: ScreenLiveProps) {
           >
             <div className="flex h-full">
               <div className="w-[20%] h-full ">
-                <ProductsLive />
+                <ProductsLive livestreamId={livestream.id} />
               </div>
-              <div className="w-[60%] bg-black h-full ">
-                <div className="bg-black w-full flex justify-between">
-                  <div className=" py-4">
-                    <div>{participantCount} người xem</div>
-                  </div>
-                </div>
+              <div className="w-[60%] bg-black h-full relative mb-28">
                 {isConnecting ? (
                   <div className="flex flex-col items-center justify-center text-white h-[70vh] p-4 text-center">
                     <h2 className="text-xl font-bold">
@@ -460,27 +539,29 @@ export default function ScreenLive({ liveStreamId }: ScreenLiveProps) {
                   </div>
                 ) : (
                   <div className="flex flex-col h-full">
-                    <div className="flex-1">
-                      <CustomerVideoDisplay
-                        onParticipantCountChange={setParticipantCount}
-                      />
+                    <div className=" py-4">
+                      <ViewerCount livestreamId={livestream.id} />
                     </div>
-
-                    <div className=" w-full bg-gradient-to-t from-black/70 to-transparent p-4  text-white">
-                      <h3 className="text-2xl font-bold mb-3 ">
-                        {livestream.title}
-                      </h3>
-                      <p className="text-base  mb-5 opacity-80">
-                        {livestream.description}
-                      </p>
-                      <p className="text-sm bg-white text-black opacity-80 px-5 py-1 rounded-full w-fit">
-                        #{livestream.tags}
-                      </p>
+                    <div className="flex-1 relative h-full ">
+                      <CustomerVideoDisplay
+                        thumbnailUrl={livestream.thumbnailUrl || undefined}
+                      />
+                      <div className="absolute bottom-0 left-0 w-full bg-gradient-to-t from-black/70 to-transparent p-4 text-white">
+                        <h3 className="text-2xl font-bold mb-3">
+                          {livestream.title}
+                        </h3>
+                        <p className="text-base mb-5 opacity-80">
+                          {livestream.description}
+                        </p>
+                        <p className="text-sm bg-white text-black opacity-80 px-5 py-1 rounded-full w-fit">
+                          #{livestream.tags}
+                        </p>
+                      </div>
                     </div>
                   </div>
                 )}
               </div>
-              <div className="w-[20%] ">
+              <div className="w-[20%] h-full ">
                 <ChatLive livestreamId={livestream.id} />
               </div>
             </div>
