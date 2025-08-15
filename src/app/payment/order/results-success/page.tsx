@@ -30,10 +30,10 @@ const PaymentSuccess = () => {
             <span className=" text-gray-600">Mã đơn hàng:</span>
             <span className="font-medium">#SC-2024-001</span>
           </div>
-          <div className="flex justify-between items-center mb-2.5">
+          {/* <div className="flex justify-between items-center mb-2.5">
             <span className=" text-gray-600">Tổng tiền:</span>
             <span className=" font-medium">1.299.000 VNĐ</span>
-          </div>
+          </div> */}
           <div className="flex justify-between items-center">
             <span className=" text-gray-600">Thanh toán:</span>
             <span className=" font-medium">Chờ thanh toán</span>
