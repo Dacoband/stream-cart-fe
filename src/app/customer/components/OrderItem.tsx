@@ -5,9 +5,7 @@ import { Order } from "@/types/order/order";
 import { getStatusText, OrderStatus } from "@/types/order/orderStatus";
 import { FormatDate } from "@/components/common/FormatDate";
 import PriceTag from "@/components/common/PriceTag";
-import { getOrdersItem } from "@/services/api/order/ordersItem";
-import { useEffect, useState } from "react";
-import { OrderItemResponse } from "@/types/order/order";
+
 interface OrderItemProps {
   order: Order;
 }
