@@ -45,11 +45,11 @@ export default function OrderPageContent() {
       {qrData && (
         <div className="flex flex-col items-center gap-4 mt-6">
           <Image
-            width={240}
-            height={240}
+            width={288}
+            height={288}
             src={qrData.qrCode.split("|")[0]}
             alt="QR Code Thanh Toán"
-            className="w-60 h-60 object-contain border p-2 rounded-lg"
+            className="w-72 h-72 object-contain border p-2 rounded-lg"
           />
           <div className="text-center">
             <p>
