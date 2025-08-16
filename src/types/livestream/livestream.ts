@@ -44,6 +44,7 @@ export interface CreateLivestream {
   scheduledStartTime: Date; 
   thumbnailUrl: string;
   tags: string;
+  livestreamHostId:string;
   products: CreateLivestreamProduct[];
 }
 export interface CreateLivestreamProduct {

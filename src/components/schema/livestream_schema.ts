@@ -8,11 +8,10 @@ export const createLivestreamSchema = z.object({
  thumbnailUrl: z.instanceof(File, {
   message: "Vui lòng chọn ảnh đại diện cửa hàng!",
 }),
+ livestreamHostId:z.string().nonempty("Chọn người livestream"),
 
+  tags: z.string().min(1, "Tags là bắt buộc"),
 
-  tags: z.string(),
-
-  
     
    
 });

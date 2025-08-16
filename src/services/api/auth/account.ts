@@ -53,3 +53,22 @@ export const getUserById = async (userId: string) => {
     throw new Error('Xảy ra lỗi trong quá trình tải thông tin người dùng.')
   }
 }
+export const getUserByShopId = async (shopId: string) => {
+  try {
+    const token = localStorage.getItem('token')
+    if (!token) {
+      throw new Error('Không tìm thấy token.')
+    }
+
+    const response = await rootApi.get(`/accounts/by-shop/${shopId}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
+    console.log('account', response)
+    return response.data?.data || null
+  } catch (error) {
+    console.error('Error fetching user by ID:', error)
+    throw new Error('Xảy ra lỗi trong quá trình tải thông tin người dùng.')
+  }
+}

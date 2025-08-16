@@ -69,6 +69,7 @@ function LiveStreamPage() {
 
       const url = `/shop/livestream/${id}`;
       window.open(url, "_blank");
+      fetchLivestreams();
     } catch (err) {
       console.error("Error starting livestream:", err);
     }
@@ -78,6 +79,7 @@ function LiveStreamPage() {
     try {
       const url = `/shop/livestream/${id}`;
       window.open(url, "_blank");
+      fetchLivestreams();
     } catch (err) {
       console.error("Error starting livestream:", err);
     }

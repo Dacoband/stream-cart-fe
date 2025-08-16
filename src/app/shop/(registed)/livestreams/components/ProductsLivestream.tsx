@@ -47,10 +47,16 @@ function ProductsLivestream({ onChange }: Props) {
   }, [productRows, onChange]);
 
   const handleConfirm = async (products: Product[]) => {
-    setSelectedProducts(products);
+    // Merge newly selected base products with existing selectedProducts list
+    setSelectedProducts((prev) => {
+      const byId = new Map(prev.map((p) => [p.id, p]));
+      for (const p of products) byId.set(p.id, p);
+      return Array.from(byId.values());
+    });
 
-    const map: Record<string, Variant[]> = {};
-    const rows: ProductRow[] = [];
+    // Prepare new variant rows for only those not already present
+    const newVariantsMap: Record<string, Variant[]> = { ...variantsMap };
+    const additions: ProductRow[] = [];
 
     await Promise.all(
       products.map(async (product) => {
@@ -59,7 +65,7 @@ function ProductsLivestream({ onChange }: Props) {
         if (product.hasVariant) {
           const detail = await getProductDetailById(product.id);
           variants = detail.variants || [];
-          map[product.id] = variants;
+          newVariantsMap[product.id] = variants;
         } else {
           variants = [
             {
@@ -78,25 +84,33 @@ function ProductsLivestream({ onChange }: Props) {
         }
 
         variants.forEach((variant) => {
-          rows.push({
-            productId: product.id,
-            variantId: variant.variantId ?? null,
-            price: variant.price,
-            stock: 1,
-            isPin: false,
-            productName: product.productName,
-            productImage: product.primaryImageUrl,
-            basePrice: variant.price,
-            variantName: variant.variantId
-              ? Object.values(variant.attributeValues).join(" / ")
-              : "",
-          });
+          const exists = productRows.some(
+            (r) =>
+              r.productId === product.id &&
+              r.variantId === (variant.variantId ?? null)
+          );
+          if (!exists) {
+            additions.push({
+              productId: product.id,
+              variantId: variant.variantId ?? null,
+              price: variant.price,
+              stock: 1,
+              isPin: false,
+              productName: product.productName,
+              productImage: product.primaryImageUrl,
+              basePrice: variant.price,
+              variantName: variant.variantId
+                ? Object.values(variant.attributeValues).join(" / ")
+                : "",
+            });
+          }
         });
       })
     );
 
-    setVariantsMap(map);
-    setProductRows(rows);
+    // Append only new rows to preserve user edits in existing rows
+    setVariantsMap(newVariantsMap);
+    setProductRows((prev) => [...prev, ...additions]);
   };
 
   const handleRowChange = (
