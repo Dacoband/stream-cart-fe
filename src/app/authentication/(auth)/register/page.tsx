@@ -35,7 +35,7 @@ function RegisterPage() {
         onAnimationComplete={() => setShowForm(true)}
       >
         <div className="w-36 h-36 mb-6 cursor-pointer">
-          <Image src="/logo2 .png" alt="Logo" width={250} height={250} />
+          <Image src="/logo2 .png" alt="Logo" width={250} height={250} priority />
         </div>
         <h1 className="text-white text-4xl font-bold mb-8">StreamCart</h1>
         <p className="text-gray-300 text-xl mb-12 font-semibold text-center px-12 font-sans">
