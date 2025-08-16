@@ -26,6 +26,7 @@ import {
   getLivestreamByShopId,
   startLivestreamById,
   deleteLivestream,
+  getJoinLivestream,
 } from "@/services/api/livestream/livestream";
 import { Livestream } from "@/types/livestream/livestream";
 import {
@@ -65,11 +66,18 @@ function LiveStreamPage() {
   }, [user?.shopId, fetchLivestreams]);
   const handleStartLivestream = async (id: string) => {
     try {
-      await startLivestreamById(id);
+      const ls = livestreams.find((l) => l.id === id);
+      const isHost = ls && user && ls.livestreamHostId === user.id;
 
-      const url = `/shop/livestream/${id}`;
-      window.open(url, "_blank");
-      fetchLivestreams();
+      if (isHost) {
+        await startLivestreamById(id);
+        window.open(`/shop/livestream/${id}`, "_blank");
+        fetchLivestreams();
+      } else {
+        await getJoinLivestream(id);
+        // Not the host: only join support live, do not start
+        window.open(`/shop/livestream/SupportLive/${id}`, "_blank");
+      }
     } catch (err) {
       console.error("Error starting livestream:", err);
     }
@@ -77,7 +85,11 @@ function LiveStreamPage() {
 
   const handleContinueLivestream = (id: string) => {
     try {
-      const url = `/shop/livestream/${id}`;
+      const ls = livestreams.find((l) => l.id === id);
+      const isHost = ls && user && ls.livestreamHostId === user.id;
+      const url = isHost
+        ? `/shop/livestream/${id}`
+        : `/shop/livestream/SupportLive/${id}`;
       window.open(url, "_blank");
       fetchLivestreams();
     } catch (err) {
@@ -139,10 +151,9 @@ function LiveStreamPage() {
                   <TableHead className="font-semibold ">
                     Thời gian bắt đầu và kết thúc
                   </TableHead>
+                  <TableHead className="font-semibold ">Người Live</TableHead>
                   <TableHead className="font-semibold ">Tags</TableHead>
-                  <TableHead className="font-semibold ">
-                    Người xem live
-                  </TableHead>
+                  <TableHead className="font-semibold ">Lượt xem</TableHead>
 
                   <TableHead className="font-semibold ">Trạng thái</TableHead>
                   <TableHead className="font-semibold text-right w-24 pr-6">
@@ -239,7 +250,7 @@ function LiveStreamPage() {
                           )}
                         </div>
                       </TableCell>
-
+                      <TableCell>{livestream.livestreamHostName}</TableCell>
                       <TableCell>{livestream.tags}</TableCell>
 
                       <TableCell>
@@ -258,7 +269,7 @@ function LiveStreamPage() {
                               handleContinueLivestream(livestream.id)
                             }
                           >
-                            Tiếp tục livestream
+                            Vào live
                           </Button>
                         ) : (
                           <Button
@@ -277,7 +288,7 @@ function LiveStreamPage() {
                           >
                             {livestream.actualEndTime
                               ? "Đã kết thúc"
-                              : "Bắt đầu livestream"}
+                              : "Bắt đầu "}
                           </Button>
                         )}
                       </TableCell>

@@ -28,12 +28,12 @@ const items = [
   },
   {
     title: "Sản phẩm",
-    url: "/shop/manager-products",
+    url: "/shop/manage-products",
     icon: ScanBarcode,
   },
   {
     title: "Đơn hàng",
-    url: "/shop/order",
+    url: "/shop/manage-orders",
     icon: Package,
   },
 

@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useRef, useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { CheckCircle, ImagePlus, Loader2 } from "lucide-react";
@@ -94,9 +94,21 @@ function Page() {
     loadUsers();
   }, [user?.shopId]);
 
-  const onSubmit = async (data: CreateLivestreamSchema) => {
+  const onSubmit: SubmitHandler<CreateLivestreamSchema> = async (data) => {
     setLoadingbt(true);
     try {
+      // Validate scheduledStartTime is not in the past
+      if (data.scheduledStartTime) {
+        const scheduled = new Date(data.scheduledStartTime);
+        const now = new Date();
+        if (scheduled.getTime() < now.getTime()) {
+          toast.error(
+            "Thời gian bắt đầu không được nhỏ hơn thời gian hiện tại."
+          );
+          setLoadingbt(false);
+          return;
+        }
+      }
       if (products.length === 0) {
         toast.error("Vui lòng chọn ít nhất 1 sản phẩm cho livestream!");
         setLoadingbt(false);
@@ -289,6 +301,10 @@ function Page() {
                     control={form.control}
                     name="scheduledStartTime"
                     render={({ field }) => {
+                      const now = new Date();
+                      const startOfToday = new Date();
+                      startOfToday.setHours(0, 0, 0, 0);
+
                       const updateFormValue = (
                         date: Date | undefined,
                         time: string
@@ -303,6 +319,29 @@ function Page() {
 
                       const handleDateChange = (date: Date | undefined) => {
                         setSelectedDate(date);
+                        if (!date) return;
+                        // If picking today, ensure time is not in the past
+                        const isSameDay =
+                          date.getFullYear() === now.getFullYear() &&
+                          date.getMonth() === now.getMonth() &&
+                          date.getDate() === now.getDate();
+                        if (isSameDay) {
+                          const currentHH = String(now.getHours()).padStart(
+                            2,
+                            "0"
+                          );
+                          const currentMM = String(now.getMinutes()).padStart(
+                            2,
+                            "0"
+                          );
+                          const minTime = `${currentHH}:${currentMM}`;
+                          // If currently selected time is behind now, bump to now
+                          if (selectedTime < minTime) {
+                            setSelectedTime(minTime);
+                            updateFormValue(date, minTime);
+                            return;
+                          }
+                        }
                         updateFormValue(date, selectedTime);
                       };
 
@@ -310,6 +349,32 @@ function Page() {
                         e: React.ChangeEvent<HTMLInputElement>
                       ) => {
                         const newTime = e.target.value;
+                        // If selected date is today, enforce time >= now
+                        if (selectedDate) {
+                          const isSameDay =
+                            selectedDate.getFullYear() === now.getFullYear() &&
+                            selectedDate.getMonth() === now.getMonth() &&
+                            selectedDate.getDate() === now.getDate();
+                          if (isSameDay) {
+                            const currentHH = String(now.getHours()).padStart(
+                              2,
+                              "0"
+                            );
+                            const currentMM = String(now.getMinutes()).padStart(
+                              2,
+                              "0"
+                            );
+                            const minTime = `${currentHH}:${currentMM}`;
+                            if (newTime < minTime) {
+                              toast.error(
+                                "Thời gian bắt đầu không được nhỏ hơn thời gian hiện tại."
+                              );
+                              setSelectedTime(minTime);
+                              updateFormValue(selectedDate, minTime);
+                              return;
+                            }
+                          }
+                        }
                         setSelectedTime(newTime);
                         updateFormValue(selectedDate, newTime);
                       };
@@ -340,6 +405,7 @@ function Page() {
                                     mode="single"
                                     selected={selectedDate}
                                     onSelect={handleDateChange}
+                                    disabled={{ before: startOfToday }}
                                   />
                                 </PopoverContent>
                               </Popover>
@@ -365,6 +431,25 @@ function Page() {
                                     };
                                   input.showPicker?.();
                                 }}
+                                min={(() => {
+                                  if (!selectedDate) return undefined;
+                                  const isSameDay =
+                                    selectedDate.getFullYear() ===
+                                      now.getFullYear() &&
+                                    selectedDate.getMonth() ===
+                                      now.getMonth() &&
+                                    selectedDate.getDate() === now.getDate();
+                                  if (!isSameDay) return undefined;
+                                  const hh = String(now.getHours()).padStart(
+                                    2,
+                                    "0"
+                                  );
+                                  const mm = String(now.getMinutes()).padStart(
+                                    2,
+                                    "0"
+                                  );
+                                  return `${hh}:${mm}`;
+                                })()}
                               />
                             </FormControl>
                             <FormMessage />

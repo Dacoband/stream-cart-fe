@@ -2,31 +2,146 @@
 
 import React from "react";
 import { getPinProductLiveStream } from "@/services/api/livestream/productLivestream";
-import type { ProductLiveStream } from "@/types/livestream/productLivestream";
 import { Card } from "@/components/ui/card";
 import Image from "next/image";
 import { ImageIcon } from "lucide-react";
 import PriceTag from "@/components/common/PriceTag";
 import { Button } from "@/components/ui/button";
+import { useLivestreamRealtime } from "@/services/signalr/useLivestreamRealtime";
 
 type Props = { livestreamId: string };
 
 function PinProduct({ livestreamId }: Props) {
-  const [pinned, setPinned] = React.useState<ProductLiveStream | null>(null);
+  type PinnedView = {
+    productName?: string;
+    productImageUrl?: string;
+    price?: number;
+    sku?: string;
+    variantName?: string;
+    isPin?: boolean;
+  };
+  const [pinned, setPinned] = React.useState<PinnedView | null>(null);
+  const { pinnedProducts, lastPinChange, refreshPinned } =
+    useLivestreamRealtime(livestreamId);
+
+  const toStr = React.useCallback(
+    (v: unknown) => (typeof v === "string" ? v : undefined),
+    []
+  );
+  const toNum = React.useCallback(
+    (v: unknown) => (Number.isFinite(Number(v)) ? Number(v) : undefined),
+    []
+  );
+  const toBool = React.useCallback(
+    (v: unknown) => (v === undefined || v === null ? undefined : Boolean(v)),
+    []
+  );
+  const getStr = React.useCallback(
+    (obj: Record<string, unknown> | undefined, ...keys: string[]) => {
+      if (!obj) return undefined;
+      for (const k of keys) {
+        const val = obj[k];
+        const s = toStr(val);
+        if (s !== undefined) return s;
+      }
+      return undefined;
+    },
+    [toStr]
+  );
+  const getNum = React.useCallback(
+    (obj: Record<string, unknown> | undefined, ...keys: string[]) => {
+      if (!obj) return undefined;
+      for (const k of keys) {
+        const n = toNum(obj[k]);
+        if (n !== undefined) return n;
+      }
+      return undefined;
+    },
+    [toNum]
+  );
+  const getBool = React.useCallback(
+    (obj: Record<string, unknown> | undefined, ...keys: string[]) => {
+      if (!obj) return undefined;
+      for (const k of keys) {
+        const b = toBool(obj[k]);
+        if (b !== undefined) return b;
+      }
+      return undefined;
+    },
+    [toBool]
+  );
 
   const fetchPinned = React.useCallback(async () => {
     try {
       const data = await getPinProductLiveStream(livestreamId);
-      const item = Array.isArray(data) ? data[0] : data;
-      setPinned(item && (item.isPin ?? item.isPinned) ? item : null);
+      const raw = (Array.isArray(data) ? data[0] : data) as
+        | Record<string, unknown>
+        | undefined;
+      const isPinned = getBool(raw, "isPin", "isPinned") ?? false;
+      if (!raw || !isPinned) return setPinned(null);
+      const view: PinnedView = {
+        productName: getStr(raw, "productName", "ProductName"),
+        productImageUrl: getStr(
+          raw,
+          "productImageUrl",
+          "ProductImageUrl",
+          "imageUrl",
+          "ImageUrl"
+        ),
+        price: getNum(raw, "price", "Price"),
+        sku: getStr(raw, "sku", "SKU", "Sku"),
+        variantName: getStr(raw, "variantName", "VariantName"),
+        isPin: isPinned,
+      };
+      setPinned(view);
     } catch {
       setPinned(null);
     }
-  }, [livestreamId]);
+  }, [livestreamId, getStr, getNum, getBool]);
 
   React.useEffect(() => {
+    // initial load from API and ask server for pinned list
     fetchPinned();
-  }, [fetchPinned]);
+    refreshPinned().catch(() => {});
+  }, [fetchPinned, refreshPinned]);
+
+  // When server reports pin status change, refresh from API to get full details
+  React.useEffect(() => {
+    if (!lastPinChange) return;
+    fetchPinned();
+  }, [lastPinChange, fetchPinned]);
+
+  // Try to map pinnedProducts pushed from server directly, fallback to API if shape unknown
+  React.useEffect(() => {
+    if (!pinnedProducts || pinnedProducts.length === 0) {
+      setPinned(null);
+      return;
+    }
+    const first = pinnedProducts[0] as Record<string, unknown>;
+    if (!first) return;
+    // Best-effort mapping from server payload
+    const mapped: PinnedView = {
+      productName: getStr(first, "productName", "ProductName"),
+      productImageUrl: getStr(
+        first,
+        "productImageUrl",
+        "ProductImageUrl",
+        "imageUrl",
+        "ImageUrl"
+      ),
+      price: getNum(first, "price", "Price"),
+      sku: getStr(first, "sku", "SKU", "Sku"),
+      variantName: getStr(first, "variantName", "VariantName"),
+      isPin: (getBool(first, "isPin", "IsPin") ?? true) as boolean,
+    };
+
+    // If we don't have minimum fields, fallback to API
+    if (!mapped || !mapped.productName) {
+      fetchPinned();
+    } else {
+      setPinned(mapped);
+    }
+  }, [pinnedProducts, fetchPinned, livestreamId, getStr, getNum, getBool]);
 
   if (!pinned) return null;
 

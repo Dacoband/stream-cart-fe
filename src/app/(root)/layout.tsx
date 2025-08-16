@@ -1,6 +1,7 @@
 import { CartProvider } from "@/lib/CartContext";
 import Footer from "./components/Footer";
 import Navigation from "./components/Navigation";
+import ChatBot from "./components/ChatBot";
 
 export default async function LayoutCustomer({
   children,
@@ -18,6 +19,7 @@ export default async function LayoutCustomer({
             <div className="w-full mt-[8vh]">{children}</div>
           </div>
         </div>
+        <ChatBot />
         <Footer />
       </div>
     </CartProvider>
