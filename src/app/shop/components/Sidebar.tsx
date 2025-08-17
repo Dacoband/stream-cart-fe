@@ -28,7 +28,7 @@ const items = [
   },
   {
     title: "Sản phẩm",
-    url: "/shop/manage-products",
+    url: "/shop/manager-products",
     icon: ScanBarcode,
   },
   {

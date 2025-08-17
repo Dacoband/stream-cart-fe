@@ -14,7 +14,13 @@ import { Send, Store, UserRound } from "lucide-react";
 import Image from "next/image";
 import { useAuth } from "@/lib/AuthContext";
 
-function ChatLive({ livestreamId }: { livestreamId: string }) {
+function ChatLive({
+  livestreamId,
+  disabledInput = false,
+}: {
+  livestreamId: string;
+  disabledInput?: boolean;
+}) {
   const { user } = useAuth();
   const [newMessage, setNewMessage] = React.useState("");
   const [messages, setMessages] = React.useState<LivestreamMessagePayload[]>(
@@ -123,6 +129,7 @@ function ChatLive({ livestreamId }: { livestreamId: string }) {
   }, [livestreamId]);
 
   const handleMessageSend = async () => {
+    if (disabledInput) return;
     if (!newMessage.trim()) return;
     const text = newMessage.trim();
     try {
@@ -201,22 +208,33 @@ function ChatLive({ livestreamId }: { livestreamId: string }) {
         <div className="relative w-full">
           <textarea
             rows={3}
-            placeholder="Nhập tin nhắn..."
+            placeholder={
+              disabledInput
+                ? "Livestream chưa bắt đầu - Chat tạm khóa"
+                : "Nhập tin nhắn..."
+            }
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
             onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
+              if (!disabledInput && e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault();
                 handleMessageSend();
               }
             }}
-            className="w-full pb-5 border rounded-md p-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-gray-400"
+            disabled={disabledInput}
+            aria-disabled={disabledInput}
+            className={`w-full pb-5 border rounded-md p-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-gray-400 ${
+              disabledInput ? "opacity-60 cursor-not-allowed bg-gray-50" : ""
+            }`}
           />
           <Button
             type="button"
             onClick={handleMessageSend}
             aria-label="Gửi tin nhắn"
-            className="absolute bottom-2 right-1 bg-white hover:bg-white text-lime-600 cursor-pointer p-0 flex items-center justify-center"
+            disabled={disabledInput}
+            className={`absolute bottom-2 right-1 bg-white hover:bg-white text-lime-600 p-0 flex items-center justify-center ${
+              disabledInput ? "opacity-60 cursor-not-allowed" : "cursor-pointer"
+            }`}
           >
             <Send size={32} />
           </Button>

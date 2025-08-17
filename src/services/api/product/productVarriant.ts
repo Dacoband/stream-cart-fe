@@ -9,3 +9,27 @@ export const getVarriantByProductId = async (productId:string) => {
     throw error;
   }
 };
+
+export const updateStockProductVariant = async (productVarrianId: string, data: { quantity: number }) => {
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      throw new Error("Not found token.");
+    }
+
+    const response = await rootApi.patch(
+      `product-variants/${productVarrianId}/stock`, 
+      { quantity: data.quantity },  
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    return response.data;
+  } catch (error) {
+    console.error("Error updating product stock:", error);
+    throw error;
+  }
+};
