@@ -8,7 +8,7 @@ export default function LivePage() {
   const { liveStreamId } = useParams<{ liveStreamId: string }>();
 
   return (
-    <div>
+    <div className=" h-[calc(100vh-8vh)] w-full">
       <ScreenLive liveStreamId={liveStreamId} />
     </div>
   );

@@ -12,6 +12,7 @@ import Image from "next/image";
 import { getProductHasFilter } from "@/services/api/product/product";
 import { useAuth } from "@/lib/AuthContext";
 import { Product } from "@/types/product/product";
+import PriceTag from "@/components/common/PriceTag";
 
 type Props = {
   open: boolean;
@@ -65,45 +66,51 @@ function DialogProduct({ open, onClose, onConfirm }: Props) {
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-5xl">
+      <DialogContent className=" overflow-hidden">
         <DialogHeader>
           <DialogTitle>Chọn sản phẩm</DialogTitle>
         </DialogHeader>
         {loading ? (
-          <p>Đang tải...</p>
+          <p>Đang tải sản phẩm...</p>
         ) : (
-          <div className="grid grid-cols-4 gap-4 max-h-[500px] overflow-y-auto">
-            {products.map((product) => (
-              <div
-                key={product.id}
-                className="border relative rounded-lg p-2 flex flex-col items-center text-center shadow hover:shadow-md"
-                onClick={() => toggleProduct(product.id)}
-              >
-                <div className="relative w-full h-32">
-                  <Image
-                    src={product.primaryImageUrl}
-                    alt={product.productName}
-                    layout="fill"
-                    objectFit="cover"
-                    className="rounded-md"
-                  />
-                  <div className="absolute top-2 left-2 bg-white rounded-full p-1 shadow">
-                    <Checkbox
-                      checked={selectedProducts.has(product.id)}
-                      onCheckedChange={() => toggleProduct(product.id)}
+          <div className=" overflow-y-auto pr-1 overflow-x-hidden">
+            <div className=" max-h-[70vh] grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4  gap-4">
+              {products.map((product) => (
+                <div
+                  key={product.id}
+                  className="border relative rounded-none mb-2 flex flex-col items-center shadow hover:shadow-md"
+                  onClick={() => toggleProduct(product.id)}
+                >
+                  <div className="relative w-full aspect-square">
+                    <Image
+                      src={product.primaryImageUrl}
+                      alt={product.productName}
+                      fill
+                      className="rounded-none object-cover"
                     />
+                    <div className="absolute top-2 left-2 ">
+                      <Checkbox
+                        className="bg-white w-6 h-6 rounded-none"
+                        checked={selectedProducts.has(product.id)}
+                        onCheckedChange={() => toggleProduct(product.id)}
+                      />
+                    </div>
+                  </div>
+                  <div className="p-2 w-full flex flex-col justify-between h-full flex-1">
+                    <p className="font-medium  line-clamp-2">
+                      {product.productName}
+                    </p>
+                    <p className="text-sm mt-2 text-rose-600">
+                      <PriceTag value={product.basePrice} />
+                    </p>
                   </div>
                 </div>
-                <p className="font-semibold mt-2">{product.productName}</p>
-                <p className="text-sm text-gray-600">
-                  {product.finalPrice.toLocaleString()}đ
-                </p>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         )}
 
-        <div className="flex justify-end gap-2 mt-4">
+        <div className="flex justify-end gap-2 mt-2">
           <Button variant="outline" onClick={onClose}>
             Hủy
           </Button>

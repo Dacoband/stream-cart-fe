@@ -134,3 +134,26 @@ export const getPagedProducts = async (params: GetPagedProductsParams) => {
   }
 }
 
+export const updateStockProductById = async (productId: string, data: { quantityChange: number }) => {
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      throw new Error("Not found token.");
+    }
+
+    const response = await rootApi.put(
+      `products/${productId}/stock`, 
+      { quantityChange: data.quantityChange },  
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    return response.data;
+  } catch (error) {
+    console.error("Error updating product stock:", error);
+    throw error;
+  }
+};

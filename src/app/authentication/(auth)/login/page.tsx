@@ -20,7 +20,7 @@ function LoginPage() {
       >
         <Link href="/home">
           <div className="w-36 h-36 mb-6 cursor-pointer">
-            <Image src="/logo2 .png" alt="Logo" width={250} height={250} />
+            <Image src="/logo2 .png" alt="Logo" width={250} height={250} priority />
           </div>
         </Link>
         <h1 className="text-white text-4xl font-bold mb-8">StreamCart</h1>

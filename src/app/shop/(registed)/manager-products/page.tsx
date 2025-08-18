@@ -1,7 +1,14 @@
 "use client";
 import { Button } from "@/components/ui/button";
 import React, { useEffect, useState } from "react";
-import { CirclePlus, Edit, MoreVertical, Search, Trash2 } from "lucide-react";
+import {
+  CirclePlus,
+  Edit,
+  MoreVertical,
+  PenLineIcon,
+  Search,
+  Trash2,
+} from "lucide-react";
 import Link from "next/link";
 import {
   getProductHasFilter,
@@ -46,6 +53,7 @@ import {
 } from "@/components/ui/select";
 import PriceTag from "@/components/common/PriceTag";
 import AlertDelete from "./components/AlertDelete";
+import DialogUpdateStock from "./components/DialogUpdateStock";
 import { toast } from "sonner";
 
 function Page() {
@@ -67,6 +75,12 @@ function Page() {
   const [confirmDeleteProduct, setConfirmDeleteProduct] =
     useState<Product | null>(null);
   const [loadingDelete, setLoadingDelete] = useState(false);
+  const [editStockProduct, setEditStockProduct] = useState<Product | null>(
+    null
+  );
+  const [editStockDetail, setEditStockDetail] = useState<
+    ProductDetail | undefined
+  >(undefined);
 
   const fetchProducts = React.useCallback(async () => {
     setLoading(true);
@@ -298,49 +312,53 @@ function Page() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {loading ? (
-                    Array.from({ length: 3 }).map((_, index) => (
-                      <TableRow key={index}>
-                        <TableCell className="flex gap-2">
-                          <Skeleton className="h-20 w-20" />
-                          <div>
-                            <Skeleton className="h-4 w-48 mb-2" />
-                            <Skeleton className="h-4 w-48" />
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Skeleton className="h-4 w-28" />
-                        </TableCell>
-                        <TableCell>
-                          <Skeleton className="h-4 w-20" />
-                        </TableCell>
-                        <TableCell>
-                          <Skeleton className="h-4 w-24" />
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <Skeleton className="h-4 w-20 ml-auto" />
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  ) : products.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={5}>
-                        <div>
-                          <Image
-                            src="/assets/emptydata.png"
-                            alt="No data"
-                            width={180}
-                            height={200}
-                            className="mt-14 mx-auto"
-                          />
-                          <div className="text-center mt-4 text-xl text-lime-700/60  font-medium">
-                            Hiện chưa có sản phẩm nào
-                          </div>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    filteredProducts.map((product) => (
+                  {(() => {
+                    if (loading) {
+                      return Array.from({ length: 3 }).map((_, index) => (
+                        <TableRow key={index}>
+                          <TableCell className="flex gap-2">
+                            <Skeleton className="h-20 w-20" />
+                            <div>
+                              <Skeleton className="h-4 w-48 mb-2" />
+                              <Skeleton className="h-4 w-48" />
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Skeleton className="h-4 w-28" />
+                          </TableCell>
+                          <TableCell>
+                            <Skeleton className="h-4 w-20" />
+                          </TableCell>
+                          <TableCell>
+                            <Skeleton className="h-4 w-24" />
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <Skeleton className="h-4 w-20 ml-auto" />
+                          </TableCell>
+                        </TableRow>
+                      ));
+                    }
+                    if (products.length === 0) {
+                      return (
+                        <TableRow>
+                          <TableCell colSpan={5}>
+                            <div>
+                              <Image
+                                src="/assets/emptydata.png"
+                                alt="No data"
+                                width={180}
+                                height={200}
+                                className="mt-14 mx-auto"
+                              />
+                              <div className="text-center mt-4 text-xl text-lime-700/60  font-medium">
+                                Hiện chưa có sản phẩm nào
+                              </div>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    }
+                    return filteredProducts.map((product) => (
                       <TableRow key={product.id}>
                         <TableCell className="pl-5 w-[400px]">
                           <div className="flex items-start gap-4  h-24 py-2">
@@ -436,24 +454,39 @@ function Page() {
                           )}
                         </TableCell>
                         <TableCell className="align-top ">
-                          <div className="h-24 py-2 text-base">
-                            {product.stockQuantity}
-                          </div>
-                          {productVariants[product.id]?.variants?.length >
-                            0 && (
-                            <div className="mt-1 text-sm  space-y-1 w-full text-gray-600 h-full">
-                              {productVariants[product.id].variants.map(
-                                (variant, idx) => (
-                                  <div
-                                    key={variant.variantId || idx}
-                                    className="flex flex-wrap gap-2"
-                                  >
-                                    {variant.stock}
-                                  </div>
-                                )
+                          <div className="flex gap-8 ">
+                            <div>
+                              <div className="h-24 py-2 text-base">
+                                {product.stockQuantity}
+                              </div>
+                              {productVariants[product.id]?.variants?.length >
+                                0 && (
+                                <div className="mt-1 text-sm  space-y-1 w-full text-gray-600 h-full">
+                                  {productVariants[product.id].variants.map(
+                                    (variant, idx) => (
+                                      <div
+                                        key={variant.variantId || idx}
+                                        className="flex flex-wrap gap-2"
+                                      >
+                                        {variant.stock}
+                                      </div>
+                                    )
+                                  )}
+                                </div>
                               )}
                             </div>
-                          )}
+                            <button
+                              type="button"
+                              className="h-24 py-2 text-blue-600 hover:text-black flex justify-start cursor-pointer"
+                              onClick={() => {
+                                setEditStockProduct(product);
+                                setEditStockDetail(productVariants[product.id]);
+                              }}
+                              aria-label="Chỉnh sửa kho"
+                            >
+                              <PenLineIcon size={20} />
+                            </button>
+                          </div>
                         </TableCell>
                         <TableCell className="align-top ">
                           <div className="flex w-full  justify-start h-24 py-2 items-start">
@@ -505,8 +538,8 @@ function Page() {
                           </DropdownMenu>
                         </TableCell>
                       </TableRow>
-                    ))
-                  )}
+                    ));
+                  })()}
                 </TableBody>
               </Table>
             </div>
@@ -551,6 +584,19 @@ function Page() {
         loading={loadingDelete}
         onCancel={() => setConfirmDeleteProduct(null)}
         onConfirm={handleConfirmDelete}
+      />
+      <DialogUpdateStock
+        open={!!editStockProduct}
+        product={editStockProduct}
+        detail={editStockDetail}
+        onClose={() => {
+          setEditStockProduct(null);
+          setEditStockDetail(undefined);
+        }}
+        onUpdated={() => {
+          // refresh products and variants
+          fetchProducts();
+        }}
       />
     </>
   );

@@ -3,24 +3,67 @@
 import React from "react";
 import { ProductLiveStream } from "@/types/livestream/productLivestream";
 import { Card, CardContent, CardTitle } from "@/components/ui/card";
-import { getProductByLiveStreamId } from "@/services/api/livestream/productLivestream";
+import {
+  getProductByLiveStreamId,
+  updatePinProductLiveStream,
+} from "@/services/api/livestream/productLivestream";
 import Image from "next/image";
 import { Input } from "@/components/ui/input";
 import { Edit, ImageIcon, Pin, PinOff, Search, Trash2 } from "lucide-react";
 import PriceTag from "@/components/common/PriceTag";
 import { Button } from "@/components/ui/button";
 
-function ProductsLiveStream({ livestreamId }: { livestreamId: string }) {
+type ProductsProps = {
+  livestreamId: string;
+  onPinnedChange?: (pinned: ProductLiveStream | null) => void;
+  refreshFlag?: boolean; // toggle to force refetch from parent
+};
+
+function ProductsLiveStream({ livestreamId, onPinnedChange, refreshFlag }: ProductsProps) {
   const [products, setProducts] = React.useState<ProductLiveStream[]>([]);
   const [search, setSearch] = React.useState("");
+  const [pinLoadingId, setPinLoadingId] = React.useState<string | null>(null);
+
+  const fetchProducts = React.useCallback(async () => {
+    const data = await getProductByLiveStreamId(livestreamId);
+    setProducts(data);
+    // inform parent about current pinned item
+    const currentPinned = Array.isArray(data)
+      ? (data as ProductLiveStream[]).find((p) => p.isPin)
+      : undefined;
+    onPinnedChange?.(currentPinned || null);
+  }, [livestreamId, onPinnedChange]);
 
   React.useEffect(() => {
-    const fetchProducts = async () => {
-      const data = await getProductByLiveStreamId(livestreamId);
-      setProducts(data);
-    };
     fetchProducts();
-  }, [livestreamId]);
+  }, [fetchProducts]);
+
+  // Refetch when parent indicates external pin/unpin happened
+  React.useEffect(() => {
+    fetchProducts();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [refreshFlag]);
+
+  const handleTogglePin = async (product: ProductLiveStream) => {
+    const newIsPin = !product.isPin;
+    try {
+      setPinLoadingId(product.id);
+      await updatePinProductLiveStream(product.id, newIsPin);
+      // Update local list: only one item should be pinned at a time
+      setProducts((prev) =>
+        prev.map((p) =>
+          p.id === product.id
+            ? { ...p, isPin: newIsPin }
+            : newIsPin
+            ? { ...p, isPin: false }
+            : p
+        )
+      );
+      onPinnedChange?.(newIsPin ? { ...product, isPin: true } : null);
+    } finally {
+      setPinLoadingId(null);
+    }
+  };
 
   // Lọc sản phẩm theo tên
   const filteredProducts = products.filter((p) =>
@@ -48,10 +91,14 @@ function ProductsLiveStream({ livestreamId }: { livestreamId: string }) {
       <CardContent className="overflow-y-auto flex-1 mt-5 px-2 space-y-3">
         {filteredProducts.length > 0 ? (
           filteredProducts.map((product) => (
-            <Card key={product.id} className=" py-2 px-2 rounded-sm gap-2 ">
+            <Card key={product.id} className=" py-2 px-2 rounded-none gap-2 ">
               <div className="flex justify-between border-b pb-1">
-                <Button className="bg-[#B0F847]/90 text-black rounded-full h-8 w-8  cursor-pointer flex items-center justify-center hover:bg-[#B0F847]/70">
-                  {product.isPinned ? <PinOff size={16} /> : <Pin size={16} />}
+                <Button
+                  onClick={() => handleTogglePin(product)}
+                  disabled={pinLoadingId === product.id}
+                  className="bg-[#B0F847]/90 text-black rounded-full h-8 w-8  cursor-pointer flex items-center justify-center hover:bg-[#B0F847]/70 disabled:opacity-50"
+                >
+                  {product.isPin ? <PinOff size={16} /> : <Pin size={16} />}
                 </Button>
 
                 <div>
@@ -70,7 +117,7 @@ function ProductsLiveStream({ livestreamId }: { livestreamId: string }) {
                     width={85}
                     src={product.productImageUrl}
                     alt={product.productName}
-                    className="rounded object-cover"
+                    className="rounded object-cover h-[85px] w-[85px]"
                   />
                 ) : (
                   <div className="h-[85px] w-[85px] bg-gray-200 flex items-center justify-center rounded">
@@ -78,17 +125,18 @@ function ProductsLiveStream({ livestreamId }: { livestreamId: string }) {
                   </div>
                 )}
                 <div className="flex-1 flex flex-col items-start">
-                  <h3 className="font-medium text-sm line-clamp-2">
+                  <h3 className="font-medium text-sm mb-2 line-clamp-1">
                     {product.productName}
                   </h3>
-                  <p className="text-red-500 font-semibold text-sm">
-                    <PriceTag value={product.price} />
-                  </p>
+                  <p className="text-xs text-gray-500">SKU: {product.sku}</p>
                   {product.variantName && (
                     <p className="text-xs text-gray-500">
                       Phân loại: {product.variantName}
                     </p>
                   )}
+                  <p className="text-red-500 font-semibold mt-2">
+                    <PriceTag value={product.price} />
+                  </p>
                 </div>
               </div>
             </Card>

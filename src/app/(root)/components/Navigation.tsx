@@ -77,6 +77,7 @@ export function Navigation() {
             alt="Stream Card Logo"
             width={96}
             height={96}
+            priority
             className="w-11 h-11 object-contain"
           />
           <div className="text-xl text-[#B0F847] font-semibold font-sans">

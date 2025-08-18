@@ -197,7 +197,7 @@ function VerifyPage() {
         <div className="flex flex-col justify-center items-center ">
           <Link href="/home">
             <div className=" mt-10 mb-2 cursor-pointer flex   rounded-md justify-center items-center ">
-              <Image src="/logo2 .png" alt="Logo" width={80} height={80} />
+              <Image src="/logo2 .png" alt="Logo" width={80} height={80} priority />
             </div>
           </Link>
           <h1 className="text-white text-2xl font-bold mb-8">StreamCart</h1>

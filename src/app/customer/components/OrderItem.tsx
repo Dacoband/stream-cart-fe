@@ -1,10 +1,10 @@
-import Image from 'next/image';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent } from '@/components/ui/card';
-import { Order } from '@/types/order/order';
-import { getStatusText, OrderStatus } from '@/types/order/orderStatus';
-import { FormatDate } from '@/components/common/FormatDate';
-import PriceTag from '@/components/common/PriceTag';
+import Image from "next/image";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
+import { Order } from "@/types/order/order";
+import { getStatusText, OrderStatus } from "@/types/order/orderStatus";
+import { FormatDate } from "@/components/common/FormatDate";
+import PriceTag from "@/components/common/PriceTag";
 
 interface OrderItemProps {
   order: Order;
@@ -12,26 +12,48 @@ interface OrderItemProps {
 
 export function OrderItem({ order }: OrderItemProps) {
   const statusText = getStatusText(order.orderStatus as OrderStatus);
-  
+  // const [orderItems, setOrderItems] = useState<OrderItemResponse[]>([]);
+
+  console.log(order);
+
+  // Call API to get order items
+  // useEffect(() => {
+  //   const fetchOrderItems = async () => {
+  //     if (order.id) {
+  //       try {
+  //         console.log(order.id);
+
+  //         const response = await getOrdersItem({ orderId: order.id });
+  //         setOrderItems(response.items);
+  //       } catch (error) {
+  //         console.error("Error fetching order items:", error);
+  //       }
+  //     }
+  //   };
+
+  //   fetchOrderItems();
+  // }, [order.id]);
+
+  // console.log(orderItems);
   const getStatusBadgeVariant = (status: OrderStatus) => {
     switch (status) {
       case OrderStatus.Waiting:
-        return 'destructive';
+        return "destructive";
       case OrderStatus.Shipped:
       case OrderStatus.OnDelivere:
-        return 'default';
+        return "default";
       case OrderStatus.Packed:
-        return 'secondary';
+        return "secondary";
       case OrderStatus.Delivered:
       case OrderStatus.Completed:
-        return 'secondary';
+        return "secondary";
       case OrderStatus.Cancelled:
-        return 'destructive';
+        return "destructive";
       case OrderStatus.Returning:
       case OrderStatus.Refunded:
-        return 'outline';
+        return "outline";
       default:
-        return 'outline';
+        return "outline";
     }
   };
 
@@ -40,12 +62,16 @@ export function OrderItem({ order }: OrderItemProps) {
       <CardContent className="p-4">
         <div className="flex justify-between items-start mb-3">
           <div className="flex flex-col gap-1">
-            <div className="font-medium text-sm">Đơn hàng #{order.orderCode}</div>
+            <div className="font-medium text-sm">
+              Đơn hàng #{order.orderCode}
+            </div>
             <div className="text-xs text-gray-500">
               <FormatDate date={order.orderDate} />
             </div>
           </div>
-          <Badge variant={getStatusBadgeVariant(order.orderStatus as OrderStatus)}>
+          <Badge
+            variant={getStatusBadgeVariant(order.orderStatus as OrderStatus)}
+          >
             {statusText}
           </Badge>
         </div>
@@ -56,14 +82,16 @@ export function OrderItem({ order }: OrderItemProps) {
               <div key={item.id} className="flex gap-3">
                 <div className="w-16 h-16 relative rounded overflow-hidden bg-gray-100">
                   <Image
-                    src={item.productImageUrl || '/assets/emptyData.png'}
+                    src={item.productImageUrl || "/assets/emptyData.png"}
                     alt={item.productName}
                     fill
                     className="object-cover"
                   />
                 </div>
                 <div className="flex-1">
-                  <div className="font-medium text-sm mb-1">{item.productName}</div>
+                  <div className="font-medium text-sm mb-1">
+                    {item.productName}
+                  </div>
                   <div className="text-xs text-gray-500 mb-1">
                     Số lượng: {item.quantity}
                   </div>
@@ -91,7 +119,9 @@ export function OrderItem({ order }: OrderItemProps) {
           {order.discountAmount > 0 && (
             <div className="flex justify-between items-center text-sm text-green-600">
               <span>Giảm giá:</span>
-              <span>-<PriceTag value={order.discountAmount} /></span>
+              <span>
+                -<PriceTag value={order.discountAmount} />
+              </span>
             </div>
           )}
           <div className="flex justify-between items-center font-medium mt-2">

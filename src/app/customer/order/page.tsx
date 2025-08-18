@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Wallet } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import AddressOrder from "./components/AddressOrder";
 import ProductsOrder from "./components/ProductsOrder";
 import MethodOrder from "./components/MethodOrder";
@@ -22,7 +22,7 @@ import { previewDeliveries } from "@/services/api/deliveries/deliveries";
 import { deleteCart } from "@/services/api/cart/cart";
 
 import { toast } from "sonner";
-export default function OrderPage() {
+function OrderPageInner() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [cartItemIds, setCartItemIds] = useState<string[]>([]);
@@ -263,5 +263,13 @@ export default function OrderPage() {
         </Card>
       </div>
     </div>
+  );
+}
+
+export default function OrderPage() {
+  return (
+    <Suspense fallback={<div className="p-4">Đang tải trang đặt hàng...</div>}>
+      <OrderPageInner />
+    </Suspense>
   );
 }

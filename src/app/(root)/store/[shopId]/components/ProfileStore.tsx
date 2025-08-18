@@ -1,4 +1,6 @@
-import React from "react";
+"use client";
+
+import React, { useState } from "react";
 import { Shop } from "@/types/shop/shop";
 import Image from "next/image";
 import { Avatar, AvatarImage } from "@/components/ui/avatar";
@@ -11,12 +13,29 @@ import {
   Package,
   Heart
 } from "lucide-react";
+import { useRouter } from 'next/navigation';
 
 interface ProfileStoreProps {
   shop: Shop;
 }
 
 function ProfileStore({ shop }: ProfileStoreProps) {
+  const router = useRouter();
+  const [loadingChat, setLoadingChat] = useState(false);
+
+  const openChat = async () => {
+    const shopId = shop?.id ?? shop?.accountId ?? null;
+    if (!shopId) return;
+    setLoadingChat(true);
+    try {
+  // Navigate to customer chat; ChatProvider will create/join room for customer users
+  router.push(`/customer/chat?shopId=${shopId}`);
+    } catch (err) {
+      console.error('Open chat failed', err);
+    } finally {
+      setLoadingChat(false);
+    }
+  };
   return (
     <div className="w-full bg-white">
       {/* Cover Image */}
@@ -96,7 +115,7 @@ function ProfileStore({ shop }: ProfileStoreProps) {
                   <Heart className="w-4 h-4" />
                   Yêu thích
                 </Button>
-                <Button className="gap-2 bg-orange-500 hover:bg-orange-600">
+                <Button className="gap-2 bg-orange-500 hover:bg-orange-600" onClick={openChat} disabled={loadingChat}>
                   <MessageCircle className="w-4 h-4" />
                   Chat ngay
                 </Button>

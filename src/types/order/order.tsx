@@ -70,6 +70,7 @@ export type Order = {
   accountId: string;
   shopId: string;
   shippingProviderId: string;
+  voucherCode: string | null;
   livestreamId: string | null;
   items: OrderItemResponse[];
 };

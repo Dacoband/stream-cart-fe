@@ -30,46 +30,49 @@ function ManageOrders() {
   useEffect(() => {
     const fetchTabCounts = async () => {
       if (!user?.id) return;
-      
+
       setLoadingCounts(true);
       const counts: Record<string, number> = {};
-      
+
       try {
         // Fetch count for all orders
         const allOrdersResponse = await getCustomerOrders({
           accountId: user.id,
           PageIndex: 1,
-          PageSize: 1
+          PageSize: 1,
         });
-        counts['all'] = allOrdersResponse.totalCount;
+        counts["all"] = allOrdersResponse.totalCount;
 
         // Fetch counts for each specific status tab
         for (const orderTab of ORDER_TABS) {
-          if (orderTab.value !== 'all') {
+          if (orderTab.value !== "all") {
             const statuses = getStatusesForTab(orderTab.value as OrderTabValue);
             let totalCount = 0;
-            
+
             for (const status of statuses) {
               try {
                 const response = await getCustomerOrders({
                   accountId: user.id,
                   PageIndex: 1,
                   PageSize: 1,
-                  Status: status
+                  Status: status,
                 });
                 totalCount += response.totalCount;
               } catch (error) {
-                console.error(`Error fetching count for status ${status}:`, error);
+                console.error(
+                  `Error fetching count for status ${status}:`,
+                  error
+                );
               }
             }
-            
+
             counts[orderTab.value] = totalCount;
           }
         }
-        
+
         setTabCounts(counts);
       } catch (error) {
-        console.error('Error fetching tab counts:', error);
+        console.error("Error fetching tab counts:", error);
       } finally {
         setLoadingCounts(false);
       }
@@ -88,13 +91,19 @@ function ManageOrders() {
     <div className="container mx-auto px-4 py-6">
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900">Quản lý đơn hàng</h1>
-        <p className="text-gray-600 mt-1">Theo dõi và quản lý các đơn hàng của bạn</p>
+        <p className="text-gray-600 mt-1">
+          Theo dõi và quản lý các đơn hàng của bạn
+        </p>
       </div>
 
-      <Tabs value={tab} onValueChange={(value) => setTab(value as OrderTabValue)} className="w-full rounded-none">
+      <Tabs
+        value={tab}
+        onValueChange={(value) => setTab(value as OrderTabValue)}
+        className="w-full rounded-none"
+      >
         <TabsList className="grid grid-cols-7 w-full rounded-none h-fit border-b bg-white p-0 overflow-hidden shadow-none">
           {ORDER_TABS.map(({ label, value }) => {
-            const count = loadingCounts ? 0 : (tabCounts[value] || 0);
+            const count = loadingCounts ? 0 : tabCounts[value] || 0;
             return (
               <TabsTrigger
                 key={value}
@@ -107,7 +116,9 @@ function ManageOrders() {
               >
                 {label}
                 {count > 0 && !loadingCounts && <div>({count})</div>}
-                {loadingCounts && <div className="w-4 h-4 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin ml-1"></div>}
+                {loadingCounts && (
+                  <div className="w-4 h-4 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin ml-1"></div>
+                )}
               </TabsTrigger>
             );
           })}

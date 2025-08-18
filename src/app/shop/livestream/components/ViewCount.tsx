@@ -7,10 +7,17 @@ import {
 } from "@livekit/components-react";
 import { Track } from "livekit-client";
 import { UserRound } from "lucide-react";
+import React from "react";
+import { chatHubService, ViewerStatsPayload } from "@/services/signalr/chatHub";
 
-export function ViewerCount() {
+interface ViewerCountProps {
+  livestreamId?: string;
+}
+
+export function ViewerCount({ livestreamId }: ViewerCountProps) {
   const participants = useParticipants();
   const { localParticipant } = useLocalParticipant();
+  const [stats, setStats] = React.useState<ViewerStatsPayload | null>(null);
 
   const filtered = participants.filter((p) => {
     // Loại chính mình
@@ -28,6 +35,42 @@ export function ViewerCount() {
     return !isSharingScreen;
   });
 
+  const viewerOnlyFromStats = React.useMemo(() => {
+    if (!stats) return null;
+    const roleMap = stats.viewersByRole || {};
+    // Exclude shop-like roles
+    const excludeKeys = ["Shop", "2", "Host", "Owner"];
+    const viewers = Object.entries(roleMap)
+      .filter(([role]) => !excludeKeys.includes(role))
+      .reduce((sum, [, count]) => sum + (count || 0), 0);
+    return viewers;
+  }, [stats]);
+
+  React.useEffect(() => {
+    if (!livestreamId) return;
+    let mounted = true;
+    (async () => {
+      try {
+        await chatHubService.ensureStarted();
+        // Join group to receive stats; do NOT startViewing here to avoid double counting
+        await chatHubService.joinLivestream(livestreamId);
+        chatHubService.onViewerStats((payload) => {
+          if (!mounted) return;
+          if (
+            payload.livestreamId?.toLowerCase?.() === livestreamId.toLowerCase()
+          ) {
+            setStats(payload);
+          }
+        });
+      } catch {
+        // ignore
+      }
+    })();
+    return () => {
+      mounted = false;
+    };
+  }, [livestreamId]);
+
   return (
     <div className="flex ml-2">
       <Button className="bg-rose-600 text-white rounded-none hover:bg-rose-600 flex items-center relative overflow-visible">
@@ -40,7 +83,7 @@ export function ViewerCount() {
 
       <Button className="rounded-none">
         <UserRound />
-        {filtered.length}
+        {viewerOnlyFromStats ?? filtered.length}
       </Button>
     </div>
   );

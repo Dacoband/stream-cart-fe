@@ -33,7 +33,7 @@ const items = [
   },
   {
     title: "Đơn hàng",
-    url: "/shop/order",
+    url: "/shop/manage-orders",
     icon: Package,
   },
 
