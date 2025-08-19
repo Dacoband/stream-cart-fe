@@ -50,6 +50,9 @@ export function useLivestreamRealtime(livestreamId?: string): LivestreamRealtime
 
   const liveRef = useRef<string | undefined>(livestreamId);
   liveRef.current = livestreamId;
+  // prevent rapid duplicate pin invocations (double-clicks, retries)
+  const inFlightPinsRef = useRef<Set<string>>(new Set());
+  const lastPinAtRef = useRef<Map<string, number>>(new Map());
 
   useEffect(() => {
     if (!livestreamId) return;
@@ -116,8 +119,7 @@ export function useLivestreamRealtime(livestreamId?: string): LivestreamRealtime
           setLastStockChange(ev);
         });
 
-        // initial fetch
-        try { await chatHubService.getPinnedProducts(livestreamId); } catch {}
+  // initial fetch: avoid GetPinnedProducts because server broadcasts to entire group
         try { await chatHubService.getLivestreamProducts(livestreamId); } catch {}
   } catch {
         // swallow; components can show fallback
@@ -146,7 +148,18 @@ export function useLivestreamRealtime(livestreamId?: string): LivestreamRealtime
 
     pinProduct: (productId, variantId, isPin) => {
       if (!liveRef.current) return Promise.resolve();
-      return chatHubService.pinProduct(liveRef.current, productId, variantId, isPin);
+      const key = `${liveRef.current}|${productId}|${variantId ?? ''}`;
+      // throttle duplicates within 700ms and while in-flight
+      if (inFlightPinsRef.current.has(key)) return Promise.resolve();
+      const lastAt = lastPinAtRef.current.get(key) ?? 0;
+      if (Date.now() - lastAt < 700) return Promise.resolve();
+      inFlightPinsRef.current.add(key);
+      return chatHubService
+        .pinProduct(liveRef.current, productId, variantId, isPin)
+        .finally(() => {
+          inFlightPinsRef.current.delete(key);
+          lastPinAtRef.current.set(key, Date.now());
+        });
     },
     updateProductStock: (productId, variantId, newStock) => {
       if (!liveRef.current) return Promise.resolve();
@@ -162,12 +175,23 @@ export function useLivestreamRealtime(livestreamId?: string): LivestreamRealtime
     },
 
     updateById: (id, price, stock, isPin) => chatHubService.updateLivestreamProductById(id, price, stock, isPin),
-    pinById: (id, isPin) => chatHubService.pinLivestreamProductById(id, isPin),
+    pinById: (id, isPin) => {
+      const key = `byId|${id}`;
+      if (inFlightPinsRef.current.has(key)) return Promise.resolve();
+      const lastAt = lastPinAtRef.current.get(key) ?? 0;
+      if (Date.now() - lastAt < 700) return Promise.resolve();
+      inFlightPinsRef.current.add(key);
+      return chatHubService.pinLivestreamProductById(id, isPin).finally(() => {
+        inFlightPinsRef.current.delete(key);
+        lastPinAtRef.current.set(key, Date.now());
+      });
+    },
     updateStockById: (id, newStock) => chatHubService.updateLivestreamProductStockById(id, newStock),
     deleteById: (id) => chatHubService.deleteLivestreamProductById(id),
     softDeleteById: (id, reason) => chatHubService.softDeleteLivestreamProductById(id, reason),
 
-    refreshPinned: () => liveRef.current ? chatHubService.getPinnedProducts(liveRef.current) : Promise.resolve(),
+  // Keep available for seller-triggered explicit refresh; note: server currently broadcasts to entire group
+  refreshPinned: () => liveRef.current ? chatHubService.getPinnedProducts(liveRef.current) : Promise.resolve(),
     refreshProducts: () => liveRef.current ? chatHubService.getLivestreamProducts(liveRef.current) : Promise.resolve(),
 
     getSummary: () => {

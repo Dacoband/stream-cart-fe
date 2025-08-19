@@ -27,6 +27,24 @@
   display: none !important;
 }
 
+/* Normalize LiveKit containers to match Preview frame sizing */
+.lk-room-container,
+.lk-layout-wrapper {
+  width: 100% !important;
+  height: 100% !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  background: transparent !important;
+}
+
+.lk-video,
+video.lk-video {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  display: block;
+}
+
 
 .animate-zoom-custom {
   animation: zoom 1.5s ease-in-out infinite;

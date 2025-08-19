@@ -72,6 +72,9 @@ class ChatHubService {
   private uniqueViewersByLive = new Map<string, Set<string>>();
   private lastViewerStatsByLive = new Map<string, ViewerStatsPayload>();
   private peakCustomerByLive = new Map<string, number>();
+  // simple de-dupe/throttle maps for pin operations
+  private inflightPins = new Set<string>();
+  private lastPinAt = new Map<string, number>();
 
   // Build a new connection
   private buildConnection(): HubConnection {
@@ -103,6 +106,19 @@ class ChatHubService {
     this.connecting = new Promise<HubConnection>(async (resolve, reject) => {
       try {
         this.connection = this.buildConnection();
+
+        // Pre-register common server events (case-insensitive variants) to avoid warning spam
+        try {
+          const c = this.connection;
+          // server might emit lowercased names
+          c.on('connected', () => {});
+          c.on('Connected', () => {});
+          c.on('receiveviewerstats', () => {});
+          c.on('userjoined', () => {});
+          c.on('livestreamproductsloaded', () => {});
+        } catch {
+          /* ignore */
+        }
 
         this.connection.onclose(err => {
           console.warn('[SignalR] Connection closed', err);
@@ -201,7 +217,8 @@ class ChatHubService {
   }
 
   onReceiveLivestreamMessage(cb: (payload: LivestreamMessagePayload) => void) {
-    this.connection?.off('ReceiveLivestreamMessage');
+  this.connection?.off('ReceiveLivestreamMessage');
+  this.connection?.off('receivelivestreammessage' as unknown as string);
     type RawMsg = {
       senderId: string;
       senderName: string;
@@ -212,7 +229,7 @@ class ChatHubService {
       senderAvatarUrl?: string; SenderAvatarUrl?: string;
       avatarUrl?: string; AvatarUrl?: string;
     };
-    this.connection?.on('ReceiveLivestreamMessage', (raw: RawMsg) => {
+  const handler = (raw: RawMsg) => {
       const payload: LivestreamMessagePayload = {
         senderId: raw.senderId,
         senderName: raw.senderName,
@@ -222,12 +239,17 @@ class ChatHubService {
         senderAvatarUrl: raw.senderAvatarUrl ?? raw.SenderAvatarUrl ?? raw.avatarUrl ?? raw.AvatarUrl,
       };
       cb(payload);
-    });
+  };
+  this.connection?.on('ReceiveLivestreamMessage', handler as unknown as (...args: never[]) => void);
+  this.connection?.on('receivelivestreammessage' as unknown as string, handler as unknown as (...args: never[]) => void);
   }
 
   onUserJoined(cb: (payload: UserPresencePayload) => void) {
-    this.connection?.off('UserJoined');
-  this.connection?.on('UserJoined', (payload: UserPresencePayload) => cb(payload));
+  this.connection?.off('UserJoined');
+  this.connection?.off('userjoined' as unknown as string);
+  const handler = (payload: UserPresencePayload) => cb(payload);
+  this.connection?.on('UserJoined', handler as unknown as (...args: never[]) => void);
+  this.connection?.on('userjoined' as unknown as string, handler as unknown as (...args: never[]) => void);
   }
 
   onUserLeft(cb: (payload: UserPresencePayload) => void) {
@@ -236,7 +258,8 @@ class ChatHubService {
   }
 
   onViewerStats(cb: (payload: ViewerStatsPayload) => void) {
-    this.connection?.off('ReceiveViewerStats');
+  this.connection?.off('ReceiveViewerStats');
+  this.connection?.off('receiveviewerstats' as unknown as string);
     type RawStats = {
       livestreamId?: string; LivestreamId?: string;
       totalViewers?: number; TotalViewers?: number;
@@ -246,7 +269,7 @@ class ChatHubService {
       maxCustomerViewer?: number; MaxCustomerViewer?: number;
       isNewRecord?: boolean; IsNewRecord?: boolean;
     };
-    this.connection?.on('ReceiveViewerStats', (raw: RawStats) => {
+  const handler = (raw: RawStats) => {
       // Normalize server casing (LivestreamId, TotalViewers, ViewersByRole, Timestamp) -> camelCase
       const normalized: ViewerStatsPayload = {
         livestreamId: (raw?.livestreamId ?? raw?.LivestreamId ?? '').toString(),
@@ -270,7 +293,9 @@ class ChatHubService {
         this.peakCustomerByLive.set(normalized.livestreamId, nextPeak);
       }
       cb(normalized);
-    });
+  };
+  this.connection?.on('ReceiveViewerStats', handler as unknown as (...args: never[]) => void);
+  this.connection?.on('receiveviewerstats' as unknown as string, handler as unknown as (...args: never[]) => void);
   }
 
   // ---------- Product: invoke hub methods ----------
@@ -279,7 +304,17 @@ class ChatHubService {
   }
 
   async pinProduct(livestreamId: string, productId: string, variantId: string | null, isPin: boolean) {
-    return this.invokeWhenConnected('PinProduct', livestreamId, productId, variantId, isPin);
+    const key = `${livestreamId}|${productId}|${variantId ?? ''}`;
+    if (this.inflightPins.has(key)) return;
+    const last = this.lastPinAt.get(key) ?? 0;
+    if (Date.now() - last < 600) return;
+    this.inflightPins.add(key);
+    try {
+      return await this.invokeWhenConnected('PinProduct', livestreamId, productId, variantId, isPin);
+    } finally {
+      this.inflightPins.delete(key);
+      this.lastPinAt.set(key, Date.now());
+    }
   }
 
   async addProductToLivestream(
@@ -310,7 +345,17 @@ class ChatHubService {
   }
 
   async pinLivestreamProductById(id: string, isPin: boolean) {
-    return this.invokeWhenConnected('PinLivestreamProductById', id, isPin);
+    const key = `byId|${id}`;
+    if (this.inflightPins.has(key)) return;
+    const last = this.lastPinAt.get(key) ?? 0;
+    if (Date.now() - last < 600) return;
+    this.inflightPins.add(key);
+    try {
+      return await this.invokeWhenConnected('PinLivestreamProductById', id, isPin);
+    } finally {
+      this.inflightPins.delete(key);
+      this.lastPinAt.set(key, Date.now());
+    }
   }
 
   async updateLivestreamProductStockById(id: string, newStock: number) {

@@ -3,15 +3,13 @@
 import React from "react";
 import { ProductLiveStream } from "@/types/livestream/productLivestream";
 import { Card, CardContent, CardTitle } from "@/components/ui/card";
-import {
-  getProductByLiveStreamId,
-  updatePinProductLiveStream,
-} from "@/services/api/livestream/productLivestream";
+import { getProductByLiveStreamId } from "@/services/api/livestream/productLivestream";
 import Image from "next/image";
 import { Input } from "@/components/ui/input";
-import { Edit, ImageIcon, Pin, PinOff, Search, Trash2 } from "lucide-react";
+import { ImageIcon, Pin, Search } from "lucide-react";
 import PriceTag from "@/components/common/PriceTag";
 import { Button } from "@/components/ui/button";
+import { useLivestreamRealtime } from "@/services/signalr/useLivestreamRealtime";
 
 type ProductsProps = {
   livestreamId: string;
@@ -19,10 +17,14 @@ type ProductsProps = {
   refreshFlag?: boolean; // toggle to force refetch from parent
 };
 
-function ProductsLiveStream({ livestreamId, onPinnedChange, refreshFlag }: ProductsProps) {
+function ProductsLiveStream({
+  livestreamId,
+  onPinnedChange,
+  refreshFlag,
+}: ProductsProps) {
   const [products, setProducts] = React.useState<ProductLiveStream[]>([]);
   const [search, setSearch] = React.useState("");
-  const [pinLoadingId, setPinLoadingId] = React.useState<string | null>(null);
+  const realtime = useLivestreamRealtime(livestreamId);
 
   const fetchProducts = React.useCallback(async () => {
     const data = await getProductByLiveStreamId(livestreamId);
@@ -34,6 +36,15 @@ function ProductsLiveStream({ livestreamId, onPinnedChange, refreshFlag }: Produ
     onPinnedChange?.(currentPinned || null);
   }, [livestreamId, onPinnedChange]);
 
+  // debounce guard to avoid excessive refetches on burst events
+  const refetchTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+  const scheduleRefetch = React.useCallback(() => {
+    if (refetchTimer.current) clearTimeout(refetchTimer.current);
+    refetchTimer.current = setTimeout(() => {
+      fetchProducts();
+    }, 250);
+  }, [fetchProducts]);
+
   React.useEffect(() => {
     fetchProducts();
   }, [fetchProducts]);
@@ -44,26 +55,64 @@ function ProductsLiveStream({ livestreamId, onPinnedChange, refreshFlag }: Produ
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [refreshFlag]);
 
-  const handleTogglePin = async (product: ProductLiveStream) => {
-    const newIsPin = !product.isPin;
-    try {
-      setPinLoadingId(product.id);
-      await updatePinProductLiveStream(product.id, newIsPin);
-      // Update local list: only one item should be pinned at a time
-      setProducts((prev) =>
-        prev.map((p) =>
-          p.id === product.id
-            ? { ...p, isPin: newIsPin }
-            : newIsPin
-            ? { ...p, isPin: false }
-            : p
-        )
-      );
-      onPinnedChange?.(newIsPin ? { ...product, isPin: true } : null);
-    } finally {
-      setPinLoadingId(null);
+  // Realtime: when any relevant product event fires, refresh list
+  React.useEffect(() => {
+    if (!livestreamId) return;
+    // pin status changed or server pushed pinned products
+    if (
+      realtime.lastPinChange &&
+      realtime.lastPinChange.livestreamId === livestreamId
+    ) {
+      scheduleRefetch();
     }
-  };
+    if (Array.isArray(realtime.pinnedProducts)) {
+      // pinned list changed -> refresh once
+      scheduleRefetch();
+    }
+    // stock changes
+    if (
+      realtime.lastStockChange &&
+      realtime.lastStockChange.livestreamId === livestreamId
+    ) {
+      scheduleRefetch();
+    }
+    // generic updated
+    if (
+      realtime.lastUpdated &&
+      realtime.lastUpdated.livestreamId === livestreamId
+    ) {
+      scheduleRefetch();
+    }
+    // add/remove
+    if (
+      realtime.lastAdded &&
+      realtime.lastAdded.livestreamId === livestreamId
+    ) {
+      scheduleRefetch();
+    }
+    if (
+      realtime.lastRemoved &&
+      realtime.lastRemoved.livestreamId === livestreamId
+    ) {
+      scheduleRefetch();
+    }
+    return () => {
+      if (refetchTimer.current) {
+        clearTimeout(refetchTimer.current);
+        refetchTimer.current = null;
+      }
+    };
+  }, [
+    livestreamId,
+    realtime.lastPinChange,
+    realtime.pinnedProducts,
+    realtime.lastStockChange,
+    realtime.lastUpdated,
+    realtime.lastAdded,
+    realtime.lastRemoved,
+    scheduleRefetch,
+    fetchProducts,
+  ]);
 
   // Lọc sản phẩm theo tên
   const filteredProducts = products.filter((p) =>
@@ -93,22 +142,14 @@ function ProductsLiveStream({ livestreamId, onPinnedChange, refreshFlag }: Produ
           filteredProducts.map((product) => (
             <Card key={product.id} className=" py-2 px-2 rounded-none gap-2 ">
               <div className="flex justify-between border-b pb-1">
-                <Button
-                  onClick={() => handleTogglePin(product)}
-                  disabled={pinLoadingId === product.id}
-                  className="bg-[#B0F847]/90 text-black rounded-full h-8 w-8  cursor-pointer flex items-center justify-center hover:bg-[#B0F847]/70 disabled:opacity-50"
-                >
-                  {product.isPin ? <PinOff size={16} /> : <Pin size={16} />}
-                </Button>
-
-                <div>
-                  <Button className=" text-blue-500 bg-white rounded-none cursor-pointer shadow-none hover:bg-white hover:text-blue-400">
-                    <Edit /> Chỉnh sửa
-                  </Button>
-                  <Button className=" text-red-500 bg-white rounded-none cursor-pointer shadow-none hover:bg-white hover:text-red-400">
-                    <Trash2 /> Xóa
-                  </Button>
+                <div className="text-sm flex items-center text-gray-500">
+                  Số lượng: {product.stock}
                 </div>
+                {product.isPin && (
+                  <Button variant="outline" size="icon">
+                    <Pin className="w-4 h-4" />
+                  </Button>
+                )}
               </div>
               <div className="flex gap-3">
                 {product.productImageUrl ? (
@@ -134,9 +175,16 @@ function ProductsLiveStream({ livestreamId, onPinnedChange, refreshFlag }: Produ
                       Phân loại: {product.variantName}
                     </p>
                   )}
-                  <p className="text-red-500 font-semibold mt-2">
-                    <PriceTag value={product.price} />
-                  </p>
+                  <div className="flex gap-4">
+                    <p className="text-red-500 font-semibold mt-2">
+                      <PriceTag value={product.price} />
+                    </p>
+                    {typeof product.originalPrice !== "undefined" && (
+                      <p className="text-gray-500 font-semibold mt-2 line-through">
+                        <PriceTag value={product.originalPrice} />
+                      </p>
+                    )}
+                  </div>
                 </div>
               </div>
             </Card>

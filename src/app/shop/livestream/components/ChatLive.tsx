@@ -1,13 +1,10 @@
 import React from "react";
-import { SendChatSignalR } from "@/types/livestream/chatSignalR";
+// import { SendChatSignalR } from "@/types/livestream/chatSignalR";
 import {
   chatHubService,
   LivestreamMessagePayload,
 } from "@/services/signalr/chatHub";
-import {
-  getChatLiveStream,
-  SendMessageLiveStream,
-} from "@/services/api/livestream/chatsignalR";
+import { getChatLiveStream } from "@/services/api/livestream/chatsignalR";
 import { Card, CardContent, CardFooter, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Send, Store, UserRound } from "lucide-react";
@@ -29,6 +26,13 @@ function ChatLive({
 
   const [loading, setLoading] = React.useState(true);
   const listRef = React.useRef<HTMLDivElement | null>(null);
+  // Track seen messages to prevent duplicates from double broadcasts or duplicate handlers
+  const seenKeysRef = React.useRef<Set<string>>(new Set());
+
+  const makeKey = React.useCallback((m: LivestreamMessagePayload) => {
+    const ts = m.timestamp ? new Date(m.timestamp).getTime() : Date.now();
+    return `${m.senderId || ""}|${(m.message || "").trim()}|${ts}`;
+  }, []);
 
   // Always scroll to bottom when messages change
   React.useEffect(() => {
@@ -94,6 +98,15 @@ function ChatLive({
               new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
           );
           setMessages(mapped);
+          // seed dedupe set so live events matching history won't duplicate
+          const seen = seenKeysRef.current;
+          for (const m of mapped) {
+            try {
+              seen.add(makeKey(m));
+            } catch {
+              /* ignore */
+            }
+          }
 
           // Scroll xuống cuối sau khi load lịch sử
           requestAnimationFrame(() => {
@@ -108,6 +121,14 @@ function ChatLive({
         await chatHubService.joinLivestream(livestreamId);
 
         chatHubService.onReceiveLivestreamMessage((payload) => {
+          // de-dupe: skip if already seen
+          try {
+            const key = makeKey(payload);
+            if (seenKeysRef.current.has(key)) return;
+            seenKeysRef.current.add(key);
+          } catch {
+            /* ignore */
+          }
           setMessages((prev) => [...prev, payload]);
           // Auto scroll
           requestAnimationFrame(() => {
@@ -126,22 +147,15 @@ function ChatLive({
       mounted = false;
       chatHubService.leaveLivestream(livestreamId);
     };
-  }, [livestreamId]);
+  }, [livestreamId, makeKey]);
 
   const handleMessageSend = async () => {
     if (disabledInput) return;
     if (!newMessage.trim()) return;
     const text = newMessage.trim();
     try {
+      // Send via SignalR only; avoid REST to prevent double-broadcasting
       await chatHubService.sendLivestreamMessage(livestreamId, text);
-      // Optional REST persistence (fire and forget)
-      const data: SendChatSignalR = {
-        livestreamId,
-        message: text,
-        messageType: 0,
-        replyToMessageId: null,
-      };
-      SendMessageLiveStream(livestreamId, data).catch(() => {});
       // Clear input only after successful send so UI waits for realtime event to render message
       setNewMessage("");
     } catch (e) {
@@ -174,6 +188,8 @@ function ChatLive({
               <div key={idx} className="flex items-start gap-2">
                 {/* Avatar / Icon */}
                 {m.senderType === "Shop" ||
+                m.senderType === "Moderator" ||
+                m.senderType === "Seller" ||
                 (user?.id && m.senderId === user.id) ? (
                   <div className="h-6 w-6 flex items-center justify-center rounded-full bg-lime-100 overflow-hidden shrink-0">
                     <Store className="h-4 w-4 text-lime-500" />
