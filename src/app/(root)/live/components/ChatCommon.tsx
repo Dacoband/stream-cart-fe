@@ -1,13 +1,10 @@
 import React from "react";
-import { SendChatSignalR } from "@/types/livestream/chatSignalR";
+// import { SendChatSignalR } from "@/types/livestream/chatSignalR";
 import {
   chatHubService,
   LivestreamMessagePayload,
 } from "@/services/signalr/chatHub";
-import {
-  getChatLiveStream,
-  SendMessageLiveStream,
-} from "@/services/api/livestream/chatsignalR";
+import { getChatLiveStream } from "@/services/api/livestream/chatsignalR";
 import { CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Send, Store, UserRound } from "lucide-react";
@@ -28,6 +25,11 @@ const ChatCommon: React.FC<ChatCommonProps> = ({ livestreamId }) => {
   const [sellerId, setSellerId] = React.useState<string | null>(null);
 
   const listRef = React.useRef<HTMLDivElement | null>(null);
+  const seenKeysRef = React.useRef<Set<string>>(new Set());
+  const makeKey = React.useCallback((m: LivestreamMessagePayload) => {
+    const ts = m.timestamp ? new Date(m.timestamp).getTime() : Date.now();
+    return `${m.senderId || ""}|${(m.message || "").trim()}|${ts}`;
+  }, []);
 
   // Always scroll to bottom when messages change
   React.useEffect(() => {
@@ -86,12 +88,22 @@ const ChatCommon: React.FC<ChatCommonProps> = ({ livestreamId }) => {
                 new Date(b.timestamp).getTime()
             );
           setMessages(mapped);
+          // seed dedupe
+          const seen = seenKeysRef.current;
+          for (const m of mapped) {
+            try { seen.add(makeKey(m)); } catch { /* ignore */ }
+          }
         }
         await chatHubService.ensureStarted();
         // Mark this client as an active viewer for stats
         await chatHubService.startViewingLivestream(livestreamId);
         await chatHubService.joinLivestream(livestreamId);
         chatHubService.onReceiveLivestreamMessage((payload) => {
+          try {
+            const key = makeKey(payload);
+            if (seenKeysRef.current.has(key)) return;
+            seenKeysRef.current.add(key);
+          } catch { /* ignore */ }
           setMessages((prev) => [...prev, payload]);
           requestAnimationFrame(() => {
             if (listRef.current)
@@ -109,21 +121,15 @@ const ChatCommon: React.FC<ChatCommonProps> = ({ livestreamId }) => {
       chatHubService.stopViewingLivestream(livestreamId);
       chatHubService.leaveLivestream(livestreamId);
     };
-  }, [livestreamId]);
+  }, [livestreamId, makeKey]);
 
   const handleMessageSend = async () => {
     if (!livestreamId) return;
     if (!newMessage.trim()) return;
     const text = newMessage.trim();
     try {
+      // Only SignalR to avoid duplicate echoes
       await chatHubService.sendLivestreamMessage(livestreamId, text);
-      const data: SendChatSignalR = {
-        livestreamId,
-        message: text,
-        messageType: 0,
-        replyToMessageId: null,
-      };
-      SendMessageLiveStream(livestreamId, data).catch(() => {});
       setNewMessage("");
     } catch (e) {
       console.error("Send message failed", e);

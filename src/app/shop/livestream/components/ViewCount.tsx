@@ -1,11 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import {
-  useParticipants,
-  useLocalParticipant,
-} from "@livekit/components-react";
-import { Track } from "livekit-client";
+import {} from "@livekit/components-react";
 import { UserRound } from "lucide-react";
 import React from "react";
 import { chatHubService, ViewerStatsPayload } from "@/services/signalr/chatHub";
@@ -15,35 +11,26 @@ interface ViewerCountProps {
 }
 
 export function ViewerCount({ livestreamId }: ViewerCountProps) {
-  const participants = useParticipants();
-  const { localParticipant } = useLocalParticipant();
+  // Viewer stats come from server via SignalR; no need to inspect LiveKit participants here
   const [stats, setStats] = React.useState<ViewerStatsPayload | null>(null);
 
-  const filtered = participants.filter((p) => {
-    // Loại chính mình
-    if (p.identity === localParticipant.identity) return false;
+  // We rely on server stats for viewer count; do not derive from LiveKit participants
 
-    // Kiểm tra xem participant có đang share màn hình không
-    const screenTrackPub = p.getTrackPublication(Track.Source.ScreenShare);
-    const screenAudioPub = p.getTrackPublication(Track.Source.ScreenShareAudio);
-
-    const isSharingScreen =
-      (screenTrackPub?.track && !screenTrackPub.track.isMuted) ||
-      (screenAudioPub?.track && !screenAudioPub.track.isMuted);
-
-    // Chỉ giữ những người KHÔNG share màn hình
-    return !isSharingScreen;
-  });
-
-  const viewerOnlyFromStats = React.useMemo(() => {
+  const customerViewers = React.useMemo(() => {
     if (!stats) return null;
+    // Prefer server-provided customerViewers if available
+    if (typeof stats.customerViewers === "number") return stats.customerViewers;
     const roleMap = stats.viewersByRole || {};
-    // Exclude shop-like roles
-    const excludeKeys = ["Shop", "2", "Host", "Owner"];
-    const viewers = Object.entries(roleMap)
-      .filter(([role]) => !excludeKeys.includes(role))
+    // Exclude non-customer roles when deriving from role map (case-insensitive)
+    const exclude = new Set(
+      ["Shop", "Seller", "Host", "Owner", "Moderator", "Admin", "Internal"].map(
+        (s) => s.toLowerCase()
+      )
+    );
+    return Object.entries(roleMap)
+      .map(([role, count]) => [String(role).toLowerCase(), count] as const)
+      .filter(([role]) => !exclude.has(role))
       .reduce((sum, [, count]) => sum + (count || 0), 0);
-    return viewers;
   }, [stats]);
 
   React.useEffect(() => {
@@ -83,7 +70,7 @@ export function ViewerCount({ livestreamId }: ViewerCountProps) {
 
       <Button className="rounded-none">
         <UserRound />
-        {viewerOnlyFromStats ?? filtered.length}
+        {customerViewers ?? 0}
       </Button>
     </div>
   );

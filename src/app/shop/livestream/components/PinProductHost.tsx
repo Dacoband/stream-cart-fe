@@ -1,55 +1,54 @@
 "use client";
 
-import { useEffect, useState, useCallback, useRef } from "react";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import Image from "next/image";
-import { ImageIcon } from "lucide-react";
-import PriceTag from "@/components/common/PriceTag";
+import React from "react";
 import { getPinProductLiveStream } from "@/services/api/livestream/productLivestream";
+import { Card } from "@/components/ui/card";
+import Image from "next/image";
+import { ImageIcon, Pin } from "lucide-react";
+import PriceTag from "@/components/common/PriceTag";
+import { Button } from "@/components/ui/button";
 import { useLivestreamRealtime } from "@/services/signalr/useLivestreamRealtime";
-type PinProductProps = {
-  livestreamId: string;
-};
 
-type PinnedProduct = {
-  productName: string;
-  productImageUrl?: string;
-  price?: number;
-  sku?: string;
-  variantName?: string;
-};
+type Props = { livestreamId: string };
 
-export default function PinProduct({ livestreamId }: PinProductProps) {
-  const [pinned, setPinned] = useState<PinnedProduct | null>(null);
-  const { pinnedProducts, lastPinChange } = useLivestreamRealtime(livestreamId);
-  const lastFetchAtRef = useRef<number>(0);
+function PinProductHost({ livestreamId }: Props) {
+  type PinnedView = {
+    productName?: string;
+    productImageUrl?: string;
+    price?: number;
+    sku?: string;
+    variantName?: string;
+    isPin?: boolean;
+  };
+  const [pinned, setPinned] = React.useState<PinnedView | null>(null);
+  const { pinnedProducts, lastPinChange, refreshPinned } =
+    useLivestreamRealtime(livestreamId);
 
-  // safe mappers for mixed-casing payloads
-  const toStr = useCallback(
+  const toStr = React.useCallback(
     (v: unknown) => (typeof v === "string" ? v : undefined),
     []
   );
-  const toNum = useCallback(
+  const toNum = React.useCallback(
     (v: unknown) => (Number.isFinite(Number(v)) ? Number(v) : undefined),
     []
   );
-  const toBool = useCallback(
+  const toBool = React.useCallback(
     (v: unknown) => (v === undefined || v === null ? undefined : Boolean(v)),
     []
   );
-  const getStr = useCallback(
+  const getStr = React.useCallback(
     (obj: Record<string, unknown> | undefined, ...keys: string[]) => {
       if (!obj) return undefined;
       for (const k of keys) {
-        const s = toStr(obj[k]);
+        const val = obj[k];
+        const s = toStr(val);
         if (s !== undefined) return s;
       }
       return undefined;
     },
     [toStr]
   );
-  const getNum = useCallback(
+  const getNum = React.useCallback(
     (obj: Record<string, unknown> | undefined, ...keys: string[]) => {
       if (!obj) return undefined;
       for (const k of keys) {
@@ -60,7 +59,7 @@ export default function PinProduct({ livestreamId }: PinProductProps) {
     },
     [toNum]
   );
-  const getBool = useCallback(
+  const getBool = React.useCallback(
     (obj: Record<string, unknown> | undefined, ...keys: string[]) => {
       if (!obj) return undefined;
       for (const k of keys) {
@@ -72,19 +71,16 @@ export default function PinProduct({ livestreamId }: PinProductProps) {
     [toBool]
   );
 
-  /** Gọi API để lấy pinned ban đầu */
-  const fetchPinned = useCallback(async () => {
+  const fetchPinned = React.useCallback(async () => {
     try {
-      const res = await getPinProductLiveStream(livestreamId);
-      const raw = (Array.isArray(res) ? res[0] : res) as
+      const data = await getPinProductLiveStream(livestreamId);
+      const raw = (Array.isArray(data) ? data[0] : data) as
         | Record<string, unknown>
         | undefined;
-      const isPinned = getBool(raw, "isPin", "IsPin", "isPinned") ?? false;
+      const isPinned = getBool(raw, "isPin", "isPinned") ?? false;
       if (!raw || !isPinned) return setPinned(null);
-
-      const mapped: PinnedProduct = {
-        productName:
-          getStr(raw, "productName", "ProductName")?.toString() || "",
+      const view: PinnedView = {
+        productName: getStr(raw, "productName", "ProductName"),
         productImageUrl: getStr(
           raw,
           "productImageUrl",
@@ -95,38 +91,37 @@ export default function PinProduct({ livestreamId }: PinProductProps) {
         price: getNum(raw, "price", "Price"),
         sku: getStr(raw, "sku", "SKU", "Sku"),
         variantName: getStr(raw, "variantName", "VariantName"),
+        isPin: isPinned,
       };
-      setPinned(mapped);
-    } catch (err) {
-      console.error("Failed to fetch pinned product:", err);
+      setPinned(view);
+    } catch {
       setPinned(null);
     }
   }, [livestreamId, getStr, getNum, getBool]);
 
-  /** Lần đầu mount → chỉ gọi REST lấy pinned, tránh broadcast socket toàn nhóm */
-  useEffect(() => {
+  React.useEffect(() => {
+    // initial: request server to push current pinned state; fallback to API once
+    refreshPinned().catch(() => {});
     fetchPinned();
-  }, [fetchPinned]);
+  }, [fetchPinned, refreshPinned]);
 
-  /** Khi có event pin/unpin → hạn chế gọi REST (debounce) */
-  useEffect(() => {
+  // When server reports pin status change, refresh from API to get full details
+  React.useEffect(() => {
     if (!lastPinChange) return;
-    const now = Date.now();
-    if (now - lastFetchAtRef.current < 900) return; // debounce ~0.9s
-    lastFetchAtRef.current = now;
     fetchPinned();
   }, [lastPinChange, fetchPinned]);
 
-  /** Nếu socket push data thì update luôn */
-  useEffect(() => {
+  // Map pinnedProducts pushed from server directly, fallback to API if shape unknown
+  React.useEffect(() => {
     if (!pinnedProducts || pinnedProducts.length === 0) {
       setPinned(null);
       return;
     }
-    const first = pinnedProducts[0] as Record<string, unknown> | undefined;
+    const first = pinnedProducts[0] as Record<string, unknown>;
     if (!first) return;
-    const mapped: PinnedProduct = {
-      productName: getStr(first, "productName", "ProductName") || "",
+    // Best-effort mapping from server payload
+    const mapped: PinnedView = {
+      productName: getStr(first, "productName", "ProductName"),
       productImageUrl: getStr(
         first,
         "productImageUrl",
@@ -137,14 +132,16 @@ export default function PinProduct({ livestreamId }: PinProductProps) {
       price: getNum(first, "price", "Price"),
       sku: getStr(first, "sku", "SKU", "Sku"),
       variantName: getStr(first, "variantName", "VariantName"),
+      isPin: (getBool(first, "isPin", "IsPin") ?? true) as boolean,
     };
-    // if productName is missing, fallback to API for full details
-    if (!mapped.productName) {
+
+    // If we don't have minimum fields, fallback to API
+    if (!mapped || !mapped.productName) {
       fetchPinned();
     } else {
       setPinned(mapped);
     }
-  }, [pinnedProducts, getStr, getNum, fetchPinned]);
+  }, [pinnedProducts, fetchPinned, livestreamId, getStr, getNum, getBool]);
 
   if (!pinned) return null;
 
@@ -187,13 +184,12 @@ export default function PinProduct({ livestreamId }: PinProductProps) {
             )}
           </div>
         </div>
-        <Button
-          size="sm"
-          className="absolute bottom-2 right-2 text-xs px-3 py-1 rounded bg-gradient-to-r from-orange-500 to-red-500 text-white font-semibold hover:opacity-90"
-        >
-          Mua ngay
+        <Button className="bg-[#B0F847]/90 absolute bottom-2 right-2 text-black rounded-full h-8 w-8 cursor-pointer flex items-center justify-center hover:bg-[#B0F847]/70 disabled:opacity-50">
+          <Pin size={16} />
         </Button>
       </div>
     </Card>
   );
 }
+
+export default PinProductHost;
