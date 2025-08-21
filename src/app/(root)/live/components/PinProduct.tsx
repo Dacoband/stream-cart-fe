@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import { ImageIcon } from "lucide-react";
 import PriceTag from "@/components/common/PriceTag";
-import { getPinProductLiveStream } from "@/services/api/livestream/productLivestream";
 import { useLivestreamRealtime } from "@/services/signalr/useLivestreamRealtime";
 type PinProductProps = {
   livestreamId: string;
@@ -22,7 +21,8 @@ type PinnedProduct = {
 
 export default function PinProduct({ livestreamId }: PinProductProps) {
   const [pinned, setPinned] = useState<PinnedProduct | null>(null);
-  const { pinnedProducts, lastPinChange } = useLivestreamRealtime(livestreamId);
+  const { pinnedProducts, lastPinChange, refreshPinned } =
+    useLivestreamRealtime(livestreamId);
   const lastFetchAtRef = useRef<number>(0);
 
   // safe mappers for mixed-casing payloads
@@ -32,10 +32,6 @@ export default function PinProduct({ livestreamId }: PinProductProps) {
   );
   const toNum = useCallback(
     (v: unknown) => (Number.isFinite(Number(v)) ? Number(v) : undefined),
-    []
-  );
-  const toBool = useCallback(
-    (v: unknown) => (v === undefined || v === null ? undefined : Boolean(v)),
     []
   );
   const getStr = useCallback(
@@ -60,62 +56,32 @@ export default function PinProduct({ livestreamId }: PinProductProps) {
     },
     [toNum]
   );
-  const getBool = useCallback(
-    (obj: Record<string, unknown> | undefined, ...keys: string[]) => {
-      if (!obj) return undefined;
-      for (const k of keys) {
-        const b = toBool(obj[k]);
-        if (b !== undefined) return b;
-      }
-      return undefined;
-    },
-    [toBool]
-  );
 
-  /** Gọi API để lấy pinned ban đầu */
-  const fetchPinned = useCallback(async () => {
-    try {
-      const res = await getPinProductLiveStream(livestreamId);
-      const raw = (Array.isArray(res) ? res[0] : res) as
-        | Record<string, unknown>
-        | undefined;
-      const isPinned = getBool(raw, "isPin", "IsPin", "isPinned") ?? false;
-      if (!raw || !isPinned) return setPinned(null);
-
-      const mapped: PinnedProduct = {
-        productName:
-          getStr(raw, "productName", "ProductName")?.toString() || "",
-        productImageUrl: getStr(
-          raw,
-          "productImageUrl",
-          "ProductImageUrl",
-          "imageUrl",
-          "ImageUrl"
-        ),
-        price: getNum(raw, "price", "Price"),
-        sku: getStr(raw, "sku", "SKU", "Sku"),
-        variantName: getStr(raw, "variantName", "VariantName"),
-      };
-      setPinned(mapped);
-    } catch (err) {
-      console.error("Failed to fetch pinned product:", err);
-      setPinned(null);
-    }
-  }, [livestreamId, getStr, getNum, getBool]);
-
-  /** Lần đầu mount → chỉ gọi REST lấy pinned, tránh broadcast socket toàn nhóm */
+  /** Lần đầu mount → gọi hub để lấy pinned */
   useEffect(() => {
-    fetchPinned();
-  }, [fetchPinned]);
+    (async () => {
+      try {
+        await refreshPinned();
+      } catch (err) {
+        console.error("refreshPinned (hub) failed", err);
+      }
+    })();
+  }, [refreshPinned]);
 
-  /** Khi có event pin/unpin → hạn chế gọi REST (debounce) */
+  /** Khi có event pin/unpin → hạn chế gọi hub refresh (debounce) */
   useEffect(() => {
     if (!lastPinChange) return;
     const now = Date.now();
     if (now - lastFetchAtRef.current < 900) return; // debounce ~0.9s
     lastFetchAtRef.current = now;
-    fetchPinned();
-  }, [lastPinChange, fetchPinned]);
+    (async () => {
+      try {
+        await refreshPinned();
+      } catch (err) {
+        console.error("refreshPinned (hub) failed", err);
+      }
+    })();
+  }, [lastPinChange, refreshPinned]);
 
   /** Nếu socket push data thì update luôn */
   useEffect(() => {
@@ -138,13 +104,19 @@ export default function PinProduct({ livestreamId }: PinProductProps) {
       sku: getStr(first, "sku", "SKU", "Sku"),
       variantName: getStr(first, "variantName", "VariantName"),
     };
-    // if productName is missing, fallback to API for full details
+    // if productName is missing, ask hub for a refresh
     if (!mapped.productName) {
-      fetchPinned();
+      (async () => {
+        try {
+          await refreshPinned();
+        } catch (err) {
+          console.error("refreshPinned (hub) failed", err);
+        }
+      })();
     } else {
       setPinned(mapped);
     }
-  }, [pinnedProducts, getStr, getNum, fetchPinned]);
+  }, [pinnedProducts, getStr, getNum, refreshPinned]);
 
   if (!pinned) return null;
 

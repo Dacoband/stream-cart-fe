@@ -1,149 +1,103 @@
 "use client";
 
-import React from "react";
-import { getPinProductLiveStream } from "@/services/api/livestream/productLivestream";
-import { Card } from "@/components/ui/card";
+import React, { useCallback, useRef } from "react";
 import Image from "next/image";
+import { Card } from "@/components/ui/card";
 import { ImageIcon, Pin } from "lucide-react";
 import PriceTag from "@/components/common/PriceTag";
 import { Button } from "@/components/ui/button";
 import { useLivestreamRealtime } from "@/services/signalr/useLivestreamRealtime";
+import { ProductLiveStream } from "@/types/livestream/productLivestream";
 
 type Props = { livestreamId: string };
 
 function PinProductHost({ livestreamId }: Props) {
-  type PinnedView = {
-    productName?: string;
-    productImageUrl?: string;
-    price?: number;
-    sku?: string;
-    variantName?: string;
-    isPin?: boolean;
-  };
-  const [pinned, setPinned] = React.useState<PinnedView | null>(null);
-  const { pinnedProducts, lastPinChange, refreshPinned } =
-    useLivestreamRealtime(livestreamId);
+  const [current, setCurrent] = React.useState<ProductLiveStream | null>(null);
+  const loadingRef = useRef(false);
 
-  const toStr = React.useCallback(
-    (v: unknown) => (typeof v === "string" ? v : undefined),
-    []
-  );
-  const toNum = React.useCallback(
-    (v: unknown) => (Number.isFinite(Number(v)) ? Number(v) : undefined),
-    []
-  );
-  const toBool = React.useCallback(
-    (v: unknown) => (v === undefined || v === null ? undefined : Boolean(v)),
-    []
-  );
-  const getStr = React.useCallback(
-    (obj: Record<string, unknown> | undefined, ...keys: string[]) => {
-      if (!obj) return undefined;
-      for (const k of keys) {
-        const val = obj[k];
-        const s = toStr(val);
-        if (s !== undefined) return s;
-      }
-      return undefined;
-    },
-    [toStr]
-  );
-  const getNum = React.useCallback(
-    (obj: Record<string, unknown> | undefined, ...keys: string[]) => {
-      if (!obj) return undefined;
-      for (const k of keys) {
-        const n = toNum(obj[k]);
-        if (n !== undefined) return n;
-      }
-      return undefined;
-    },
-    [toNum]
-  );
-  const getBool = React.useCallback(
-    (obj: Record<string, unknown> | undefined, ...keys: string[]) => {
-      if (!obj) return undefined;
-      for (const k of keys) {
-        const b = toBool(obj[k]);
-        if (b !== undefined) return b;
-      }
-      return undefined;
-    },
-    [toBool]
-  );
+  const realtime = useLivestreamRealtime(livestreamId);
 
-  const fetchPinned = React.useCallback(async () => {
+  const refreshPinnedRealtime = useCallback(async () => {
+    if (!livestreamId) return;
+    if (loadingRef.current) return;
+    loadingRef.current = true;
     try {
-      const data = await getPinProductLiveStream(livestreamId);
-      const raw = (Array.isArray(data) ? data[0] : data) as
-        | Record<string, unknown>
-        | undefined;
-      const isPinned = getBool(raw, "isPin", "isPinned") ?? false;
-      if (!raw || !isPinned) return setPinned(null);
-      const view: PinnedView = {
-        productName: getStr(raw, "productName", "ProductName"),
-        productImageUrl: getStr(
-          raw,
-          "productImageUrl",
-          "ProductImageUrl",
-          "imageUrl",
-          "ImageUrl"
-        ),
-        price: getNum(raw, "price", "Price"),
-        sku: getStr(raw, "sku", "SKU", "Sku"),
-        variantName: getStr(raw, "variantName", "VariantName"),
-        isPin: isPinned,
-      };
-      setPinned(view);
-    } catch {
-      setPinned(null);
+      await (realtime.refreshPinned?.() ?? Promise.resolve());
+    } finally {
+      loadingRef.current = false;
     }
-  }, [livestreamId, getStr, getNum, getBool]);
+  }, [livestreamId, realtime]);
 
+  // initial realtime refresh
   React.useEffect(() => {
-    // initial: request server to push current pinned state; fallback to API once
-    refreshPinned().catch(() => {});
-    fetchPinned();
-  }, [fetchPinned, refreshPinned]);
+    if (!livestreamId) return;
+    refreshPinnedRealtime();
+  }, [livestreamId, refreshPinnedRealtime]);
 
-  // When server reports pin status change, refresh from API to get full details
+  // when server signals pin status changed, refresh
   React.useEffect(() => {
-    if (!lastPinChange) return;
-    fetchPinned();
-  }, [lastPinChange, fetchPinned]);
+    if (!livestreamId) return;
+    if (!realtime.lastPinChange) return;
+    refreshPinnedRealtime();
+  }, [realtime.lastPinChange, refreshPinnedRealtime, livestreamId]);
 
-  // Map pinnedProducts pushed from server directly, fallback to API if shape unknown
+  // map live pinnedProducts push (best-effort)
   React.useEffect(() => {
-    if (!pinnedProducts || pinnedProducts.length === 0) {
-      setPinned(null);
+    if (!livestreamId) return;
+    const list = realtime.pinnedProducts as unknown[] | undefined;
+    if (!list || list.length === 0) {
+      setCurrent(null);
       return;
     }
-    const first = pinnedProducts[0] as Record<string, unknown>;
-    if (!first) return;
-    // Best-effort mapping from server payload
-    const mapped: PinnedView = {
-      productName: getStr(first, "productName", "ProductName"),
-      productImageUrl: getStr(
-        first,
-        "productImageUrl",
-        "ProductImageUrl",
-        "imageUrl",
-        "ImageUrl"
-      ),
-      price: getNum(first, "price", "Price"),
-      sku: getStr(first, "sku", "SKU", "Sku"),
-      variantName: getStr(first, "variantName", "VariantName"),
-      isPin: (getBool(first, "isPin", "IsPin") ?? true) as boolean,
+    const first = (list[0] ?? {}) as Record<string, unknown>;
+
+    const get = (obj: Record<string, unknown>, keys: string[]): unknown => {
+      for (const k of keys) if (obj[k] !== undefined) return obj[k];
+      return undefined;
+    };
+    const toStr = (v: unknown) => (v == null ? undefined : String(v));
+    const toNum = (v: unknown) => {
+      const n = Number(v);
+      return Number.isFinite(n) ? n : undefined;
+    };
+    const toBool = (v: unknown) =>
+      v === undefined || v === null ? undefined : Boolean(v);
+
+    const mapped: Partial<ProductLiveStream> = {
+      id: toStr(get(first, ["id", "Id", "ID"])) || "",
+      livestreamId:
+        toStr(get(first, ["livestreamId", "LivestreamId"])) || livestreamId,
+      productId: toStr(get(first, ["productId", "ProductId"])) || "",
+      variantId: toStr(get(first, ["variantId", "VariantId"])) || "",
+      isPin: (toBool(get(first, ["isPin", "IsPin"])) ?? true) as boolean,
+      price: toNum(get(first, ["price", "Price"])) ?? undefined,
+      originalPrice:
+        toNum(get(first, ["originalPrice", "OriginalPrice"])) ?? undefined,
+      stock: toNum(get(first, ["stock", "Stock"])) ?? undefined,
+      productName: toStr(get(first, ["productName", "ProductName"])) || "",
+      productImageUrl:
+        toStr(
+          get(first, [
+            "productImageUrl",
+            "ProductImageUrl",
+            "imageUrl",
+            "ImageUrl",
+          ])
+        ) || undefined,
+      variantName:
+        toStr(get(first, ["variantName", "VariantName"])) || undefined,
+      sku: toStr(get(first, ["sku", "SKU", "Sku"])) || undefined,
     };
 
-    // If we don't have minimum fields, fallback to API
-    if (!mapped || !mapped.productName) {
-      fetchPinned();
-    } else {
-      setPinned(mapped);
+    // Accept best-effort; if even name is missing, clear
+    if (!mapped.productName) {
+      setCurrent(null);
+      return;
     }
-  }, [pinnedProducts, fetchPinned, livestreamId, getStr, getNum, getBool]);
+    setCurrent(mapped as ProductLiveStream);
+  }, [realtime.pinnedProducts, livestreamId]);
 
-  if (!pinned) return null;
+  if (!current) return null;
 
   return (
     <Card className="py-2 px-2 absolute top-10 left-4 rounded-none gap-2 border-white w-[350px] bg-white/70">
@@ -151,12 +105,12 @@ function PinProductHost({ livestreamId }: Props) {
         Sản phẩm đang ghim
       </div>
       <div className="flex gap-3">
-        {pinned.productImageUrl ? (
+        {current.productImageUrl ? (
           <Image
             height={85}
             width={85}
-            src={pinned.productImageUrl}
-            alt={pinned.productName || "Pinned product"}
+            src={current.productImageUrl}
+            alt={current.productName || "Pinned product"}
             className="rounded object-cover h-[85px] w-[85px]"
           />
         ) : (
@@ -166,25 +120,29 @@ function PinProductHost({ livestreamId }: Props) {
         )}
         <div className="flex-1 flex flex-col items-start">
           <h3 className="font-medium text-sm mb-1 line-clamp-1">
-            {pinned.productName}
+            {current.productName}
           </h3>
-          {pinned.sku && (
-            <p className="text-xs text-gray-500 mb-1">SKU: {pinned.sku}</p>
+          {current.sku && (
+            <p className="text-xs text-gray-500 mb-1">SKU: {current.sku}</p>
           )}
-          {pinned.variantName && (
+          {current.variantName && (
             <p className="text-xs text-gray-500 mb-1">
-              Phân loại: {pinned.variantName}
+              Phân loại: {current.variantName}
             </p>
           )}
           <div className="justify-between flex w-full">
-            {typeof pinned.price !== "undefined" && (
+            {typeof current.price !== "undefined" && (
               <p className="text-red-500 font-semibold mt-1">
-                <PriceTag value={pinned.price as number} />
+                <PriceTag value={current.price as number} />
               </p>
             )}
           </div>
         </div>
-        <Button className="bg-[#B0F847]/90 absolute bottom-2 right-2 text-black rounded-full h-8 w-8 cursor-pointer flex items-center justify-center hover:bg-[#B0F847]/70 disabled:opacity-50">
+        <Button
+          className="bg-[#B0F847]/90 absolute bottom-2 right-2 text-black rounded-full h-8 w-8 cursor-pointer flex items-center justify-center hover:bg-[#B0F847]/70 disabled:opacity-50"
+          disabled
+          aria-label="Đang ghim"
+        >
           <Pin size={16} />
         </Button>
       </div>

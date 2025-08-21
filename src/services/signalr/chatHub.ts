@@ -62,6 +62,13 @@ export interface PinnedProductsUpdatedEvent {
   count?: number;
 }
 
+export interface LivestreamProductsLoadedPayload {
+  livestreamId: string;
+  products: unknown[];
+  timestamp?: string;
+  count?: number;
+}
+
 // Singleton manager for SignalR connection to Chat Hub
 class ChatHubService {
   private connection: HubConnection | null = null;
@@ -556,6 +563,24 @@ class ChatHubService {
       };
       cb(payload);
     });
+  }
+
+  onLivestreamProductsLoaded(cb: (payload: LivestreamProductsLoadedPayload) => void) {
+    this.connection?.off('LivestreamProductsLoaded');
+    // also listen to lowercase variant to be safe
+    try { this.connection?.off('livestreamproductsloaded' as unknown as string); } catch {}
+    const handler = (raw: Record<string, unknown>) => {
+      const list = this.getArrayField(raw, 'Products', 'products');
+      const payload: LivestreamProductsLoadedPayload = {
+        livestreamId: this.toStr(raw?.LivestreamId ?? raw?.livestreamId) ?? '',
+        products: list,
+        timestamp: this.toStr(raw?.Timestamp ?? raw?.timestamp) ?? new Date().toISOString(),
+        count: this.toNum(raw?.Count ?? raw?.count),
+      };
+      cb(payload);
+    };
+    this.connection?.on('LivestreamProductsLoaded', handler as unknown as (...args: never[]) => void);
+    this.connection?.on('livestreamproductsloaded' as unknown as string, handler as unknown as (...args: never[]) => void);
   }
 
   onMaxCustomerViewerUpdated(cb: (payload: { livestreamId: string; newMaxCustomerViewer: number; previousMax: number; viewerType?: string; timestamp?: string; message?: string; }) => void) {

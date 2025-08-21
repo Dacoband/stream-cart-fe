@@ -1,22 +1,24 @@
 "use client";
-import { CirclePlay } from "lucide-react";
-import React from "react";
-import {
-  deleteProductLivestream,
-  updateStockProductLiveStream,
-} from "@/services/api/livestream/productLivestream";
-import { ProductLiveStream } from "@/types/livestream/productLivestream";
-import { Card } from "@/components/ui/card";
-import {
-  getProductByLiveStreamId,
-  updatePinProductLiveStream,
-} from "@/services/api/livestream/productLivestream";
+import * as React from "react";
 import Image from "next/image";
+import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Edit, ImageIcon, Pin, PinOff, Search, Trash2 } from "lucide-react";
-import PriceTag from "@/components/common/PriceTag";
 import { Button } from "@/components/ui/button";
+import PriceTag from "@/components/common/PriceTag";
 import { toast } from "sonner";
+import {
+  Search,
+  CirclePlay,
+  Edit,
+  ImageIcon,
+  Pin,
+  PinOff,
+  Trash2,
+} from "lucide-react";
+import type { ProductLiveStream } from "@/types/livestream/productLivestream";
+import { useLivestreamRealtime } from "@/services/signalr/useLivestreamRealtime";
+import { livestreamProductsClient } from "@/services/signalr/livestreamProductsClient";
+import { updatePinProductLiveStream } from "@/services/api/livestream/productLivestream";
 import {
   Dialog,
   DialogContent,
@@ -26,12 +28,21 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { useLivestreamRealtime } from "@/services/signalr/useLivestreamRealtime";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 type ProductsProps = {
   livestreamId: string;
   onPinnedChange?: (pinned: ProductLiveStream | null) => void;
-  refreshFlag?: boolean; // toggle to force refetch from parent
+  refreshFlag?: boolean;
   isLive: boolean;
 };
 function ManageProductLive({
@@ -44,18 +55,54 @@ function ManageProductLive({
   const [search, setSearch] = React.useState("");
   const [pinLoadingId, setPinLoadingId] = React.useState<string | null>(null);
   const [editing, setEditing] = React.useState<ProductLiveStream | null>(null);
-  const [newStock, setNewStock] = React.useState<number>(0);
+  const [newStock, setNewStock] = React.useState<number | null>(0);
   const [saving, setSaving] = React.useState(false);
+  const [confirmDelete, setConfirmDelete] =
+    React.useState<ProductLiveStream | null>(null);
+  const [deleting, setDeleting] = React.useState(false);
 
   // realtime hub api
   const realtime = useLivestreamRealtime(livestreamId);
 
+  // Keep in sync with real-time product stock updates and deletions
+  React.useEffect(() => {
+    let off1: (() => void) | undefined;
+    let off2: (() => void) | undefined;
+    (async () => {
+      try {
+        await livestreamProductsClient.ensureReady(livestreamId);
+        off1 = livestreamProductsClient.onStockUpdated((p) => {
+          setProducts((prev) =>
+            prev.map((it) =>
+              it.id === String(p.Id)
+                ? { ...it, stock: Number(p.NewStock ?? it.stock) }
+                : it
+            )
+          );
+        });
+        off2 = livestreamProductsClient.onDeleted((p) => {
+          const targetId = String(p.Id);
+          setProducts((prev) => {
+            const removed = prev.find((it) => it.id === targetId);
+            const next = prev.filter((it) => it.id !== targetId);
+            if (removed?.isPin) onPinnedChange?.(null);
+            return next;
+          });
+        });
+      } catch {}
+    })();
+    return () => {
+      off1?.();
+      off2?.();
+    };
+  }, [livestreamId, onPinnedChange]);
+
   const fetchProducts = React.useCallback(async () => {
-    const data = await getProductByLiveStreamId(livestreamId);
-    setProducts(data);
-    // inform parent about current pinned item
-    const currentPinned = Array.isArray(data)
-      ? (data as ProductLiveStream[]).find((p) => p.isPin)
+    await livestreamProductsClient.ensureReady(livestreamId);
+    const list = await livestreamProductsClient.loadProducts(livestreamId);
+    setProducts(list);
+    const currentPinned = Array.isArray(list)
+      ? (list as ProductLiveStream[]).find((p) => p.isPin)
       : undefined;
     onPinnedChange?.(currentPinned || null);
   }, [livestreamId, onPinnedChange]);
@@ -114,11 +161,8 @@ function ManageProductLive({
     }
     try {
       setSaving(true);
-      // prefer realtime hub; fallback to REST
-      await Promise.race([
-        realtime.updateStockById(editing.id, value),
-        updateStockProductLiveStream(editing.id, value),
-      ]);
+      // hub only
+      await realtime.updateStockById(editing.id, value);
       setProducts((prev) =>
         prev.map((p) => (p.id === editing.id ? { ...p, stock: value } : p))
       );
@@ -131,25 +175,23 @@ function ManageProductLive({
     }
   };
 
-  const handleDelete = async (product: ProductLiveStream) => {
-    const ok = window.confirm(
-      `Xóa sản phẩm khỏi livestream?\n${product.productName}`
-    );
-    if (!ok) return;
+  const requestDelete = (product: ProductLiveStream) => {
+    setConfirmDelete(product);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!confirmDelete) return;
     try {
-      // prefer realtime hub; fallback to REST
-      await Promise.race([
-        realtime.deleteById(product.id),
-        deleteProductLivestream(product.id),
-      ]);
-      setProducts((prev) => prev.filter((p) => p.id !== product.id));
+      setDeleting(true);
+      await realtime.deleteById(confirmDelete.id);
+      setProducts((prev) => prev.filter((p) => p.id !== confirmDelete.id));
+      if (confirmDelete.isPin) onPinnedChange?.(null);
       toast.success("Đã xóa sản phẩm khỏi livestream");
-      // If the deleted product was pinned, inform parent to clear
-      if (product.isPin) {
-        onPinnedChange?.(null);
-      }
+      setConfirmDelete(null);
     } catch {
       toast.error("Không thể xóa sản phẩm. Vui lòng thử lại");
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -181,9 +223,9 @@ function ManageProductLive({
           filteredProducts.map((product) => (
             <Card
               key={product.id}
-              className=" py-2 px-2 grid grid-cols-5 rounded-none gap-2 "
+              className=" py-2 px-2 grid grid-cols-7 rounded-none gap-2 "
             >
-              <div className="col-span-2 flex gap-3">
+              <div className="col-span-3 flex gap-3">
                 {product.productImageUrl ? (
                   <Image
                     height={90}
@@ -230,7 +272,7 @@ function ManageProductLive({
                   </p>
                 </div>
               </div>
-              <div className=" flex col-span-1 justify-end items-center">
+              <div className=" flex col-span-2 justify-end items-center">
                 <Button
                   onClick={() => handleTogglePin(product)}
                   disabled={pinLoadingId === product.id}
@@ -255,7 +297,7 @@ function ManageProductLive({
                     <Edit /> Số lượng
                   </Button>
                   <Button
-                    onClick={() => handleDelete(product)}
+                    onClick={() => requestDelete(product)}
                     className=" text-red-500 bg-white rounded-none cursor-pointer shadow-none hover:bg-white hover:text-red-400"
                   >
                     <Trash2 /> Xóa
@@ -273,15 +315,17 @@ function ManageProductLive({
 
       {/* Edit Stock Dialog */}
       <Dialog open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="w-[40vw]">
           <DialogHeader>
-            <DialogTitle>Cập nhật số lượng</DialogTitle>
-            <DialogDescription>
-              Tồn kho sản phẩm (stockProduct):
-              <span className="font-semibold ml-1">
-                {editing?.productStock ?? 0}
-              </span>
-            </DialogDescription>
+            <DialogTitle>Cập nhật số lượng:</DialogTitle>
+            <div className="mt-5 font-medium text-gray-700">
+              {editing?.productName}
+            </div>
+            {editing?.variantName && (
+              <div className="mt-2 text-sm text-gray-500">
+                Phân Loại: {editing.variantName}
+              </div>
+            )}
           </DialogHeader>
           <div className="grid gap-3 py-2">
             <div className="space-y-2">
@@ -291,21 +335,37 @@ function ManageProductLive({
                 type="number"
                 min={0}
                 max={editing?.productStock ?? undefined}
-                value={Number.isFinite(newStock) ? newStock : 0}
+                value={newStock === null ? "" : newStock}
                 onChange={(e) => {
-                  const v = Math.floor(Number(e.target.value || 0));
-                  if (editing?.productStock !== undefined) {
-                    setNewStock(Math.max(0, Math.min(v, editing.productStock)));
-                  } else {
-                    setNewStock(Math.max(0, v));
+                  const raw = e.target.value;
+                  if (raw === "") {
+                    setNewStock(null);
+                    return;
                   }
+
+                  let v = Math.floor(Number(raw));
+                  if (Number.isNaN(v)) {
+                    setNewStock(null);
+                    return;
+                  }
+
+                  if (editing?.productStock !== undefined) {
+                    v = Math.max(0, Math.min(v, editing.productStock));
+                  } else {
+                    v = Math.max(0, v);
+                  }
+
+                  setNewStock(v);
                 }}
               />
-              <p className="text-xs text-gray-500">
-                Không được vượt quá {editing?.productStock ?? 0}
-              </p>
             </div>
           </div>
+          <DialogDescription>
+            Sản phẩm trong kho:
+            <span className="font-semibold ml-1">
+              {editing?.productStock ?? 0}
+            </span>
+          </DialogDescription>
           <DialogFooter>
             <Button
               variant="outline"
@@ -320,6 +380,32 @@ function ManageProductLive({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Confirm Delete Product */}
+      <AlertDialog
+        open={!!confirmDelete}
+        onOpenChange={(open) => !open && !deleting && setConfirmDelete(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Xác nhận xóa </AlertDialogTitle>
+            <AlertDialogDescription>
+              Bạn có chắc chắn muốn xóa
+              <span className="font-medium">{confirmDelete?.productName}</span>
+              khỏi livestream?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Hủy</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmDelete}
+              disabled={deleting}
+            >
+              Xác nhận
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

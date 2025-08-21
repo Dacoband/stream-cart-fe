@@ -48,6 +48,29 @@ export const getOrderById = async (id: string) => {
   }
 };
 
+export const updateOrderStatus = async (id: string, status: number) => {
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      throw new Error("Not found token.");
+    }
+
+    const response = await rootApi.put(
+      `orders/${id}/status`,
+      { status }, // body
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    return response.data;
+  } catch (error) {
+    console.error("Error updating order status:", error);
+    throw error;
+  }
+};
 
 export const getOrdersByShop = async (
   shopId: string,

@@ -53,3 +53,22 @@ export const getOrderItemsByOrderId = async (
     throw error;
   }
 };
+export const getOrderProductByOrderId = async (id: string) => {
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      throw new Error("Not found token.");
+    }
+
+    const response = await rootApi.get(`/order-items/by-order/${id}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching order product by ID:", error);
+    throw error;
+  }
+};

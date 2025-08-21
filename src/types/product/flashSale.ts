@@ -9,3 +9,12 @@ export interface FlashSaleProduct{
     endTime:string;
 
 }
+export interface CreateFlashSale{
+    productId:string;
+    variantId:string[];
+    flashSalePrice:number;
+    quantityAvailable:number;
+    
+    startTime:Date;
+    endTime:Date;
+}

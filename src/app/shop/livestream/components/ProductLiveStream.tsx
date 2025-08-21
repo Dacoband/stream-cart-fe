@@ -3,7 +3,7 @@
 import React from "react";
 import { ProductLiveStream } from "@/types/livestream/productLivestream";
 import { Card, CardContent, CardTitle } from "@/components/ui/card";
-import { getProductByLiveStreamId } from "@/services/api/livestream/productLivestream";
+// realtime-first: use SignalR via useLivestreamRealtime; API fallback not needed here
 import Image from "next/image";
 import { Input } from "@/components/ui/input";
 import { ImageIcon, Pin, Search } from "lucide-react";
@@ -13,106 +13,59 @@ import { useLivestreamRealtime } from "@/services/signalr/useLivestreamRealtime"
 
 type ProductsProps = {
   livestreamId: string;
-  onPinnedChange?: (pinned: ProductLiveStream | null) => void;
-  refreshFlag?: boolean; // toggle to force refetch from parent
 };
 
-function ProductsLiveStream({
-  livestreamId,
-  onPinnedChange,
-  refreshFlag,
-}: ProductsProps) {
+function ProductsLiveStream({ livestreamId }: ProductsProps) {
   const [products, setProducts] = React.useState<ProductLiveStream[]>([]);
   const [search, setSearch] = React.useState("");
   const realtime = useLivestreamRealtime(livestreamId);
 
-  const fetchProducts = React.useCallback(async () => {
-    const data = await getProductByLiveStreamId(livestreamId);
-    setProducts(data);
-    // inform parent about current pinned item
-    const currentPinned = Array.isArray(data)
-      ? (data as ProductLiveStream[]).find((p) => p.isPin)
-      : undefined;
-    onPinnedChange?.(currentPinned || null);
-  }, [livestreamId, onPinnedChange]);
-
-  // debounce guard to avoid excessive refetches on burst events
-  const refetchTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
-  const scheduleRefetch = React.useCallback(() => {
-    if (refetchTimer.current) clearTimeout(refetchTimer.current);
-    refetchTimer.current = setTimeout(() => {
-      fetchProducts();
-    }, 250);
-  }, [fetchProducts]);
-
+  // map realtime products (normalized in hook) to typed ProductLiveStream when possible
   React.useEffect(() => {
-    fetchProducts();
-  }, [fetchProducts]);
+    const list = (realtime.products ?? []) as unknown[];
+    // best-effort shape mapping, tolerate backend casing/fields
+    const mapped = list.map((raw) => {
+      const r = raw as Record<string, unknown>;
+      const get = (keys: string[]) => {
+        for (const k of keys) if (r[k] !== undefined) return r[k];
+        return undefined;
+      };
+      const toStr = (v: unknown) => (v == null ? undefined : String(v));
+      const toNum = (v: unknown) => {
+        const n = Number(v);
+        return Number.isFinite(n) ? (n as number) : undefined;
+      };
+      const toBool = (v: unknown) => (v == null ? undefined : Boolean(v));
+      return {
+        id: toStr(get(["id", "Id", "ID"])) || "",
+        livestreamId:
+          toStr(get(["livestreamId", "LivestreamId"])) || livestreamId,
+        productId: toStr(get(["productId", "ProductId"])) || "",
+        variantId: toStr(get(["variantId", "VariantId"])) || undefined,
+        isPin: (toBool(get(["isPin", "IsPin"])) ?? false) as boolean,
+        price: toNum(get(["price", "Price"])) ?? 0,
+        originalPrice:
+          toNum(get(["originalPrice", "OriginalPrice"])) ?? undefined,
+        stock: toNum(get(["stock", "Stock"])) ?? 0,
+        productName: toStr(get(["productName", "ProductName"])) || "",
+        productImageUrl:
+          toStr(
+            get(["productImageUrl", "ProductImageUrl", "imageUrl", "ImageUrl"])
+          ) || undefined,
+        variantName: toStr(get(["variantName", "VariantName"])) || undefined,
+        sku: toStr(get(["sku", "SKU", "Sku"])) || undefined,
+      } as ProductLiveStream;
+    });
+    setProducts(mapped);
+  }, [realtime.products, livestreamId]);
 
-  // Refetch when parent indicates external pin/unpin happened
+  // no manual debounce needed; hook mutates products on events
+
+  // initial load: ask server to push the current products to this client
   React.useEffect(() => {
-    fetchProducts();
+    realtime.refreshProducts?.();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [refreshFlag]);
-
-  // Realtime: when any relevant product event fires, refresh list
-  React.useEffect(() => {
-    if (!livestreamId) return;
-    // pin status changed or server pushed pinned products
-    if (
-      realtime.lastPinChange &&
-      realtime.lastPinChange.livestreamId === livestreamId
-    ) {
-      scheduleRefetch();
-    }
-    if (Array.isArray(realtime.pinnedProducts)) {
-      // pinned list changed -> refresh once
-      scheduleRefetch();
-    }
-    // stock changes
-    if (
-      realtime.lastStockChange &&
-      realtime.lastStockChange.livestreamId === livestreamId
-    ) {
-      scheduleRefetch();
-    }
-    // generic updated
-    if (
-      realtime.lastUpdated &&
-      realtime.lastUpdated.livestreamId === livestreamId
-    ) {
-      scheduleRefetch();
-    }
-    // add/remove
-    if (
-      realtime.lastAdded &&
-      realtime.lastAdded.livestreamId === livestreamId
-    ) {
-      scheduleRefetch();
-    }
-    if (
-      realtime.lastRemoved &&
-      realtime.lastRemoved.livestreamId === livestreamId
-    ) {
-      scheduleRefetch();
-    }
-    return () => {
-      if (refetchTimer.current) {
-        clearTimeout(refetchTimer.current);
-        refetchTimer.current = null;
-      }
-    };
-  }, [
-    livestreamId,
-    realtime.lastPinChange,
-    realtime.pinnedProducts,
-    realtime.lastStockChange,
-    realtime.lastUpdated,
-    realtime.lastAdded,
-    realtime.lastRemoved,
-    scheduleRefetch,
-    fetchProducts,
-  ]);
+  }, [livestreamId]);
 
   // Lọc sản phẩm theo tên
   const filteredProducts = products.filter((p) =>
