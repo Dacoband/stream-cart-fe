@@ -54,6 +54,7 @@ export type ShippingAddress = {
 
 export type Order = {
   id: string;
+  timeForShop: Date;
   paymentMethod: string;
   orderCode: string;
   orderDate: Date;

@@ -52,3 +52,23 @@ export const getVouchersByShop = async (
     throw error;
   }
 };
+export const deleteVoucherById = async (voucherId:string) => {
+  try{
+ 
+const token = localStorage.getItem("token");
+    if (!token) {
+      throw new Error("Not found token.");
+    }
+
+  const response = await rootApi.delete(`vouchers/${voucherId}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  })
+
+  return response.data}
+   catch (error) {
+    console.error("Error delete voucher:", error);
+    throw error;
+  }
+}
