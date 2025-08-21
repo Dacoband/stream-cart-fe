@@ -9,7 +9,7 @@ import { Voucher } from "@/types/voucher/voucher";
 import { Card } from "@/components/ui/card";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { CirclePlus } from "lucide-react";
+import { CirclePlus, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -114,6 +114,9 @@ function VouchersPage() {
       <div className="mx-5 mb-10">
         <Card className="bg-white py-5 px-8 min-h-[75vh] space-y-4">
           <div className="flex flex-col md:flex-row gap-3 md:items-center md:justify-between">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">
+              <Search className="text-gray-600" />
+            </span>
             <div className="flex-1 max-w-xl">
               <Input
                 value={search}
@@ -153,7 +156,11 @@ function VouchersPage() {
                 </SelectContent>
               </Select>
 
-              <Button variant="outline" onClick={resetFilters}>
+              <Button
+                variant="outline"
+                onClick={resetFilters}
+                className="border-blue-500 text-blue-500 cursor-pointer hover:text-blue-400 hover:bg-white hover:border-blue-400"
+              >
                 Đặt lại
               </Button>
             </div>

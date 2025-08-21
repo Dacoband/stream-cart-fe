@@ -2,7 +2,6 @@
 
 import React from "react";
 import { useLivestreamCart } from "@/services/signalr/useLivestreamCart";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Minus, Plus } from "lucide-react";
 import Image from "next/image";
@@ -27,8 +26,8 @@ function CartLive({ livestreamId }: { livestreamId?: string }) {
   }, [lastEvent]);
 
   return (
-    <Card className="bg-white rounded-none h-full border">
-      <CardContent className="p-0">
+    <div className="bg-white rounded-none h-full border">
+      <div className="p-0">
         {banner && (
           <div className="px-3 py-2 text-sm bg-green-50 text-green-700 border-b border-green-200">
             {banner}
@@ -101,7 +100,7 @@ function CartLive({ livestreamId }: { livestreamId?: string }) {
         )}
 
         {/* Footer totals */}
-        <div className="p-3 border-t bg-gray-50">
+        {/* <div className="p-3 border-t bg-gray-50">
           <div className="flex justify-between text-sm">
             <span>Tổng số lượng</span>
             <span>{cart?.totalItems ?? 0}</span>
@@ -112,9 +111,9 @@ function CartLive({ livestreamId }: { livestreamId?: string }) {
               <PriceTag value={cart?.totalAmount ?? 0} />
             </span>
           </div>
-        </div>
-      </CardContent>
-    </Card>
+        </div> */}
+      </div>
+    </div>
   );
 }
 

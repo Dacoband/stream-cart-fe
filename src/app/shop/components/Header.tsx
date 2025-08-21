@@ -58,7 +58,10 @@ function Header() {
           <Button className="w-10 h-10 flex items-center text-2xl cursor-pointer text-[#B0F847] justify-center rounded-full bg-[#34373b] hover:bg-[#B0F847] hover:text-black pr-4">
             <Bell className="min-w-[25px] min-h-[25px]" />
           </Button>
-          <Button onClick={() => router.push('/shop/chat')} className="w-10 h-10 flex items-center text-2xl cursor-pointer text-[#B0F847] justify-center rounded-full bg-[#34373b] hover:bg-[#B0F847] hover:text-black pr-4">
+          <Button
+            onClick={() => router.push("/shop/chat")}
+            className="w-10 h-10 flex items-center text-2xl cursor-pointer text-[#B0F847] justify-center rounded-full bg-[#34373b] hover:bg-[#B0F847] hover:text-black pr-4"
+          >
             <MessageCircleMore className="min-w-[25px] min-h-[25px]" />
           </Button>
         </div>

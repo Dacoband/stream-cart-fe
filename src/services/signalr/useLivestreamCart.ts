@@ -39,10 +39,10 @@ export function useLivestreamCart(livestreamId?: string) {
           const r = raw as CartUpdatedPayload;
           setLastEvent({
             action,
-            productName: r?.ProductName,
-            quantity: r?.Quantity,
-            timestamp: r?.Timestamp,
-            message: r?.Message,
+            productName: r?.ProductName ?? r?.productName,
+            quantity: r?.Quantity ?? r?.quantity,
+            timestamp: r?.Timestamp ?? r?.timestamp,
+            message: r?.Message ?? r?.message,
           });
         });
         const offError = livestreamCartClient.onError((msg) => {
