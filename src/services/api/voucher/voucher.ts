@@ -3,9 +3,9 @@ import rootApi from '@/services/rootApi';
 export interface CreateVoucherDTO {
   code: string;
   description?: string;
-  type: number; // e.g., 1 = percent, 2 = fixed
+  type: number; 
   value: number;
-  maxValue?: number;
+  maxValue?: number|null;
   minOrderAmount?: number;
   startDate: string;
   endDate: string;

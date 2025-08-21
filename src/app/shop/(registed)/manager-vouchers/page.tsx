@@ -1,73 +1,216 @@
 "use client";
 import React from "react";
-import { useAuth } from '@/lib/AuthContext';
-import { getVouchersByShop } from '@/services/api/voucher/voucher';
-import { Voucher } from '@/types/voucher/voucher';
-import { Card } from '@/components/ui/card';
+import { useAuth } from "@/lib/AuthContext";
+import {
+  getVouchersByShop,
+  VoucherListResponse,
+} from "@/services/api/voucher/voucher";
+import { Voucher } from "@/types/voucher/voucher";
+import { Card } from "@/components/ui/card";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { CirclePlus } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 function VouchersPage() {
   const { user } = useAuth();
   const [loading, setLoading] = React.useState(true);
   const [vouchers, setVouchers] = React.useState<Voucher[]>([]);
+  const [search, setSearch] = React.useState("");
+  // type filter: "all" | "1" | "2"
+  const [typeFilter, setTypeFilter] = React.useState<"all" | "1" | "2">("all");
+  // expired filter: "all" | "active" | "expired"
+  const [expiredFilter, setExpiredFilter] = React.useState<
+    "all" | "active" | "expired"
+  >("all");
 
   React.useEffect(() => {
     if (!user?.shopId) return;
     const fetch = async () => {
       setLoading(true);
       try {
-        const res = await getVouchersByShop(user.shopId, { isActive: true, type: 1, isExpired: false, pageNumber: 1, pageSize: 10 });
-        setVouchers(res.items || []);
+        const params: {
+          isActive?: boolean;
+          type?: number;
+          isExpired?: boolean;
+          pageNumber?: number;
+          pageSize?: number;
+        } = {
+          pageNumber: 1,
+          pageSize: 50,
+        };
+
+        // Map type filter
+        if (typeFilter !== "all") {
+          params.type = Number(typeFilter);
+        }
+
+        // Map expired filter
+        if (expiredFilter === "expired") {
+          params.isExpired = true;
+        } else if (expiredFilter === "active") {
+          params.isExpired = false;
+          params.isActive = true;
+        }
+
+        const res: VoucherListResponse = await getVouchersByShop(
+          user.shopId,
+          params
+        );
+        setVouchers(res.items ?? []);
       } catch (err) {
-        console.error('Fetch vouchers error', err);
+        console.error("Fetch vouchers error", err);
         setVouchers([]);
       } finally {
         setLoading(false);
       }
-    }
+    };
     fetch();
-  }, [user?.shopId]);
+  }, [user?.shopId, typeFilter, expiredFilter]);
+
+  const resetFilters = () => {
+    setSearch("");
+    setTypeFilter("all");
+    setExpiredFilter("all");
+  };
+
+  const filtered = React.useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return vouchers;
+    return vouchers.filter((v) => {
+      const code = v.code?.toLowerCase() || "";
+      const desc =
+        typeof v.description === "string" ? v.description.toLowerCase() : "";
+      return code.includes(q) || desc.includes(q);
+    });
+  }, [search, vouchers]);
 
   return (
     <div className="flex flex-col gap-5 min-h-full">
-      <div className="bg-white sticky top-0  z-10 h-fit w-full py-4 px-8 shadow flex justify-between items-center">
-        <div className="">
-          <h2 className="text-xl font-bold">Voucher</h2>
-        </div>
+      <div className="bg-white sticky top-0 z-10 h-fit w-full py-4 px-8 shadow flex justify-between items-center">
+        <h2 className="text-xl font-bold">Vouchers (Mã giảm giá)</h2>
+        <Link href="/shop/manager-vouchers/new-voucher">
+          <Button className="bg-[#B0F847] text-black shadow flex gap-2 py-2 px-4 text-base cursor-pointer hover:bg-[#B0F847]/80 hover:text-black/80">
+            <CirclePlus />
+            Thêm voucher
+          </Button>
+        </Link>
       </div>
       <div className="mx-5 mb-10">
-        <Card className="p-4">
+        <Card className="bg-white py-5 px-8 min-h-[75vh] space-y-4">
+          <div className="flex flex-col md:flex-row gap-3 md:items-center md:justify-between">
+            <div className="flex-1 max-w-xl">
+              <Input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Tìm theo mã hoặc mô tả voucher..."
+                className="bg-white"
+              />
+            </div>
+            <div className="flex gap-3 items-center">
+              <Select
+                value={typeFilter}
+                onValueChange={(v: "all" | "1" | "2") => setTypeFilter(v)}
+              >
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Loại" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tất cả loại</SelectItem>
+                  <SelectItem value="1">Theo %</SelectItem>
+                  <SelectItem value="2">Theo số tiền</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <Select
+                value={expiredFilter}
+                onValueChange={(v: "all" | "active" | "expired") =>
+                  setExpiredFilter(v)
+                }
+              >
+                <SelectTrigger className="w-[200px]">
+                  <SelectValue placeholder="Trạng thái" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tất cả</SelectItem>
+                  <SelectItem value="active">Đang hoạt động</SelectItem>
+                  <SelectItem value="expired">Hết hạn</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <Button variant="outline" onClick={resetFilters}>
+                Đặt lại
+              </Button>
+            </div>
+          </div>
           {loading ? (
             <div>Đang tải...</div>
-          ) : vouchers.length === 0 ? (
+          ) : filtered.length === 0 ? (
             <div>Chưa có voucher</div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full table-auto">
-                <thead>
-                  <tr className="text-left">
-                    <th className="py-2">Mã</th>
-                    <th className="py-2">Loại</th>
-                    <th className="py-2">Giá trị</th>
-                    <th className="py-2">Giá tối đa</th>
-                    <th className="py-2">Giá tối thiểu đơn hàng</th>
-                    <th className="py-2">Số lượng</th>
-                    <th className="py-2">Thời gian</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {vouchers.map((v) => (
-                    <tr key={v.id} className="border-t">
-                      <td className="py-2">{v.code}</td>
-                      <td className="py-2">{v.type === 1 ? '% (Giảm phần trăm)' : 'Tiền (VNĐ)'}</td>
-                      <td className="py-2">{v.type === 1 ? `${v.value}%` : `${v.value}K`}</td>
-                      <td className="py-2">{v.maxValue != null ? v.maxValue.toLocaleString('vi-VN') : '-'}</td>
-                      <td className="py-2">{v.minOrderAmount != null ? v.minOrderAmount.toLocaleString('vi-VN') + '₫' : '-'}</td>
-                      <td className="py-2">{v.availableQuantity}</td>
-                      <td className="py-2">{new Date(v.startDate).toLocaleDateString()} - {new Date(v.endDate).toLocaleDateString()}</td>
-                    </tr>
+            <div className="w-full">
+              <Table>
+                <TableHeader className="bg-[#B0F847]/50">
+                  <TableRow>
+                    <TableHead className="font-semibold">Mã</TableHead>
+                    <TableHead className="font-semibold">Loại</TableHead>
+                    <TableHead className="font-semibold">Giá trị</TableHead>
+                    <TableHead className="font-semibold">Giá tối đa</TableHead>
+                    <TableHead className="font-semibold">
+                      Giá tối thiểu đơn hàng
+                    </TableHead>
+                    <TableHead className="font-semibold">Số lượng</TableHead>
+                    <TableHead className="font-semibold">Thời gian</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filtered.map((v) => (
+                    <TableRow key={v.id}>
+                      <TableCell className="py-2">{v.code}</TableCell>
+                      <TableCell className="py-2">
+                        {v.type === 1 ? "% (Giảm phần trăm)" : "Tiền (VNĐ)"}
+                      </TableCell>
+                      <TableCell className="py-2">
+                        {v.type === 1
+                          ? `${v.value}%`
+                          : `${(v.value || 0).toLocaleString("vi-VN")}₫`}
+                      </TableCell>
+                      <TableCell className="py-2">
+                        {v.maxValue != null
+                          ? `${v.maxValue.toLocaleString("vi-VN")}₫`
+                          : "-"}
+                      </TableCell>
+                      <TableCell className="py-2">
+                        {v.minOrderAmount != null
+                          ? v.minOrderAmount.toLocaleString("vi-VN") + "₫"
+                          : "-"}
+                      </TableCell>
+                      <TableCell className="py-2">
+                        {v.availableQuantity}
+                      </TableCell>
+                      <TableCell className="py-2">
+                        {new Date(v.startDate).toLocaleDateString()} -{" "}
+                        {new Date(v.endDate).toLocaleDateString()}
+                      </TableCell>
+                    </TableRow>
                   ))}
-                </tbody>
-              </table>
+                </TableBody>
+              </Table>
             </div>
           )}
         </Card>
