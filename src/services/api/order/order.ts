@@ -101,3 +101,23 @@ export const getOrdersByShop = async (
   }
 };
 
+export const getOrdersStatisticsByShop = async (shopId: string) => {
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      throw new Error("Not found token.");
+    }
+
+    const response = await rootApi.get(`orders/shop/${shopId}/statistics`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    return response.data.data;
+  } catch (error) {
+    console.error("Error fetching orders statistics by shop:", error);
+    throw error;
+  }
+};
+

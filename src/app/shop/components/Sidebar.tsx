@@ -45,7 +45,7 @@ const items = [
 
   {
     title: "Voucher",
-    url: "/admin/vouchers",
+  url: "/shop/manager-vouchers",
     icon: TicketPercent,
   },
 
