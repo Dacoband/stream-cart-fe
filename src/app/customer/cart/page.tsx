@@ -7,6 +7,7 @@ import { withRoleProtection } from "@/lib/requireRole";
 import LoadingScreen from "@/components/common/LoadingScreen";
 import EmptyCart from "./components/EmptyCart";
 import ShoppingCart from "./components/ShoppingCart";
+
 function CartPage() {
   const [cart, setCart] = useState<Cart | null>(null);
   const [loading, setLoading] = useState(true);

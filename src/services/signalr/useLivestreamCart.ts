@@ -78,9 +78,13 @@ export function useLivestreamCart(livestreamId?: string) {
     await livestreamCartClient.updateItemQuantity(cartItemId, newQty);
   }, []);
 
+  const deleteItem = useCallback(async (cartItemId: string) => {
+    await livestreamCartClient.deleteItem(cartItemId);
+  }, []);
+
   return useMemo(
-    () => ({ cart, loading, error, addOne, updateQty, lastEvent }),
-    [cart, loading, error, addOne, updateQty, lastEvent]
+    () => ({ cart, loading, error, addOne, updateQty, deleteItem, lastEvent }),
+    [cart, loading, error, addOne, updateQty, deleteItem, lastEvent]
   );
 }
 

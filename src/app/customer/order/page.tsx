@@ -11,6 +11,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import PriceTag from "@/components/common/PriceTag";
 import { previewOrder } from "@/services/api/cart/cart";
 import { PreviewOrder } from "@/types/Cart/Cart";
+import { previewOrderLive } from "@/services/api/livestream/livestreamCart";
+import { PreviewOrderLive } from "@/types/livestream/cartLive";
 import { CreateOrder, Order } from "@/types/order/order";
 import { createOrder } from "@/services/api/order/order";
 import { Address } from "@/types/address/address";
@@ -55,21 +57,29 @@ function OrderPageInner() {
 
     router.push(`?${params.toString()}`);
   };
-  const [orderProduct, setOrderProduct] = useState<PreviewOrder | null>(null);
+  const [orderProduct, setOrderProduct] = useState<
+    PreviewOrder | PreviewOrderLive | null
+  >(null);
 
   useEffect(() => {
     const fetchPreview = async () => {
       try {
         if (cartItemIds.length === 0) return;
-        const res: PreviewOrder = await previewOrder(cartItemIds);
-        setOrderProduct(res);
+        const isLive = !!(searchParams.get("live") ?? searchParams.has("live"));
+        if (isLive) {
+          const res: PreviewOrderLive = await previewOrderLive(cartItemIds);
+          setOrderProduct(res);
+        } else {
+          const res: PreviewOrder = await previewOrder(cartItemIds);
+          setOrderProduct(res);
+        }
       } catch (error) {
         console.error("Lỗi khi xem trước đơn hàng:", error);
       }
     };
 
     fetchPreview();
-  }, [cartItemIds]);
+  }, [cartItemIds, searchParams]);
 
   useEffect(() => {
     const fetchDeliveries = async () => {
@@ -134,10 +144,13 @@ function OrderPageInner() {
         })),
       };
     });
+    const isLive = !!(searchParams.get("live") ?? searchParams.has("live"));
+    const liveId = searchParams.get("livestreamId");
+
     const payload: CreateOrder = {
       paymentMethod: selectedPaymentMethod,
       addressId: AddressInfo.id,
-      livestreamId: null,
+      livestreamId: isLive ? liveId : null,
       createdFromCommentId: null,
       ordersByShop,
     };
@@ -240,8 +253,8 @@ function OrderPageInner() {
                 <div className=" text-rose-500 font-medium text-2xl">
                   <PriceTag
                     value={
-                      (orderProduct?.subTotal || 0) +
-                      (deliveryInfo?.totalAmount || 0)
+                      orderProduct?.totalAmount || 0
+                      // (deliveryInfo?.totalAmount || 0)
                     }
                   />
                 </div>

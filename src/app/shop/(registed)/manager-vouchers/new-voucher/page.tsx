@@ -242,15 +242,21 @@ export default function VoucherPage() {
                   <FormField
                     control={form.control}
                     name="startDate"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Ngày bắt đầu</FormLabel>
-                        <FormControl>
-                          <Input type="datetime-local" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
+                    render={({ field }) => {
+                      // Calculate min value for datetime-local (current time, rounded to minutes)
+                      const now = new Date();
+                      now.setSeconds(0, 0);
+                      const min = now.toISOString().slice(0, 16);
+                      return (
+                        <FormItem>
+                          <FormLabel>Ngày bắt đầu</FormLabel>
+                          <FormControl>
+                            <Input type="datetime-local" min={min} {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      );
+                    }}
                   />
 
                   <FormField
@@ -276,13 +282,9 @@ export default function VoucherPage() {
                       <FormControl>
                         <Input
                           type="number"
-                          min={1}
-                          step={1}
-                          value={field.value}
-                          onChange={(e) => {
-                            const n = e.currentTarget.valueAsNumber;
-                            field.onChange(Number.isNaN(n) ? undefined : n);
-                          }}
+                          step="0.01"
+                          {...field}
+                          className="pr-16"
                         />
                       </FormControl>
                       <FormMessage />
@@ -290,7 +292,10 @@ export default function VoucherPage() {
                   )}
                 />
                 <div className="flex justify-end">
-                  <Button type="submit" className="bg-[#B0F847] text-black">
+                  <Button
+                    type="submit"
+                    className="bg-[#B0F847] text-black hover:bg-[#B0F847]/80 cursor-pointer"
+                  >
                     Tạo Voucher
                   </Button>
                 </div>

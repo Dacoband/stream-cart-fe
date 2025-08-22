@@ -27,7 +27,7 @@ const ChatLive: React.FC<ChatLiveProps> = ({ livestreamId }) => {
         <TabsContent value="live" className="h-full">
           <ChatCommon livestreamId={livestreamId} />
         </TabsContent>
-        <TabsContent value="ai" className="h-full">
+        <TabsContent value="ai" className="h-full flex-1">
           <CartLive livestreamId={livestreamId} />
         </TabsContent>
       </Tabs>

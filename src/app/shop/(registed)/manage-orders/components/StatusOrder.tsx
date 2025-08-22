@@ -1,8 +1,18 @@
 "use client";
+
 import React, { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ClipboardList } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import {
+  ClipboardList,
+  Clock,
+  Package,
+  Truck,
+  CheckCircle,
+  XCircle,
+  AlertCircle,
+} from "lucide-react";
 import { Order } from "@/types/order/order";
 import { formatFullDateTimeVN } from "@/components/common/formatFullDateTimeVN";
 import { updateOrderStatus } from "@/services/api/order/order";
@@ -13,39 +23,108 @@ type Props = {
   onStatusUpdated?: (newStatus: number) => void;
 };
 
-const getStatusInfo = (status: number) => {
-  switch (status) {
-    case 0:
-    case 1:
-      return { text: "Chờ xác nhận", color: "bg-yellow-100 text-yellow-700" };
-    case 2:
-      return { text: "Chờ xử lí", color: "bg-orange-100 text-orange-700" };
-    case 3:
-      return { text: "Chờ lấy hàng", color: "bg-blue-100 text-blue-700" };
-    case 4:
-      return {
-        text: "Giao hàng thành công",
-        color: "bg-green-100 text-green-700",
-      };
-    case 5:
-      return { text: "Đã hủy", color: "bg-red-100 text-red-700" };
-    case 7:
-      return { text: "Chờ giao hàng", color: "bg-indigo-100 text-indigo-700" };
-    case 10:
-      return { text: "Thành công", color: "bg-emerald-100 text-emerald-700" };
-    default:
-      return { text: "Đang giao", color: "bg-gray-100 text-gray-700" };
+const statusConfig: Record<
+  number,
+  {
+    label: string;
+    icon: React.ElementType;
+    color: string;
+    bgColor: string;
+    textColor: string;
+    borderColor: string;
+    needsAction: boolean;
+    description: string;
   }
+> = {
+  0: {
+    label: "Chờ xác nhận",
+    icon: AlertCircle,
+    color: "bg-orange-500",
+    bgColor: "bg-orange-50",
+    textColor: "text-orange-700",
+    borderColor: "border-orange-200",
+    needsAction: true,
+    description: "Đơn hàng đang chờ xác nhận từ người bán",
+  },
+  1: {
+    label: "Chờ xác nhận",
+    icon: AlertCircle,
+    color: "bg-orange-500",
+    bgColor: "bg-orange-50",
+    textColor: "text-orange-700",
+    borderColor: "border-orange-200",
+    needsAction: true,
+    description: "Đơn hàng đang chờ xác nhận từ người bán",
+  },
+  2: {
+    label: "Chờ xử lí",
+    icon: Clock,
+    color: "bg-blue-500",
+    bgColor: "bg-blue-50",
+    textColor: "text-blue-700",
+    borderColor: "border-blue-200",
+    needsAction: true,
+    description: "Đơn hàng đang chờ được xử lí",
+  },
+  3: {
+    label: "Chờ lấy hàng",
+    icon: Package,
+    color: "bg-purple-500",
+    bgColor: "bg-purple-50",
+    textColor: "text-purple-700",
+    borderColor: "border-purple-200",
+    needsAction: false,
+    description: "Đơn hàng đã sẵn sàng để lấy",
+  },
+  7: {
+    label: "Đang giao hàng",
+    icon: Truck,
+    color: "bg-indigo-500",
+    bgColor: "bg-indigo-50",
+    textColor: "text-indigo-700",
+    borderColor: "border-indigo-200",
+    needsAction: false,
+    description: "Đơn hàng đang được vận chuyển",
+  },
+  4: {
+    label: "Giao thành công",
+    icon: CheckCircle,
+    color: "bg-green-500",
+    bgColor: "bg-green-50",
+    textColor: "text-green-700",
+    borderColor: "border-green-200",
+    needsAction: false,
+    description: "Đơn hàng đã giao thành công",
+  },
+  10: {
+    label: "Thành công",
+    icon: CheckCircle,
+    color: "bg-green-500",
+    bgColor: "bg-green-50",
+    textColor: "text-green-700",
+    borderColor: "border-green-200",
+    needsAction: false,
+    description: "Đơn hàng đã giao thành công",
+  },
+  5: {
+    label: "Đã hủy",
+    icon: XCircle,
+    color: "bg-red-500",
+    bgColor: "bg-red-50",
+    textColor: "text-red-700",
+    borderColor: "border-red-200",
+    needsAction: false,
+    description: "Đơn hàng đã bị hủy",
+  },
 };
+
+const statusFlow = [0, 1, 2, 3, 7, 4]; // tiến trình hợp lệ
 
 export default function StatusOrder({ order, onStatusUpdated }: Props) {
   const [updating, setUpdating] = useState(false);
 
-  const statusInfo = getStatusInfo(order.orderStatus);
-  const canUpdateStatus =
-    order.orderStatus === 0 ||
-    order.orderStatus === 1 ||
-    order.orderStatus === 2;
+  const currentConfig = statusConfig[order.orderStatus];
+  const currentIndex = statusFlow.indexOf(order.orderStatus);
 
   const deadlineMessage =
     order.orderStatus === 0 || order.orderStatus === 1
@@ -58,11 +137,9 @@ export default function StatusOrder({ order, onStatusUpdated }: Props) {
 
   const handleUpdateStatus = async () => {
     if (updating) return;
-
     let newStatus: number | null = null;
     if (order.orderStatus === 0 || order.orderStatus === 1) newStatus = 2;
     else if (order.orderStatus === 2) newStatus = 3;
-    else newStatus = null;
 
     if (newStatus == null) {
       toast.info("Không thể cập nhật trạng thái đơn hàng này");
@@ -82,49 +159,173 @@ export default function StatusOrder({ order, onStatusUpdated }: Props) {
     }
   };
 
-  return (
-    <Card className="rounded-none">
-      <CardHeader>
-        <CardTitle className="flex gap-5 items-center justify-between">
-          <div className="flex  items-center gap-2 text-lg font-semibold ">
-            <ClipboardList className="w-5 h-5 text-lime-600" />
-            Trạng thái đơn hàng
+  // Nếu bị hủy thì hiển thị đơn giản
+  if (order.orderStatus === 5) {
+    return (
+      <Card className="border-0 shadow-lg bg-gradient-to-br from-white to-gray-50">
+        <CardContent>
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center space-x-3">
+              <div className="p-2 rounded-full bg-gradient-to-r from-lime-500 to-green-600">
+                <ClipboardList className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Trạng thái đơn hàng
+                </h3>
+                <p className="text-sm text-gray-500">
+                  Mã đơn: {order.orderCode}
+                </p>
+              </div>
+            </div>
+            <div className="text-right">
+              <p className="text-sm text-gray-500">Ngày đặt</p>
+              <p className="text-sm font-medium text-gray-900">
+                {formatFullDateTimeVN(order.orderDate)}
+              </p>
+            </div>
           </div>
-          <span
-            className={`px-3 py-1 rounded-full text-sm font-medium shadow-sm ${statusInfo.color}`}
-          >
-            {statusInfo.text}
-          </span>
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          {/* Trạng thái */}
+          <div className="flex items-center gap-3 p-4 rounded-xl bg-red-50 border border-red-200">
+            <XCircle className="w-6 h-6 text-red-600" />
+            <div>
+              <p className="font-medium text-red-700">
+                Đơn hàng này đã bị hủy đã bị hủy
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
-          {/* Ngày đặt + Deadline */}
-          <div className="flex flex-col text-sm text-gray-600">
-            <p className="flex items-center gap-1">
-              <span className="font-medium">Ngày đặt:</span>{" "}
+  return (
+    <Card className="border-0 shadow-lg bg-gradient-to-br from-white to-gray-50">
+      <CardContent className="">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center space-x-3">
+            <div className="p-2 rounded-full bg-gradient-to-r from-lime-500 to-green-600">
+              <ClipboardList className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900">
+                Trạng thái đơn hàng
+              </h3>
+              <p className="text-sm text-gray-500">Mã đơn: {order.id}</p>
+            </div>
+          </div>
+          <div className="text-right">
+            <p className="text-sm text-gray-500">Ngày đặt</p>
+            <p className="text-sm font-medium text-gray-900">
               {formatFullDateTimeVN(order.orderDate)}
             </p>
+          </div>
+        </div>
+
+        {/* Current Status Display */}
+        <div
+          className={`p-4 rounded-xl ${currentConfig.bgColor} ${currentConfig.borderColor} border-2 mb-6`}
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <div className={`p-2 rounded-full ${currentConfig.color}`}>
+                <currentConfig.icon className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <Badge
+                  className={`${currentConfig.bgColor} ${currentConfig.textColor} border-0 font-medium`}
+                >
+                  {currentConfig.label}
+                </Badge>
+                <p className="text-sm text-gray-600 mt-1">
+                  {currentConfig.description}
+                </p>
+              </div>
+            </div>
+
             {deadlineMessage && (
-              <p className="flex items-center gap-1 text-orange-600 font-medium">
-                ⏰ {deadlineMessage}
-              </p>
+              <div className="text-right">
+                <p className="text-xs text-gray-500 mb-2">Hạn xử lí</p>
+                <Badge variant="outline" className="text-xs">
+                  <Clock className="w-3 h-3 mr-1" />
+                  {deadlineMessage}
+                </Badge>
+              </div>
             )}
           </div>
+        </div>
 
-          {/* Nút cập nhật */}
-          {canUpdateStatus && (
+        {/* Status Timeline */}
+        <div className="mb-6">
+          <h4 className="text-sm font-medium text-gray-700 mb-4">
+            Tiến trình đơn hàng
+          </h4>
+          <div className="flex items-center justify-between relative">
+            {statusFlow.map((status, index) => {
+              const config = statusConfig[status];
+              const isCompleted = index < currentIndex;
+              const isCurrent = index === currentIndex;
+
+              return (
+                <div
+                  key={status}
+                  className="flex flex-col items-center flex-1 relative"
+                >
+                  <div
+                    className={`w-14 h-14 rounded-full flex items-center justify-center mb-2 transition-all duration-300 ${
+                      isCompleted
+                        ? "bg-green-500 text-white"
+                        : isCurrent
+                        ? `${config.color} text-white`
+                        : "bg-gray-200 text-gray-400"
+                    }`}
+                  >
+                    <config.icon className="w-4 h-4" />
+                  </div>
+                  <p
+                    className={`text-xs text-center ${
+                      isCurrent ? "font-medium text-gray-900" : "text-gray-500"
+                    }`}
+                  >
+                    {config.label}
+                  </p>
+                  {index < statusFlow.length - 1 && (
+                    <div
+                      className={`absolute top-4 left-1/2 w-full h-0.5 -z-10 ${
+                        isCompleted ? "bg-green-500" : "bg-gray-200"
+                      }`}
+                    />
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Action Button */}
+        {currentConfig.needsAction && (
+          <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+            <div className="flex items-center space-x-2">
+              <AlertCircle className="w-4 h-4 text-orange-500" />
+              <span className="text-sm text-gray-700">
+                {order.orderStatus === 0 || order.orderStatus === 1
+                  ? "Đơn hàng cần được xác nhận"
+                  : "Đơn hàng cần được xử lí"}
+              </span>
+            </div>
             <Button
               onClick={handleUpdateStatus}
               disabled={updating}
-              className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg shadow-sm"
+              className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-medium px-6"
             >
-              {updating ? "Đang cập nhật..." : "Cập nhật trạng thái"}
+              {updating
+                ? "Đang cập nhật..."
+                : order.orderStatus === 0 || order.orderStatus === 1
+                ? "Xác nhận đơn hàng"
+                : "Bắt đầu xử lí"}
             </Button>
-          )}
-        </div>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

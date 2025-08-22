@@ -34,3 +34,13 @@ export interface CreateVoucher{
     availableQuantity:number
 
 }
+export interface UpdateVoucher{
+    description:string;
+     value:number;
+     maxValue:number;
+        minOrderAmount:number;
+   startDate:Date;
+    endDate:Date;
+    availableQuantity:number
+
+}

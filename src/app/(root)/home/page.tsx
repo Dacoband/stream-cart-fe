@@ -4,6 +4,7 @@ import CategoryComponent from "./components/Category";
 import LiveStreaming from "./components/LiveStreaming";
 import RecommendedProducts from "./components/RecommendedProducts";
 import FlashSale from "./components/FlashSale";
+import ChatBot from "../components/ChatBot";
 
 export default function Home() {
   return (
@@ -14,6 +15,7 @@ export default function Home() {
       <LiveStreaming />
       <FlashSale />
       <RecommendedProducts />
+      <ChatBot />
     </div>
   );
 }

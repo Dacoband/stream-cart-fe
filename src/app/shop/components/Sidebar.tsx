@@ -9,6 +9,7 @@ import {
   ScanBarcode,
   Video,
   UsersRound,
+  Zap,
 } from "lucide-react";
 import {
   Sidebar,
@@ -42,10 +43,14 @@ const items = [
     url: "/shop/livestreams",
     icon: Video,
   },
-
+  {
+    title: "Flash Sale",
+    url: "/shop/manager-flashSale",
+    icon: Zap,
+  },
   {
     title: "Voucher",
-  url: "/shop/manager-vouchers",
+    url: "/shop/manager-vouchers",
     icon: TicketPercent,
   },
 

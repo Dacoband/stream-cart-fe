@@ -27,8 +27,22 @@ export const createVoucher = async (data: CreateVoucherDTO) => {
     throw error;
   }
 };
+export const updateVoucher = async (id: string, data: UpdateVoucher) => {
+  try {
+    const token = localStorage.getItem('token');
+    if (!token) throw new Error('Not authenticated');
 
-import { Voucher } from '@/types/voucher/voucher';
+    const res = await rootApi.put(`/vouchers/${id}`, data, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    return res.data;
+  } catch (error) {
+    console.error('Error creating voucher:', error);
+    throw error;
+  }
+};
+import { UpdateVoucher, Voucher } from '@/types/voucher/voucher';
 
 export interface VoucherListResponse {
   currentPage: number;

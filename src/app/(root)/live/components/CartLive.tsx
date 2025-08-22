@@ -1,38 +1,43 @@
 "use client";
 
 import React from "react";
+import { useRouter } from "next/navigation";
 import { useLivestreamCart } from "@/services/signalr/useLivestreamCart";
 import { Button } from "@/components/ui/button";
-import { Minus, Plus } from "lucide-react";
+import { Minus, Plus, X } from "lucide-react";
 import Image from "next/image";
 import PriceTag from "@/components/common/PriceTag";
-
+import { getAddressDefaultShipping } from "@/services/api/address/address";
 function CartLive({ livestreamId }: { livestreamId?: string }) {
-  const { cart, loading, error, updateQty, lastEvent } =
+  const { cart, loading, error, updateQty, deleteItem } =
     useLivestreamCart(livestreamId);
-  const [banner, setBanner] = React.useState<string | null>(null);
+  const router = useRouter();
 
-  React.useEffect(() => {
-    if (lastEvent?.action === "ITEM_ADDED") {
-      const msg =
-        lastEvent.message ||
-        `Đã thêm ${lastEvent.quantity ?? ""} ${
-          lastEvent.productName ?? "sản phẩm"
-        }`;
-      setBanner(msg);
-      const t = setTimeout(() => setBanner(null), 2000);
-      return () => clearTimeout(t);
+  const handleConfirm = React.useCallback(async () => {
+    if (!cart || (cart.totalItems ?? 0) <= 0) return;
+
+    const params = new URLSearchParams();
+    for (const it of cart.items) params.append("cartItemIds", it.id);
+    params.set("live", "1");
+
+    const id = livestreamId ?? cart.livestreamId;
+    if (id) params.set("livestreamId", id);
+
+    try {
+      const address = await getAddressDefaultShipping();
+      if (address && address.id) {
+        params.set("addressId", address.id);
+      }
+    } catch (err) {
+      console.error("Lỗi khi lấy địa chỉ mặc định:", err);
     }
-  }, [lastEvent]);
+
+    router.push(`/customer/order?${params.toString()}`);
+  }, [router, cart, livestreamId]);
 
   return (
-    <div className="bg-white rounded-none h-full border">
-      <div className="p-0">
-        {banner && (
-          <div className="px-3 py-2 text-sm bg-green-50 text-green-700 border-b border-green-200">
-            {banner}
-          </div>
-        )}
+    <div className="bg-white relative flex w-full rounded-none h-[87vh] flex-col">
+      <div className="p-0 flex-1 overflow-y-auto custom-scroll mb-40">
         {loading ? (
           <div className="p-4 text-sm text-gray-500">Đang tải giỏ hàng…</div>
         ) : error ? (
@@ -42,9 +47,17 @@ function CartLive({ livestreamId }: { livestreamId?: string }) {
             Chưa có sản phẩm nào
           </div>
         ) : (
-          <div className="max-h-[60vh] overflow-y-auto divide-y">
+          <div className="">
             {cart.items.map((it) => (
-              <div key={it.id} className="flex gap-3 p-3 items-start">
+              <div key={it.id} className="relative flex gap-3 p-3 items-start">
+                <button
+                  aria-label="Xóa sản phẩm khỏi giỏ"
+                  onClick={() => deleteItem(it.id)}
+                  className="absolute top-2 right-2 p-1 cursor-pointer rounded hover:bg-red-50 text-red-600"
+                  title="Xóa"
+                >
+                  <X className="w-4 h-4" />
+                </button>
                 <div className="flex-shrink-0">
                   {it.primaryImage ? (
                     <Image
@@ -59,28 +72,30 @@ function CartLive({ livestreamId }: { livestreamId?: string }) {
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="font-medium text-sm line-clamp-1">
+                  <div className="font-medium text-sm line-clamp-1 mr-5">
                     {it.productName}
                   </div>
-                  {it.variantId && (
-                    <div className="text-xs text-gray-500 mt-0.5">
-                      SKU/Variant: {it.variantId}
-                    </div>
-                  )}
+
+                  <div className="text-xs text-gray-500 mt-0.5 whitespace-pre-wrap">
+                    {it.variantName && <span>{it.variantName}</span>}
+                  </div>
+
                   <div className="flex items-center justify-between mt-2">
-                    <div className="text-red-600 font-semibold">
+                    <div className="text-red-600 font-semibold ">
                       <PriceTag value={it.livestreamPrice} />
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center border rounded overflow-hidden">
                       <Button
                         onClick={() =>
                           updateQty(it.id, Math.max(0, it.quantity - 1))
                         }
                         disabled={it.quantity <= 0}
+                        className="h-7 w-7 p-0 rounded-none"
+                        variant="outline"
                       >
-                        <Minus className="w-4 h-4" />
+                        <Minus className="w-3 h-3" />
                       </Button>
-                      <span className="w-6 text-center text-sm">
+                      <span className="w-6 text-center text-xs">
                         {it.quantity}
                       </span>
                       <Button
@@ -88,8 +103,10 @@ function CartLive({ livestreamId }: { livestreamId?: string }) {
                           updateQty(it.id, Math.min(it.stock, it.quantity + 1))
                         }
                         disabled={it.quantity >= it.stock}
+                        className="h-7 w-7 p-0 rounded-none"
+                        variant="outline"
                       >
-                        <Plus className="w-4 h-4" />
+                        <Plus className="w-3 h-3" />
                       </Button>
                     </div>
                   </div>
@@ -98,20 +115,27 @@ function CartLive({ livestreamId }: { livestreamId?: string }) {
             ))}
           </div>
         )}
+      </div>
 
-        {/* Footer totals */}
-        {/* <div className="p-3 border-t bg-gray-50">
-          <div className="flex justify-between text-sm">
-            <span>Tổng số lượng</span>
-            <span>{cart?.totalItems ?? 0}</span>
-          </div>
-          <div className="flex justify-between text-sm mt-1">
-            <span>Tạm tính</span>
-            <span className="font-semibold text-red-600">
-              <PriceTag value={cart?.totalAmount ?? 0} />
-            </span>
-          </div>
-        </div> */}
+      {/* Footer totals + confirm */}
+      <div className="px-3 pt-5 pb-8 h-36 border-t  bg-gray-100 absolute bottom-0 left-0 right-0">
+        <div className="flex justify-between text-sm">
+          <span>Tổng số lượng</span>
+          <span>{cart?.totalItems ?? 0}</span>
+        </div>
+        <div className="flex justify-between text-sm mt-1">
+          <span>Tạm tính</span>
+          <span className="font-semibold text-red-600">
+            <PriceTag value={cart?.totalAmount ?? 0} />
+          </span>
+        </div>
+        <Button
+          className="w-full mt-3 cursor-pointer"
+          onClick={handleConfirm}
+          disabled={!cart || (cart.totalItems ?? 0) <= 0}
+        >
+          Xác nhận đặt hàng
+        </Button>
       </div>
     </div>
   );

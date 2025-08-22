@@ -139,7 +139,7 @@ function Page() {
       const message =
         err?.response?.data?.errors?.[0] ||
         err?.response?.data?.message ||
-        "Cập nhật thất bại!";
+        "Tạo Live Thất bái!";
       toast.error(message);
     } finally {
       setLoadingbt(false);

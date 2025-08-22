@@ -45,23 +45,37 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
+import { Badge } from "@/components/ui/badge";
+import DialogUpdateVoucher from "./components/DialogupdateVocher";
 
 function VouchersPage() {
   const { user } = useAuth();
   const [loading, setLoading] = React.useState(true);
   const [vouchers, setVouchers] = React.useState<Voucher[]>([]);
   const [search, setSearch] = React.useState("");
+  const [openDialog, setOpenDialog] = React.useState(false);
+  const [selectedVoucher, setSelectedVoucher] = React.useState<Voucher | null>(
+    null
+  );
+  const [refreshTick, setRefreshTick] = React.useState(0);
   // type filter: "all" | "1" | "2"
   const [typeFilter, setTypeFilter] = React.useState<"all" | "1" | "2">("all");
   // expired filter: "all" | "active" | "expired"
   const [expiredFilter, setExpiredFilter] = React.useState<
     "all" | "active" | "expired"
   >("all");
+  // active filter: "all" | "active" | "inactive"
+  const [activeFilter, setActiveFilter] = React.useState<
+    "all" | "active" | "inactive"
+  >("all");
   const [confirmDelete, setConfirmDelete] = React.useState<Voucher | null>(
     null
   );
   const [loadingDelete, setLoadingDelete] = React.useState(false);
-
+  const handleOpenDialog = (voucher: Voucher) => {
+    setSelectedVoucher(voucher);
+    setOpenDialog(true);
+  };
   React.useEffect(() => {
     if (!user?.shopId) return;
     const fetch = async () => {
@@ -88,7 +102,13 @@ function VouchersPage() {
           params.isExpired = true;
         } else if (expiredFilter === "active") {
           params.isExpired = false;
+        }
+
+        // Map active filter
+        if (activeFilter === "active") {
           params.isActive = true;
+        } else if (activeFilter === "inactive") {
+          params.isActive = false;
         }
 
         const res: VoucherListResponse = await getVouchersByShop(
@@ -104,12 +124,13 @@ function VouchersPage() {
       }
     };
     fetch();
-  }, [user?.shopId, typeFilter, expiredFilter]);
+  }, [user?.shopId, typeFilter, expiredFilter, activeFilter, refreshTick]);
 
   const resetFilters = () => {
     setSearch("");
     setTypeFilter("all");
     setExpiredFilter("all");
+    setActiveFilter("all");
   };
 
   const filtered = React.useMemo(() => {
@@ -181,7 +202,7 @@ function VouchersPage() {
                   <SelectValue placeholder="Loại" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Tất cả loại</SelectItem>
+                  <SelectItem value="all">Loại voucher</SelectItem>
                   <SelectItem value="1">Theo %</SelectItem>
                   <SelectItem value="2">Theo số tiền</SelectItem>
                 </SelectContent>
@@ -197,9 +218,25 @@ function VouchersPage() {
                   <SelectValue placeholder="Trạng thái" />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="all">Trạng thái</SelectItem>
+                  <SelectItem value="active">Voucher còn hạn</SelectItem>
+                  <SelectItem value="expired">Voucher hết hạn</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <Select
+                value={activeFilter}
+                onValueChange={(v: "all" | "active" | "inactive") =>
+                  setActiveFilter(v)
+                }
+              >
+                <SelectTrigger className="w-[200px]">
+                  <SelectValue placeholder="Hiệu lực" />
+                </SelectTrigger>
+                <SelectContent>
                   <SelectItem value="all">Tất cả</SelectItem>
                   <SelectItem value="active">Đang hoạt động</SelectItem>
-                  <SelectItem value="expired">Hết hạn</SelectItem>
+                  <SelectItem value="inactive">Ngừng hoạt động</SelectItem>
                 </SelectContent>
               </Select>
 
@@ -240,16 +277,13 @@ function VouchersPage() {
               <Table>
                 <TableHeader className="bg-[#B0F847]/50">
                   <TableRow>
-                    <TableHead className="font-semibold">Mã</TableHead>
-                    <TableHead className="font-semibold">Tên</TableHead>
-                    <TableHead className="font-semibold">Giá trị</TableHead>
-                    <TableHead className="font-semibold">Giá tối đa</TableHead>
+                    <TableHead className="font-semibold">Mã và Tên</TableHead>
                     <TableHead className="font-semibold">
-                      Giá tối thiểu đơn hàng
-                    </TableHead>
-
+                      Loại và giá trị
+                    </TableHead>{" "}
+                    <TableHead className="font-semibold">Điều kiện</TableHead>
                     <TableHead className="font-semibold">
-                      Số lượng(đã dùng / tất cả)
+                      Lượt sử dụng
                     </TableHead>
                     <TableHead className="font-semibold">Trạng thái</TableHead>
                     <TableHead className="font-semibold">Thời gian</TableHead>
@@ -261,26 +295,85 @@ function VouchersPage() {
                 <TableBody>
                   {filtered.map((v) => (
                     <TableRow key={v.id}>
-                      <TableCell className="py-2">{v.code}</TableCell>
-                      <TableCell className="py-2">{v.description}</TableCell>
-                      <TableCell className="py-2">
-                        {v.type === 1
-                          ? `${v.value}%`
-                          : `${(v.value || 0).toLocaleString("vi-VN")}₫`}
+                      <TableCell className="py-3">
+                        <div className="space-y-1">
+                          <div className="flex items-center space-x-2">
+                            <Badge
+                              variant="outline"
+                              className="font-mono text-xs bg-gray-100 px-4 py-1 rounded-full text-gray-800 border-gray-300"
+                            >
+                              {v.code}
+                            </Badge>
+                          </div>
+                          <p className="font-medium text-gray-900">
+                            {v.description}
+                          </p>
+                        </div>
                       </TableCell>
-                      <TableCell className="py-2">
-                        {v.maxValue != null
-                          ? `${v.maxValue.toLocaleString("vi-VN")}₫`
-                          : "-"}
+                      <TableCell>
+                        <div className="space-y-1">
+                          <span className="font-medium text-gray-900">
+                            Giảm{" "}
+                            {v.type === 1
+                              ? `${v.value}%`
+                              : `${(v.value || 0).toLocaleString("vi-VN")}₫`}
+                          </span>
+                          <p className="text-xs text-gray-500">
+                            {v.maxValue != null
+                              ? `Tối đa ${v.maxValue.toLocaleString("vi-VN")}₫`
+                              : "Không giới hạn"}
+                          </p>
+                        </div>
                       </TableCell>
-                      <TableCell className="py-2">
-                        {v.minOrderAmount != null
-                          ? v.minOrderAmount.toLocaleString("vi-VN") + "₫"
-                          : "-"}
+
+                      <TableCell>
+                        <div className="space-y-1">
+                          <span className="font-medium text-gray-900">
+                            {v.minOrderAmount && v.minOrderAmount > 0
+                              ? v.minOrderAmount.toLocaleString("vi-VN") + "₫"
+                              : "Không yêu cầu"}
+                          </span>
+                          <p className="text-xs text-gray-500">Đơn tối thiểu</p>
+                        </div>
                       </TableCell>
-                      <TableCell className="py-2">
-                        {v.usedQuantity}/{v.availableQuantity}
+
+                      <TableCell>
+                        <div className="space-y-2 mr-4">
+                          <div className="flex items-center justify-between text-sm">
+                            <span className="font-medium text-gray-900">
+                              {v.usedQuantity}/{v.availableQuantity}
+                            </span>
+                            <span className="text-xs text-gray-500">
+                              {(
+                                (v.usedQuantity / v.availableQuantity) *
+                                100
+                              ).toFixed(0)}
+                              %
+                            </span>
+                          </div>
+                          <div className="w-full bg-gray-200 rounded-full h-2">
+                            <div
+                              className={`h-2 rounded-full transition-all duration-300 ${
+                                (v.usedQuantity / v.availableQuantity) * 100 >=
+                                80
+                                  ? "bg-red-500"
+                                  : (v.usedQuantity / v.availableQuantity) *
+                                      100 >=
+                                    50
+                                  ? "bg-yellow-500"
+                                  : "bg-green-500"
+                              }`}
+                              style={{
+                                width: `${(
+                                  (v.usedQuantity / v.availableQuantity) *
+                                  100
+                                ).toFixed(0)}%`,
+                              }}
+                            />
+                          </div>
+                        </div>
                       </TableCell>
+
                       <TableCell className="py-2">
                         {v.isExpired ? (
                           <span className="text-red-600 font-medium">
@@ -308,7 +401,10 @@ function VouchersPage() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem className="text-blue-600">
+                            <DropdownMenuItem
+                              className="text-blue-600"
+                              onClick={() => handleOpenDialog(v)}
+                            >
                               <Edit
                                 size={18}
                                 className="text-blue-600 flex justify-start"
@@ -360,6 +456,14 @@ function VouchersPage() {
           </AlertDialog>
         </Card>
       </div>
+      {selectedVoucher && (
+        <DialogUpdateVoucher
+          open={openDialog}
+          voucher={selectedVoucher}
+          onClose={() => setOpenDialog(false)}
+          onSuccess={() => setRefreshTick((t) => t + 1)}
+        />
+      )}
     </div>
   );
 }
