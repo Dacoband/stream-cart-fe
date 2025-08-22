@@ -3,67 +3,69 @@
 import React from "react";
 import { ProductLiveStream } from "@/types/livestream/productLivestream";
 import { Card, CardContent, CardTitle } from "@/components/ui/card";
-import {
-  getProductByLiveStreamId,
-  updatePinProductLiveStream,
-} from "@/services/api/livestream/productLivestream";
+// realtime-first: use SignalR via useLivestreamRealtime; API fallback not needed here
 import Image from "next/image";
 import { Input } from "@/components/ui/input";
-import { Edit, ImageIcon, Pin, PinOff, Search, Trash2 } from "lucide-react";
+import { ImageIcon, Pin, Search } from "lucide-react";
 import PriceTag from "@/components/common/PriceTag";
 import { Button } from "@/components/ui/button";
+import { useLivestreamRealtime } from "@/services/signalr/useLivestreamRealtime";
 
 type ProductsProps = {
   livestreamId: string;
-  onPinnedChange?: (pinned: ProductLiveStream | null) => void;
-  refreshFlag?: boolean; // toggle to force refetch from parent
 };
 
-function ProductsLiveStream({ livestreamId, onPinnedChange, refreshFlag }: ProductsProps) {
+function ProductsLiveStream({ livestreamId }: ProductsProps) {
   const [products, setProducts] = React.useState<ProductLiveStream[]>([]);
   const [search, setSearch] = React.useState("");
-  const [pinLoadingId, setPinLoadingId] = React.useState<string | null>(null);
+  const realtime = useLivestreamRealtime(livestreamId);
 
-  const fetchProducts = React.useCallback(async () => {
-    const data = await getProductByLiveStreamId(livestreamId);
-    setProducts(data);
-    // inform parent about current pinned item
-    const currentPinned = Array.isArray(data)
-      ? (data as ProductLiveStream[]).find((p) => p.isPin)
-      : undefined;
-    onPinnedChange?.(currentPinned || null);
-  }, [livestreamId, onPinnedChange]);
-
+  // map realtime products (normalized in hook) to typed ProductLiveStream when possible
   React.useEffect(() => {
-    fetchProducts();
-  }, [fetchProducts]);
+    const list = (realtime.products ?? []) as unknown[];
+    // best-effort shape mapping, tolerate backend casing/fields
+    const mapped = list.map((raw) => {
+      const r = raw as Record<string, unknown>;
+      const get = (keys: string[]) => {
+        for (const k of keys) if (r[k] !== undefined) return r[k];
+        return undefined;
+      };
+      const toStr = (v: unknown) => (v == null ? undefined : String(v));
+      const toNum = (v: unknown) => {
+        const n = Number(v);
+        return Number.isFinite(n) ? (n as number) : undefined;
+      };
+      const toBool = (v: unknown) => (v == null ? undefined : Boolean(v));
+      return {
+        id: toStr(get(["id", "Id", "ID"])) || "",
+        livestreamId:
+          toStr(get(["livestreamId", "LivestreamId"])) || livestreamId,
+        productId: toStr(get(["productId", "ProductId"])) || "",
+        variantId: toStr(get(["variantId", "VariantId"])) || undefined,
+        isPin: (toBool(get(["isPin", "IsPin"])) ?? false) as boolean,
+        price: toNum(get(["price", "Price"])) ?? 0,
+        originalPrice:
+          toNum(get(["originalPrice", "OriginalPrice"])) ?? undefined,
+        stock: toNum(get(["stock", "Stock"])) ?? 0,
+        productName: toStr(get(["productName", "ProductName"])) || "",
+        productImageUrl:
+          toStr(
+            get(["productImageUrl", "ProductImageUrl", "imageUrl", "ImageUrl"])
+          ) || undefined,
+        variantName: toStr(get(["variantName", "VariantName"])) || undefined,
+        sku: toStr(get(["sku", "SKU", "Sku"])) || undefined,
+      } as ProductLiveStream;
+    });
+    setProducts(mapped);
+  }, [realtime.products, livestreamId]);
 
-  // Refetch when parent indicates external pin/unpin happened
+  // no manual debounce needed; hook mutates products on events
+
+  // initial load: ask server to push the current products to this client
   React.useEffect(() => {
-    fetchProducts();
+    realtime.refreshProducts?.();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [refreshFlag]);
-
-  const handleTogglePin = async (product: ProductLiveStream) => {
-    const newIsPin = !product.isPin;
-    try {
-      setPinLoadingId(product.id);
-      await updatePinProductLiveStream(product.id, newIsPin);
-      // Update local list: only one item should be pinned at a time
-      setProducts((prev) =>
-        prev.map((p) =>
-          p.id === product.id
-            ? { ...p, isPin: newIsPin }
-            : newIsPin
-            ? { ...p, isPin: false }
-            : p
-        )
-      );
-      onPinnedChange?.(newIsPin ? { ...product, isPin: true } : null);
-    } finally {
-      setPinLoadingId(null);
-    }
-  };
+  }, [livestreamId]);
 
   // Lọc sản phẩm theo tên
   const filteredProducts = products.filter((p) =>
@@ -93,22 +95,14 @@ function ProductsLiveStream({ livestreamId, onPinnedChange, refreshFlag }: Produ
           filteredProducts.map((product) => (
             <Card key={product.id} className=" py-2 px-2 rounded-none gap-2 ">
               <div className="flex justify-between border-b pb-1">
-                <Button
-                  onClick={() => handleTogglePin(product)}
-                  disabled={pinLoadingId === product.id}
-                  className="bg-[#B0F847]/90 text-black rounded-full h-8 w-8  cursor-pointer flex items-center justify-center hover:bg-[#B0F847]/70 disabled:opacity-50"
-                >
-                  {product.isPin ? <PinOff size={16} /> : <Pin size={16} />}
-                </Button>
-
-                <div>
-                  <Button className=" text-blue-500 bg-white rounded-none cursor-pointer shadow-none hover:bg-white hover:text-blue-400">
-                    <Edit /> Chỉnh sửa
-                  </Button>
-                  <Button className=" text-red-500 bg-white rounded-none cursor-pointer shadow-none hover:bg-white hover:text-red-400">
-                    <Trash2 /> Xóa
-                  </Button>
+                <div className="text-sm flex items-center text-gray-500">
+                  Số lượng: {product.stock}
                 </div>
+                {product.isPin && (
+                  <Button variant="outline" size="icon">
+                    <Pin className="w-4 h-4" />
+                  </Button>
+                )}
               </div>
               <div className="flex gap-3">
                 {product.productImageUrl ? (
@@ -134,9 +128,16 @@ function ProductsLiveStream({ livestreamId, onPinnedChange, refreshFlag }: Produ
                       Phân loại: {product.variantName}
                     </p>
                   )}
-                  <p className="text-red-500 font-semibold mt-2">
-                    <PriceTag value={product.price} />
-                  </p>
+                  <div className="flex gap-4">
+                    <p className="text-red-500 font-semibold mt-2">
+                      <PriceTag value={product.price} />
+                    </p>
+                    {typeof product.originalPrice !== "undefined" && (
+                      <p className="text-gray-500 font-semibold mt-2 line-through">
+                        <PriceTag value={product.originalPrice} />
+                      </p>
+                    )}
+                  </div>
                 </div>
               </div>
             </Card>

@@ -19,7 +19,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-
+import { useAuth } from "@/lib/AuthContext";
 const items = [
   {
     title: "Thống kê",
@@ -45,7 +45,7 @@ const items = [
 
   {
     title: "Voucher",
-    url: "/admin/vouchers",
+  url: "/shop/manager-vouchers",
     icon: TicketPercent,
   },
 
@@ -63,6 +63,14 @@ const items = [
 
 export function AppSidebar() {
   const pathname = usePathname();
+  const { user } = useAuth();
+  const visibleItems =
+    user?.role === 3
+      ? items.filter(
+          (it) =>
+            it.url !== "/admin/transactions" && it.url !== "/shop/moderators"
+        )
+      : items;
 
   return (
     <Sidebar
@@ -73,7 +81,7 @@ export function AppSidebar() {
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
-              {items.map((item) => (
+              {visibleItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton
                     asChild

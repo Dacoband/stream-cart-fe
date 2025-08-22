@@ -23,7 +23,7 @@ export interface OrderItemCreate {
   // unitPrice: number;
 }
 
-export type OrderItemResponse = {
+export interface OrderItemResponse {
   id: string;
   orderId: string;
   productId: string;
@@ -36,7 +36,7 @@ export type OrderItemResponse = {
   refundRequestId: string | null;
   productName: string;
   productImageUrl: string;
-};
+}
 
 export type ShippingAddress = {
   fullName: string;
@@ -54,6 +54,8 @@ export type ShippingAddress = {
 
 export type Order = {
   id: string;
+  timeForShop: Date;
+  paymentMethod: string;
   orderCode: string;
   orderDate: Date;
   orderStatus: number;

@@ -4,6 +4,7 @@ export interface ProductLiveStream{
    productId:string;
    variantId:string;
    isPin:boolean;
+   originalPrice:number;
    price:number;
    stock:number;
    createAt:Date;

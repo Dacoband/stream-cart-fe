@@ -48,6 +48,29 @@ export const getOrderById = async (id: string) => {
   }
 };
 
+export const updateOrderStatus = async (id: string, status: number) => {
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      throw new Error("Not found token.");
+    }
+
+    const response = await rootApi.put(
+      `orders/${id}/status`,
+      { status }, // body
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    return response.data;
+  } catch (error) {
+    console.error("Error updating order status:", error);
+    throw error;
+  }
+};
 
 export const getOrdersByShop = async (
   shopId: string,
@@ -74,6 +97,26 @@ export const getOrdersByShop = async (
     return response.data;
   } catch (error) {
     console.error("Error fetching orders by shop:", error);
+    throw error;
+  }
+};
+
+export const getOrdersStatisticsByShop = async (shopId: string) => {
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      throw new Error("Not found token.");
+    }
+
+    const response = await rootApi.get(`orders/shop/${shopId}/statistics`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    return response.data.data;
+  } catch (error) {
+    console.error("Error fetching orders statistics by shop:", error);
     throw error;
   }
 };

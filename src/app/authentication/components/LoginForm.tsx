@@ -82,7 +82,7 @@ export default function LoginForm() {
           }
           break;
         case 3:
-          router.push("/partner/manageproduct");
+          router.push("/shop/dashboard");
           break;
         case 5:
           router.push("/manager/dashboard");

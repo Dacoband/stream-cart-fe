@@ -2,7 +2,8 @@ import { Card, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import React from "react";
 import ChatCommon from "./ChatCommon";
-import ChatwithAI from "./ChatwithAI";
+import CartLive from "./CartLive";
+import { ShoppingCart } from "lucide-react";
 
 interface ChatLiveProps {
   livestreamId?: string;
@@ -18,7 +19,7 @@ const ChatLive: React.FC<ChatLiveProps> = ({ livestreamId }) => {
               Chat Live
             </TabsTrigger>
             <TabsTrigger value="ai" className="rounded-none ">
-              Chat AI
+              <ShoppingCart /> Giỏ hàng
             </TabsTrigger>
           </TabsList>
         </CardTitle>
@@ -27,7 +28,7 @@ const ChatLive: React.FC<ChatLiveProps> = ({ livestreamId }) => {
           <ChatCommon livestreamId={livestreamId} />
         </TabsContent>
         <TabsContent value="ai" className="h-full">
-          <ChatwithAI />
+          <CartLive livestreamId={livestreamId} />
         </TabsContent>
       </Tabs>
     </Card>

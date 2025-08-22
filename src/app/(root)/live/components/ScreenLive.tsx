@@ -28,6 +28,8 @@ import ChatLive from "./ChatLive";
 import ProductsLive from "./ProductsLive";
 import { ViewerCount } from "@/app/shop/livestream/components/ViewCount";
 import PinProduct from "./PinProduct";
+import { setLogLevel, LogLevel } from "livekit-client";
+
 interface ScreenLiveProps {
   liveStreamId: string;
 }
@@ -261,7 +263,7 @@ export default function ScreenLive({ liveStreamId }: ScreenLiveProps) {
       setLoading(false);
     }
   }, [liveStreamId]);
-
+  setLogLevel(LogLevel.debug);
   useEffect(() => {
     fetchLivestreamData();
   }, [fetchLivestreamData]);

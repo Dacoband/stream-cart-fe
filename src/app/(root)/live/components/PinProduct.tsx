@@ -1,54 +1,51 @@
 "use client";
 
-import React from "react";
-import { getPinProductLiveStream } from "@/services/api/livestream/productLivestream";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import { ImageIcon } from "lucide-react";
 import PriceTag from "@/components/common/PriceTag";
-import { Button } from "@/components/ui/button";
 import { useLivestreamRealtime } from "@/services/signalr/useLivestreamRealtime";
+type PinProductProps = {
+  livestreamId: string;
+};
 
-type Props = { livestreamId: string };
+type PinnedProduct = {
+  productName: string;
+  productImageUrl?: string;
+  price?: number;
+  sku?: string;
+  variantName?: string;
+};
 
-function PinProduct({ livestreamId }: Props) {
-  type PinnedView = {
-    productName?: string;
-    productImageUrl?: string;
-    price?: number;
-    sku?: string;
-    variantName?: string;
-    isPin?: boolean;
-  };
-  const [pinned, setPinned] = React.useState<PinnedView | null>(null);
+export default function PinProduct({ livestreamId }: PinProductProps) {
+  const [pinned, setPinned] = useState<PinnedProduct | null>(null);
   const { pinnedProducts, lastPinChange, refreshPinned } =
     useLivestreamRealtime(livestreamId);
+  const lastFetchAtRef = useRef<number>(0);
 
-  const toStr = React.useCallback(
+  // safe mappers for mixed-casing payloads
+  const toStr = useCallback(
     (v: unknown) => (typeof v === "string" ? v : undefined),
     []
   );
-  const toNum = React.useCallback(
+  const toNum = useCallback(
     (v: unknown) => (Number.isFinite(Number(v)) ? Number(v) : undefined),
     []
   );
-  const toBool = React.useCallback(
-    (v: unknown) => (v === undefined || v === null ? undefined : Boolean(v)),
-    []
-  );
-  const getStr = React.useCallback(
+  const getStr = useCallback(
     (obj: Record<string, unknown> | undefined, ...keys: string[]) => {
       if (!obj) return undefined;
       for (const k of keys) {
-        const val = obj[k];
-        const s = toStr(val);
+        const s = toStr(obj[k]);
         if (s !== undefined) return s;
       }
       return undefined;
     },
     [toStr]
   );
-  const getNum = React.useCallback(
+  const getNum = useCallback(
     (obj: Record<string, unknown> | undefined, ...keys: string[]) => {
       if (!obj) return undefined;
       for (const k of keys) {
@@ -59,69 +56,43 @@ function PinProduct({ livestreamId }: Props) {
     },
     [toNum]
   );
-  const getBool = React.useCallback(
-    (obj: Record<string, unknown> | undefined, ...keys: string[]) => {
-      if (!obj) return undefined;
-      for (const k of keys) {
-        const b = toBool(obj[k]);
-        if (b !== undefined) return b;
+
+  /** Lần đầu mount → gọi hub để lấy pinned */
+  useEffect(() => {
+    (async () => {
+      try {
+        await refreshPinned();
+      } catch (err) {
+        console.error("refreshPinned (hub) failed", err);
       }
-      return undefined;
-    },
-    [toBool]
-  );
+    })();
+  }, [refreshPinned]);
 
-  const fetchPinned = React.useCallback(async () => {
-    try {
-      const data = await getPinProductLiveStream(livestreamId);
-      const raw = (Array.isArray(data) ? data[0] : data) as
-        | Record<string, unknown>
-        | undefined;
-      const isPinned = getBool(raw, "isPin", "isPinned") ?? false;
-      if (!raw || !isPinned) return setPinned(null);
-      const view: PinnedView = {
-        productName: getStr(raw, "productName", "ProductName"),
-        productImageUrl: getStr(
-          raw,
-          "productImageUrl",
-          "ProductImageUrl",
-          "imageUrl",
-          "ImageUrl"
-        ),
-        price: getNum(raw, "price", "Price"),
-        sku: getStr(raw, "sku", "SKU", "Sku"),
-        variantName: getStr(raw, "variantName", "VariantName"),
-        isPin: isPinned,
-      };
-      setPinned(view);
-    } catch {
-      setPinned(null);
-    }
-  }, [livestreamId, getStr, getNum, getBool]);
-
-  React.useEffect(() => {
-    // initial load from API and ask server for pinned list
-    fetchPinned();
-    refreshPinned().catch(() => {});
-  }, [fetchPinned, refreshPinned]);
-
-  // When server reports pin status change, refresh from API to get full details
-  React.useEffect(() => {
+  /** Khi có event pin/unpin → hạn chế gọi hub refresh (debounce) */
+  useEffect(() => {
     if (!lastPinChange) return;
-    fetchPinned();
-  }, [lastPinChange, fetchPinned]);
+    const now = Date.now();
+    if (now - lastFetchAtRef.current < 900) return; // debounce ~0.9s
+    lastFetchAtRef.current = now;
+    (async () => {
+      try {
+        await refreshPinned();
+      } catch (err) {
+        console.error("refreshPinned (hub) failed", err);
+      }
+    })();
+  }, [lastPinChange, refreshPinned]);
 
-  // Try to map pinnedProducts pushed from server directly, fallback to API if shape unknown
-  React.useEffect(() => {
+  /** Nếu socket push data thì update luôn */
+  useEffect(() => {
     if (!pinnedProducts || pinnedProducts.length === 0) {
       setPinned(null);
       return;
     }
-    const first = pinnedProducts[0] as Record<string, unknown>;
+    const first = pinnedProducts[0] as Record<string, unknown> | undefined;
     if (!first) return;
-    // Best-effort mapping from server payload
-    const mapped: PinnedView = {
-      productName: getStr(first, "productName", "ProductName"),
+    const mapped: PinnedProduct = {
+      productName: getStr(first, "productName", "ProductName") || "",
       productImageUrl: getStr(
         first,
         "productImageUrl",
@@ -132,16 +103,20 @@ function PinProduct({ livestreamId }: Props) {
       price: getNum(first, "price", "Price"),
       sku: getStr(first, "sku", "SKU", "Sku"),
       variantName: getStr(first, "variantName", "VariantName"),
-      isPin: (getBool(first, "isPin", "IsPin") ?? true) as boolean,
     };
-
-    // If we don't have minimum fields, fallback to API
-    if (!mapped || !mapped.productName) {
-      fetchPinned();
+    // if productName is missing, ask hub for a refresh
+    if (!mapped.productName) {
+      (async () => {
+        try {
+          await refreshPinned();
+        } catch (err) {
+          console.error("refreshPinned (hub) failed", err);
+        }
+      })();
     } else {
       setPinned(mapped);
     }
-  }, [pinnedProducts, fetchPinned, livestreamId, getStr, getNum, getBool]);
+  }, [pinnedProducts, getStr, getNum, refreshPinned]);
 
   if (!pinned) return null;
 
@@ -186,7 +161,7 @@ function PinProduct({ livestreamId }: Props) {
         </div>
         <Button
           size="sm"
-          className="absolute bottom-2 right-2 text-[12px] py-1 cursor-pointer px-2 rounded-none h-fit bg-gradient-to-r from-orange-500 to-red-500 hover:bg-[#B0F847]/80 font-semibold text-white"
+          className="absolute bottom-2 right-2 text-xs px-3 py-1 rounded bg-gradient-to-r from-orange-500 to-red-500 text-white font-semibold hover:opacity-90"
         >
           Mua ngay
         </Button>
@@ -194,5 +169,3 @@ function PinProduct({ livestreamId }: Props) {
     </Card>
   );
 }
-
-export default PinProduct;
