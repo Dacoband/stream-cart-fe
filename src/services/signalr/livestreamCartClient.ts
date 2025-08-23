@@ -6,6 +6,7 @@ export interface LivestreamCartItem {
   livestreamProductId: string;
   productId: string;
   variantId?: string | null;
+  variantName?: string;
   productName: string;
   shopId: string;
   shopName: string;
@@ -15,7 +16,7 @@ export interface LivestreamCartItem {
   quantity: number;
   stock: number;
   primaryImage?: string;
-  attributes?: unknown;
+  attributes?: Record<string, string> | null;
   productStatus?: string | boolean;
   totalPrice: number;
   createdAt?: string;
@@ -35,12 +36,43 @@ export interface LivestreamCartData {
   createdAt?: string;
 }
 
+function parseAttributes(input: unknown): Record<string, string> | null {
+  if (input == null) return null;
+  try {
+    // If server sends JSON string
+    const raw = typeof input === "string" ? JSON.parse(input) : input;
+    if (raw && typeof raw === "object" && !Array.isArray(raw)) {
+      const obj = raw as Record<string, unknown>;
+      const out: Record<string, string> = {};
+      for (const [k, v] of Object.entries(obj)) {
+        if (!k) continue;
+        out[String(k)] = v == null ? "" : String(v);
+      }
+      return Object.keys(out).length ? out : null;
+    }
+    // If server sends array of {Key,Value}
+    if (Array.isArray(raw)) {
+      const out: Record<string, string> = {};
+      for (const entry of raw as Array<Record<string, unknown>>) {
+        const key = (entry?.Key ?? entry?.key) as string | undefined;
+        const val = (entry?.Value ?? entry?.value) as string | undefined;
+        if (key) out[String(key)] = val != null ? String(val) : "";
+      }
+      return Object.keys(out).length ? out : null;
+    }
+  } catch {
+    // ignore parse errors
+  }
+  return null;
+}
+
 function mapItem(server: Record<string, unknown>): LivestreamCartItem {
   return {
     id: String(server["Id"] ?? server["id"] ?? ""),
     livestreamProductId: String(server["LivestreamProductId"] ?? server["livestreamProductId"] ?? ""),
     productId: String(server["ProductId"] ?? server["productId"] ?? ""),
     variantId: (server["VariantId"] as string | null | undefined) ?? (server["variantId"] as string | null | undefined) ?? null,
+  variantName: (server["VariantName"] as string) ?? (server["variantName"] as string) ?? undefined,
     productName: (server["ProductName"] as string) ?? (server["productName"] as string) ?? "",
     shopId: String(server["ShopId"] ?? server["shopId"] ?? ""),
     shopName: (server["ShopName"] as string) ?? (server["shopName"] as string) ?? "",
@@ -53,7 +85,7 @@ function mapItem(server: Record<string, unknown>): LivestreamCartItem {
     quantity: Number((server["Quantity"] as number) ?? (server["quantity"] as number) ?? 0),
     stock: Number((server["Stock"] as number) ?? (server["stock"] as number) ?? 0),
     primaryImage: (server["PrimaryImage"] as string) ?? (server["primaryImage"] as string) ?? undefined,
-    attributes: server["Attributes"] ?? server["attributes"],
+  attributes: parseAttributes(server["Attributes"] ?? server["attributes"]),
     productStatus: (server["ProductStatus"] as string | boolean) ?? (server["productStatus"] as string | boolean) ?? undefined,
     totalPrice: Number((server["TotalPrice"] as number) ?? (server["totalPrice"] as number) ?? 0),
     createdAt: (server["CreatedAt"] as string) ?? (server["createdAt"] as string) ?? undefined,
@@ -190,6 +222,12 @@ class LivestreamCartClient {
     await this.ensureReady();
     const conn = (await chatHubService.getConnection()) as HubConnection;
     return conn.invoke("UpdateLivestreamCartItemQuantity", cartItemId, newQuantity);
+  }
+
+  async deleteItem(cartItemId: string) {
+    await this.ensureReady();
+    const conn = (await chatHubService.getConnection()) as HubConnection;
+    return conn.invoke("DeleteLivestreamCartItem", cartItemId);
   }
 }
 

@@ -37,7 +37,7 @@ function ProductsLive({ livestreamId }: { livestreamId: string }) {
       </div>
 
       {/* Danh sách sản phẩm */}
-      <CardContent className="overflow-y-auto flex-1 mt-5 px-2 space-y-3">
+      <CardContent className="overflow-y-auto flex-1 mt-5 mb-5 px-2 space-y-3">
         {loading && (
           <p className="text-center text-gray-500 text-sm mt-4">
             Đang tải sản phẩm…
@@ -54,17 +54,17 @@ function ProductsLive({ livestreamId }: { livestreamId: string }) {
             return (
               <Card key={product.id} className="py-3 px-3 rounded-none">
                 <div className="flex gap-3">
-                  <div>
+                  <div className="w-[85px] h-[85px] aspect-square flex-shrink-0">
                     {product.productImageUrl ? (
                       <Image
-                        height={85}
-                        width={85}
                         src={product.productImageUrl}
                         alt={product.productName}
-                        className="rounded object-cover flex-shrink-0"
+                        width={85}
+                        height={85}
+                        className="rounded object-cover w-full h-full"
                       />
                     ) : (
-                      <div className="h-[85px] w-[85px] bg-gray-200 flex items-center justify-center rounded flex-shrink-0">
+                      <div className="w-full h-full bg-gray-200 flex items-center justify-center rounded">
                         <ImageIcon className="w-6 h-6 text-gray-400" />
                       </div>
                     )}

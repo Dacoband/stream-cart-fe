@@ -206,7 +206,7 @@ function OrderDetailPage() {
         </Breadcrumb>
       </div>
 
-      <div className="mx-5 mb-10 space-y-5">
+      <div className="mx-10 mb-10 space-y-5 ">
         {/* Order Status Card */}
         <StatusOrder order={order} onStatusUpdated={handleStatusUpdated} />
 

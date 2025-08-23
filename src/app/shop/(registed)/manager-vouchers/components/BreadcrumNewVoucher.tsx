@@ -16,7 +16,7 @@ export default function BreadcrumbNewVoucher() {
       <BreadcrumbList>
         <BreadcrumbItem className="font-medium text-lg cursor-pointer">
           <BreadcrumbLink asChild>
-            <Link href="/shop/manager-products">Vouchers</Link>
+            <Link href="/shop/manager-vouchers">Vouchers</Link>
           </BreadcrumbLink>
         </BreadcrumbItem>
 
