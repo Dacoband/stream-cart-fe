@@ -17,20 +17,22 @@ export function ViewerCount({ livestreamId }: ViewerCountProps) {
   // We rely on server stats for viewer count; do not derive from LiveKit participants
 
   const customerViewers = React.useMemo(() => {
-    if (!stats) return null;
-    // Prefer server-provided customerViewers if available
-    if (typeof stats.customerViewers === "number") return stats.customerViewers;
+    if (!stats) return 0;
+    // Prefer server-provided CustomerViewers if present
+    if (
+      typeof stats.customerViewers === "number" &&
+      Number.isFinite(stats.customerViewers)
+    ) {
+      return stats.customerViewers;
+    }
+    // Fallback: read only the exact "Customer" role (case-insensitive) from ViewersByRole
     const roleMap = stats.viewersByRole || {};
-    // Exclude non-customer roles when deriving from role map (case-insensitive)
-    const exclude = new Set(
-      ["Shop", "Seller", "Host", "Owner", "Moderator", "Admin", "Internal"].map(
-        (s) => s.toLowerCase()
-      )
-    );
-    return Object.entries(roleMap)
-      .map(([role, count]) => [String(role).toLowerCase(), count] as const)
-      .filter(([role]) => !exclude.has(role))
-      .reduce((sum, [, count]) => sum + (count || 0), 0);
+    for (const [role, count] of Object.entries(roleMap)) {
+      if (String(role).toLowerCase() === "customer") {
+        return Number(count) || 0;
+      }
+    }
+    return 0;
   }, [stats]);
 
   React.useEffect(() => {
@@ -70,7 +72,7 @@ export function ViewerCount({ livestreamId }: ViewerCountProps) {
 
       <Button className="rounded-none">
         <UserRound />
-        {customerViewers ?? 0}
+        {customerViewers}
       </Button>
     </div>
   );
