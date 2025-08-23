@@ -15,24 +15,34 @@ export function ViewerCount({ livestreamId }: ViewerCountProps) {
   const [stats, setStats] = React.useState<ViewerStatsPayload | null>(null);
 
   // We rely on server stats for viewer count; do not derive from LiveKit participants
-
-  const customerViewers = React.useMemo(() => {
+  // Requirement: count viewers with roles Customer + Unknown only
+  const viewerCount = React.useMemo(() => {
     if (!stats) return 0;
-    // Prefer server-provided CustomerViewers if present
+    const roleMap = stats.viewersByRole || {};
+
+    // Helper to read a role value case-insensitively
+    const getRoleCount = (roleName: string) => {
+      for (const [role, count] of Object.entries(roleMap)) {
+        if (String(role).toLowerCase() === roleName.toLowerCase()) {
+          return Number(count) || 0;
+        }
+      }
+      return 0;
+    };
+
+    // Prefer server-provided CustomerViewers when available and add Unknown from role map
     if (
       typeof stats.customerViewers === "number" &&
       Number.isFinite(stats.customerViewers)
     ) {
-      return stats.customerViewers;
+      const unknown = getRoleCount("Unknown");
+      return stats.customerViewers + unknown;
     }
-    // Fallback: read only the exact "Customer" role (case-insensitive) from ViewersByRole
-    const roleMap = stats.viewersByRole || {};
-    for (const [role, count] of Object.entries(roleMap)) {
-      if (String(role).toLowerCase() === "customer") {
-        return Number(count) || 0;
-      }
-    }
-    return 0;
+
+    // Fallback: sum counts for Customer + Unknown from ViewersByRole
+    const customer = getRoleCount("Customer");
+    const unknown = getRoleCount("Unknown");
+    return customer + unknown;
   }, [stats]);
 
   React.useEffect(() => {
@@ -72,7 +82,7 @@ export function ViewerCount({ livestreamId }: ViewerCountProps) {
 
       <Button className="rounded-none">
         <UserRound />
-        {customerViewers}
+        {viewerCount}
       </Button>
     </div>
   );

@@ -154,30 +154,32 @@ function TableOrder() {
         value={activeTab}
         onValueChange={(v) => setActiveTab(v as TabValue)}
       >
-        <TabsPrimitive.List className="flex gap-2 mb-4 border-b">
-          {[
-            { value: "all", label: "Tất Cả" },
-            { value: "0", label: "Chờ xác nhận" },
-            { value: "1,2", label: "Chờ lấy hàng" },
-            { value: "3", label: "Đang giao" },
-            { value: "4,10", label: "Đã giao" },
-            { value: "5,8,9", label: "Trả hàng/Hủy" },
-          ].map((tab) => (
-            <TabsPrimitive.Trigger
-              key={tab.value}
-              value={tab.value}
-              className="px-3 py-2 -mb-px border-b-2 border-transparent 
-                         data-[state=active]:border-lime-600 
-                         data-[state=active]:text-lime-600 
-                         data-[state=active]:font-medium"
-            >
-              {tab.label}
-            </TabsPrimitive.Trigger>
-          ))}
-        </TabsPrimitive.List>
+        <div className="sticky top-16 z-0 bg-white">
+          <TabsPrimitive.List className="flex gap-2 mb-4 border-b">
+            {[
+              { value: "all", label: "Tất Cả" },
+              { value: "0", label: "Chờ xác nhận" },
+              { value: "1,2", label: "Chờ lấy hàng" },
+              { value: "3", label: "Đang giao" },
+              { value: "4,10", label: "Đã giao" },
+              { value: "5,8,9", label: "Trả hàng/Hủy" },
+            ].map((tab) => (
+              <TabsPrimitive.Trigger
+                key={tab.value}
+                value={tab.value}
+                className="px-3 py-2 -mb-px border-b-2 border-transparent 
+                           data-[state=active]:border-lime-600 
+                           data-[state=active]:text-lime-600 
+                           data-[state=active]:font-medium"
+              >
+                {tab.label}
+              </TabsPrimitive.Trigger>
+            ))}
+          </TabsPrimitive.List>
+          {header}
+        </div>
 
         <TabsPrimitive.Content value={activeTab}>
-          {header}
           {loading ? (
             <>
               {Array.from({ length: 3 }).map((_, idx) => (
