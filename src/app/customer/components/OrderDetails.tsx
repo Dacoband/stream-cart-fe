@@ -41,51 +41,54 @@ function getStatusInfo(status: number) {
       label: "Chờ xác nhận",
       color: "bg-yellow-100 text-yellow-800 border-yellow-200",
       icon: Clock,
-      description: "Đơn hàng đang chờ shop xác nhận"
+      description: "Đơn hàng đang chờ shop xác nhận",
     },
     2: {
       label: "Đã xác nhận",
       color: "bg-blue-100 text-blue-800 border-blue-200",
       icon: CheckCircle,
-      description: "Shop đã xác nhận đơn hàng"
+      description: "Shop đã xác nhận đơn hàng",
     },
     3: {
       label: "Đang chuẩn bị",
       color: "bg-purple-100 text-purple-800 border-purple-200",
       icon: Package,
-      description: "Shop đang chuẩn bị hàng"
+      description: "Shop đang chuẩn bị hàng",
     },
     4: {
       label: "Đang giao hàng",
       color: "bg-orange-100 text-orange-800 border-orange-200",
       icon: Truck,
-      description: "Đơn hàng đang được vận chuyển"
+      description: "Đơn hàng đang được vận chuyển",
     },
     5: {
       label: "Đã giao hàng",
       color: "bg-green-100 text-green-800 border-green-200",
       icon: CheckCircle,
-      description: "Đơn hàng đã được giao thành công"
+      description: "Đơn hàng đã được giao thành công",
     },
     6: {
       label: "Đã hủy",
       color: "bg-red-100 text-red-800 border-red-200",
       icon: XCircle,
-      description: "Đơn hàng đã bị hủy"
-    }
+      description: "Đơn hàng đã bị hủy",
+    },
   };
 
-  return statusMap[status as keyof typeof statusMap] || {
-    label: "Không xác định",
-    color: "bg-gray-100 text-gray-800 border-gray-200",
-    icon: AlertCircle,
-    description: "Trạng thái không xác định"
-  };
+  return (
+    statusMap[status as keyof typeof statusMap] || {
+      label: "Không xác định",
+      color: "bg-gray-100 text-gray-800 border-gray-200",
+      icon: AlertCircle,
+      description: "Trạng thái không xác định",
+    }
+  );
 }
 
 function OrderDetails() {
   const params = useParams();
-  const orderId = params.orderId as string;
+  // Customer route is /customer/(hasSidebar)/order-details/[id]
+  const orderId = (params as { id?: string }).id as string;
 
   const [order, setOrder] = useState<Order | null>(null);
   const [orderItems, setOrderItems] = useState<OrderItemResponse[]>([]);
@@ -124,7 +127,6 @@ function OrderDetails() {
           console.error("Error fetching order items:", error);
           setOrderItems(orderInfo?.items || []);
         }
-
       } catch (error) {
         console.error("Error fetching order:", error);
         toast.error("Không thể tải thông tin đơn hàng");
@@ -192,7 +194,7 @@ function OrderDetails() {
           <div className="bg-white rounded-lg shadow-sm p-8">
             <XCircle className="w-16 h-16 mx-auto mb-4 text-gray-400" />
             <p className="text-gray-500 mb-4">Không tìm thấy đơn hàng này</p>
-            <Link href="/orders">
+            <Link href="/customer/manage-orders">
               <Button variant="outline">
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Quay lại đơn hàng của tôi
@@ -216,7 +218,10 @@ function OrderDetails() {
             <BreadcrumbList>
               <BreadcrumbItem>
                 <BreadcrumbLink asChild>
-                  <Link href="/orders" className="text-blue-600 hover:text-blue-800">
+                  <Link
+                    href="/customer/manage-orders"
+                    className="text-blue-600 hover:text-blue-800"
+                  >
                     Đơn hàng của tôi
                   </Link>
                 </BreadcrumbLink>
@@ -246,15 +251,20 @@ function OrderDetails() {
                     Đơn hàng #{order.orderCode}
                   </h1>
                   <p className="text-gray-600 mt-1">
-                    Đặt hàng lúc {new Date(order.orderDate).toLocaleString("vi-VN")}
+                    Đặt hàng lúc{" "}
+                    {new Date(order.orderDate).toLocaleString("vi-VN")}
                   </p>
                 </div>
               </div>
-              <Badge className={`px-4 py-2 text-sm font-medium ${statusInfo.color}`}>
+              <Badge
+                className={`px-4 py-2 text-sm font-medium ${statusInfo.color}`}
+              >
                 {statusInfo.label}
               </Badge>
             </div>
-            <p className="text-gray-700 mt-3 text-sm">{statusInfo.description}</p>
+            <p className="text-gray-700 mt-3 text-sm">
+              {statusInfo.description}
+            </p>
           </div>
 
           {/* Tracking Information */}
@@ -263,17 +273,25 @@ function OrderDetails() {
               <div className="flex items-center gap-4 p-4 bg-blue-50 rounded-lg">
                 <Truck className="w-8 h-8 text-blue-600" />
                 <div className="flex-1">
-                  <h3 className="font-semibold text-gray-900">Thông tin vận chuyển</h3>
+                  <h3 className="font-semibold text-gray-900">
+                    Thông tin vận chuyển
+                  </h3>
                   <div className="mt-2 space-y-1">
                     <div className="flex justify-between items-center">
                       <span className="text-sm text-gray-600">Mã vận đơn:</span>
-                      <span className="font-mono text-sm font-medium">{order.trackingCode}</span>
+                      <span className="font-mono text-sm font-medium">
+                        {order.trackingCode}
+                      </span>
                     </div>
                     {order.estimatedDeliveryDate && (
                       <div className="flex justify-between items-center">
-                        <span className="text-sm text-gray-600">Dự kiến giao:</span>
+                        <span className="text-sm text-gray-600">
+                          Dự kiến giao:
+                        </span>
                         <span className="text-sm font-medium">
-                          {new Date(order.estimatedDeliveryDate).toLocaleDateString("vi-VN")}
+                          {new Date(
+                            order.estimatedDeliveryDate
+                          ).toLocaleDateString("vi-VN")}
                         </span>
                       </div>
                     )}
@@ -281,7 +299,9 @@ function OrderDetails() {
                       <div className="flex justify-between items-center">
                         <span className="text-sm text-gray-600">Đã giao:</span>
                         <span className="text-sm font-medium text-green-600">
-                          {new Date(order.actualDeliveryDate).toLocaleDateString("vi-VN")}
+                          {new Date(
+                            order.actualDeliveryDate
+                          ).toLocaleDateString("vi-VN")}
                         </span>
                       </div>
                     )}
@@ -310,7 +330,8 @@ function OrderDetails() {
               <div className="space-y-4">
                 {orderItems.map((item, idx) => {
                   const attrs = itemAttributes[item.id];
-                  const isGift = (item.unitPrice ?? 0) === 0 || (item.totalPrice ?? 0) === 0;
+                  const isGift =
+                    (item.unitPrice ?? 0) === 0 || (item.totalPrice ?? 0) === 0;
                   const attrsText = attrs
                     ? Object.entries(attrs)
                         .map(([key, value]) => `${key}: ${value}`)
@@ -345,11 +366,14 @@ function OrderDetails() {
                               </h4>
                             </div>
                             {attrsText && (
-                              <p className="text-sm text-gray-600 mb-2">{attrsText}</p>
+                              <p className="text-sm text-gray-600 mb-2">
+                                {attrsText}
+                              </p>
                             )}
                             <div className="flex items-center gap-4 text-sm">
                               <span className="text-gray-500">
-                                <PriceTag value={item.unitPrice} /> × {item.quantity}
+                                <PriceTag value={item.unitPrice} /> ×{" "}
+                                {item.quantity}
                               </span>
                             </div>
                           </div>
@@ -418,21 +442,29 @@ function OrderDetails() {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Tổng tiền hàng:</span>
-                  <span><PriceTag value={order.totalPrice} /></span>
+                  <span>
+                    <PriceTag value={order.totalPrice} />
+                  </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Phí vận chuyển:</span>
-                  <span><PriceTag value={order.shippingFee} /></span>
+                  <span>
+                    <PriceTag value={order.shippingFee} />
+                  </span>
                 </div>
                 {order.discountAmount > 0 && (
                   <div className="flex justify-between text-green-600">
                     <span>Giảm giá:</span>
-                    <span>-<PriceTag value={order.discountAmount} /></span>
+                    <span>
+                      -<PriceTag value={order.discountAmount} />
+                    </span>
                   </div>
                 )}
                 <hr className="my-2" />
                 <div className="flex justify-between items-center">
-                  <span className="font-semibold text-lg">Tổng thanh toán:</span>
+                  <span className="font-semibold text-lg">
+                    Tổng thanh toán:
+                  </span>
                   <span className="font-bold text-xl text-rose-600">
                     <PriceTag value={order.finalAmount} />
                   </span>
@@ -461,7 +493,7 @@ function OrderDetails() {
 
         {/* Action Buttons */}
         <div className="flex gap-4 justify-center pt-6">
-          <Link href="/orders">
+          <Link href="/customer/manage-orders">
             <Button variant="outline" size="lg">
               <ArrowLeft className="w-4 h-4 mr-2" />
               Quay lại đơn hàng của tôi

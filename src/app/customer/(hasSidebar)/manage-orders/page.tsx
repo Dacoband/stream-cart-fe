@@ -9,7 +9,6 @@ import { getStatusesForTab, OrderTabValue } from "@/types/order/orderStatus";
 import { getCustomerOrders } from "@/services/api/order/customerOrder";
 import LoadingScreen from "@/components/common/LoadingScreen";
 
-// Có thể lấy count động từ API, ở đây demo cứng
 const ORDER_TABS = [
   { label: "Tất cả", value: "all" },
   { label: "Chờ thanh toán", value: "0", count: 0 },
