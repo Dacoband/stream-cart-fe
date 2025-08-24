@@ -113,7 +113,7 @@ export default function SellerLiveStream() {
     if (window.confirm("Bạn có chắc chắn muốn kết thúc buổi phát sóng?")) {
       try {
         await endLivestreamById(livestreamId);
-        router.push("/shop/livestreams");
+        router.push(`/shop/livestream/${livestreamId}/review-livestream`);
       } catch (err) {
         console.error("Error ending livestream:", err);
       }
