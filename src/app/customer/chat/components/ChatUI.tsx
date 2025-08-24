@@ -1,15 +1,14 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import { ChatProvider, useChat } from "../../../lib/ChatContext";
+import { useChat } from "../../../../lib/ChatContext";
 import { getShopDetail } from "@/services/api/shop/shop";
-import { useSearchParams } from "next/navigation";
 
 const ChatUI: React.FC = () => {
   const { messages, sendMessage, setTyping, connected } = useChat();
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
-  const [myAvatarUrl, setMyAvatarUrl] = useState<string | undefined>(undefined);
-  const [shopLogoUrl, setShopLogoUrl] = useState<string | undefined>(undefined);
+  const [myAvatarUrl, setMyAvatarUrl] = useState<string | undefined>();
+  const [shopLogoUrl, setShopLogoUrl] = useState<string | undefined>();
   const [text, setText] = useState("");
   const endRef = useRef<HTMLDivElement | null>(null);
 
@@ -24,7 +23,6 @@ const ChatUI: React.FC = () => {
       if (raw) {
         const parsed = JSON.parse(raw) as Record<string, unknown>;
         setCurrentUserId((parsed.id as string) ?? null);
-        // try multiple possible keys for user avatar
         const avatar =
           (parsed["avatarUrl"] as string) ||
           (parsed["avatarURL"] as string) ||
@@ -39,7 +37,7 @@ const ChatUI: React.FC = () => {
     }
   }, []);
 
-  // fetch shop logo by shopId from query
+  // fetch shop logo
   useEffect(() => {
     const qsShopId =
       typeof window !== "undefined"
@@ -75,8 +73,8 @@ const ChatUI: React.FC = () => {
 
   return (
     <div className="flex h-[calc(100vh-4rem)]">
-      {/* Conversation only (customer view), mirror shop style */}
       <main className="flex-1 flex flex-col max-w-3xl mx-auto">
+        {/* header */}
         <div className="p-4 border-b">
           <div className="font-semibold">Trò chuyện với Shop</div>
           <div
@@ -87,6 +85,8 @@ const ChatUI: React.FC = () => {
             {connected ? "Đã kết nối" : "Mất kết nối"}
           </div>
         </div>
+
+        {/* messages */}
         <div className="flex-1 overflow-auto">
           <div className="min-h-full flex flex-col justify-end p-4">
             {messages.map((m, idx) => {
@@ -101,6 +101,7 @@ const ChatUI: React.FC = () => {
                 String(m.senderUserId) === String(currentUserId)
               );
               const avatar = mine ? myAvatarUrl : shopLogoUrl;
+
               return (
                 <React.Fragment key={m.id}>
                   {showDate && (
@@ -169,6 +170,8 @@ const ChatUI: React.FC = () => {
             <div ref={endRef} />
           </div>
         </div>
+
+        {/* input */}
         <div className="p-3 border-t flex gap-2">
           <input
             className="flex-1 border rounded-full px-4 py-2"
@@ -194,16 +197,4 @@ const ChatUI: React.FC = () => {
   );
 };
 
-const Page: React.FC = () => {
-  // Determine shop id from query using Next navigation hook
-  const searchParams = useSearchParams();
-  const shopId = searchParams.get("shopId");
-
-  return (
-    <ChatProvider shopId={shopId ?? undefined}>
-      <ChatUI />
-    </ChatProvider>
-  );
-};
-
-export default Page;
+export default ChatUI;

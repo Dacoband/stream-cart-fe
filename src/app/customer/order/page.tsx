@@ -253,8 +253,8 @@ function OrderPageInner() {
                 <div className=" text-rose-500 font-medium text-2xl">
                   <PriceTag
                     value={
-                      orderProduct?.totalAmount || 0
-                      // (deliveryInfo?.totalAmount || 0)
+                      (orderProduct?.totalAmount || 0) +
+                      (deliveryInfo?.totalAmount || 0)
                     }
                   />
                 </div>

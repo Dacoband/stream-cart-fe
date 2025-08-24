@@ -161,14 +161,17 @@ function ManageProductLive({
     }
     try {
       setSaving(true);
+      console.log("[DEBUG Support] Calling updateStockById with id:", editing.id, "value:", value);
       // hub only
       await realtime.updateStockById(editing.id, value);
+      console.log("[DEBUG Support] updateStockById completed successfully");
       setProducts((prev) =>
         prev.map((p) => (p.id === editing.id ? { ...p, stock: value } : p))
       );
       toast.success("Cập nhật số lượng thành công");
       setEditing(null);
-    } catch {
+    } catch (e) {
+      console.error("[DEBUG Support] updateStockById failed:", e);
       toast.error("Không thể cập nhật số lượng. Vui lòng thử lại");
     } finally {
       setSaving(false);

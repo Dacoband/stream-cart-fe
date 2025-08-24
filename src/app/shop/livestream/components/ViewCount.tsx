@@ -15,22 +15,34 @@ export function ViewerCount({ livestreamId }: ViewerCountProps) {
   const [stats, setStats] = React.useState<ViewerStatsPayload | null>(null);
 
   // We rely on server stats for viewer count; do not derive from LiveKit participants
-
-  const customerViewers = React.useMemo(() => {
-    if (!stats) return null;
-    // Prefer server-provided customerViewers if available
-    if (typeof stats.customerViewers === "number") return stats.customerViewers;
+  // Requirement: count viewers with roles Customer + Unknown only
+  const viewerCount = React.useMemo(() => {
+    if (!stats) return 0;
     const roleMap = stats.viewersByRole || {};
-    // Exclude non-customer roles when deriving from role map (case-insensitive)
-    const exclude = new Set(
-      ["Shop", "Seller", "Host", "Owner", "Moderator", "Admin", "Internal"].map(
-        (s) => s.toLowerCase()
-      )
-    );
-    return Object.entries(roleMap)
-      .map(([role, count]) => [String(role).toLowerCase(), count] as const)
-      .filter(([role]) => !exclude.has(role))
-      .reduce((sum, [, count]) => sum + (count || 0), 0);
+
+    // Helper to read a role value case-insensitively
+    const getRoleCount = (roleName: string) => {
+      for (const [role, count] of Object.entries(roleMap)) {
+        if (String(role).toLowerCase() === roleName.toLowerCase()) {
+          return Number(count) || 0;
+        }
+      }
+      return 0;
+    };
+
+    // Prefer server-provided CustomerViewers when available and add Unknown from role map
+    if (
+      typeof stats.customerViewers === "number" &&
+      Number.isFinite(stats.customerViewers)
+    ) {
+      const unknown = getRoleCount("Unknown");
+      return stats.customerViewers + unknown;
+    }
+
+    // Fallback: sum counts for Customer + Unknown from ViewersByRole
+    const customer = getRoleCount("Customer");
+    const unknown = getRoleCount("Unknown");
+    return customer + unknown;
   }, [stats]);
 
   React.useEffect(() => {
@@ -70,7 +82,7 @@ export function ViewerCount({ livestreamId }: ViewerCountProps) {
 
       <Button className="rounded-none">
         <UserRound />
-        {customerViewers ?? 0}
+        {viewerCount}
       </Button>
     </div>
   );
