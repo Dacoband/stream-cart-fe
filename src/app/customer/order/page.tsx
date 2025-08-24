@@ -22,6 +22,7 @@ import {
 } from "@/types/deliveries/deliveries";
 import { previewDeliveries } from "@/services/api/deliveries/deliveries";
 import { deleteCart } from "@/services/api/cart/cart";
+import { livestreamCartClient } from "@/services/signalr/livestreamCartClient";
 
 import { toast } from "sonner";
 function OrderPageInner() {
@@ -168,7 +169,11 @@ function OrderPageInner() {
         return;
       }
       try {
-        await deleteCart(cartItemIds);
+        if (isLive && liveId) {
+          await livestreamCartClient.clearCart(liveId);
+        } else {
+          await deleteCart(cartItemIds);
+        }
       } catch (err) {
         console.warn("Không thể xóa giỏ hàng:", err);
       }

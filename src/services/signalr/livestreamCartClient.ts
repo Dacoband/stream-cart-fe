@@ -229,6 +229,12 @@ class LivestreamCartClient {
     const conn = (await chatHubService.getConnection()) as HubConnection;
     return conn.invoke("DeleteLivestreamCartItem", cartItemId);
   }
+
+  async clearCart(livestreamId: string) {
+    await this.ensureReady(livestreamId);
+    const conn = (await chatHubService.getConnection()) as HubConnection;
+    return conn.invoke("ClearLivestreamCart", livestreamId);
+  }
 }
 
 export const livestreamCartClient = new LivestreamCartClient();
