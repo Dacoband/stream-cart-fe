@@ -5,6 +5,16 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   ClipboardList,
   Clock,
   Package,
@@ -36,16 +46,6 @@ const statusConfig: Record<
     description: string;
   }
 > = {
-  0: {
-    label: "Chờ xác nhận",
-    icon: AlertCircle,
-    color: "bg-orange-500",
-    bgColor: "bg-orange-50",
-    textColor: "text-orange-700",
-    borderColor: "border-orange-200",
-    needsAction: true,
-    description: "Đơn hàng đang chờ xác nhận từ người bán",
-  },
   1: {
     label: "Chờ xác nhận",
     icon: AlertCircle,
@@ -57,14 +57,14 @@ const statusConfig: Record<
     description: "Đơn hàng đang chờ xác nhận từ người bán",
   },
   2: {
-    label: "Chờ xử lí",
+    label: "Đang chuẩn bị hàng",
     icon: Clock,
     color: "bg-blue-500",
     bgColor: "bg-blue-50",
     textColor: "text-blue-700",
     borderColor: "border-blue-200",
     needsAction: true,
-    description: "Đơn hàng đang chờ được xử lí",
+    description: "Đơn hàng đang chờ đóng gói ",
   },
   3: {
     label: "Chờ lấy hàng",
@@ -74,7 +74,7 @@ const statusConfig: Record<
     textColor: "text-purple-700",
     borderColor: "border-purple-200",
     needsAction: false,
-    description: "Đơn hàng đã sẵn sàng để lấy",
+    description: "Đơn hàng đã sẵn sàng để bên vận chuyển đến lấy",
   },
   7: {
     label: "Đang giao hàng",
@@ -118,16 +118,17 @@ const statusConfig: Record<
   },
 };
 
-const statusFlow = [0, 1, 2, 3, 7, 4]; // tiến trình hợp lệ
+const statusFlow = [1, 2, 3, 7, 4];
 
 export default function StatusOrder({ order, onStatusUpdated }: Props) {
   const [updating, setUpdating] = useState(false);
+  const [confirmPickupOpen, setConfirmPickupOpen] = useState(false);
 
   const currentConfig = statusConfig[order.orderStatus];
   const currentIndex = statusFlow.indexOf(order.orderStatus);
 
   const deadlineMessage =
-    order.orderStatus === 0 || order.orderStatus === 1
+    order.orderStatus === 1
       ? `Vui lòng xác nhận đơn trước ${formatFullDateTimeVN(order.timeForShop)}`
       : order.orderStatus === 2
       ? `Vui lòng đóng gói trước ${formatFullDateTimeVN(
@@ -211,7 +212,7 @@ export default function StatusOrder({ order, onStatusUpdated }: Props) {
               <h3 className="text-lg font-semibold text-gray-900">
                 Trạng thái đơn hàng
               </h3>
-              <p className="text-sm text-gray-500">Mã đơn: {order.id}</p>
+              <p className="text-sm text-gray-500">Mã đơn: {order.orderCode}</p>
             </div>
           </div>
           <div className="text-right">
@@ -308,13 +309,19 @@ export default function StatusOrder({ order, onStatusUpdated }: Props) {
             <div className="flex items-center space-x-2">
               <AlertCircle className="w-4 h-4 text-orange-500" />
               <span className="text-sm text-gray-700">
-                {order.orderStatus === 0 || order.orderStatus === 1
-                  ? "Đơn hàng cần được xác nhận"
-                  : "Đơn hàng cần được xử lí"}
+                {order.orderStatus === 1
+                  ? "Xác nhận đơn hàng"
+                  : "Đã đóng gói xong"}
               </span>
             </div>
             <Button
-              onClick={handleUpdateStatus}
+              onClick={() => {
+                if (order.orderStatus === 2) {
+                  setConfirmPickupOpen(true);
+                } else {
+                  handleUpdateStatus();
+                }
+              }}
               disabled={updating}
               className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-medium px-6"
             >
@@ -322,10 +329,40 @@ export default function StatusOrder({ order, onStatusUpdated }: Props) {
                 ? "Đang cập nhật..."
                 : order.orderStatus === 0 || order.orderStatus === 1
                 ? "Xác nhận đơn hàng"
+                : order.orderStatus === 2
+                ? "Đã đóng gói xong"
                 : "Bắt đầu xử lí"}
             </Button>
           </div>
         )}
+
+        {/* Confirm pickup dialog for status 2 */}
+        <AlertDialog
+          open={confirmPickupOpen}
+          onOpenChange={setConfirmPickupOpen}
+        >
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Xác nhận yêu cầu vận chuyển</AlertDialogTitle>
+              <AlertDialogDescription>
+                Bạn đã đóng gói xong đơn hàng và muốn yêu cầu đơn vị vận chuyển
+                đến lấy hàng?
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={updating}>Hủy</AlertDialogCancel>
+              <AlertDialogAction
+                disabled={updating}
+                onClick={async () => {
+                  setConfirmPickupOpen(false);
+                  await handleUpdateStatus();
+                }}
+              >
+                Xác nhận
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </CardContent>
     </Card>
   );
