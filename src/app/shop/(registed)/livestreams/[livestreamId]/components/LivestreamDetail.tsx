@@ -48,12 +48,16 @@ export default function LivestreamDetail({
   if (!livestream) {
     return (
       <div className="p-8">
-        <p className="text-sm text-red-500 mb-4">Không tìm thấy livestream.</p>
-        <Link href="/shop/livestreams">
-          <Button variant="outline" className="cursor-pointer">
-            Quay lại
-          </Button>
-        </Link>
+        <Card className="bg-white py-5 px-8 min-h-[78vh] flex flex-col items-center justify-center">
+          <p className="text-sm text-red-500 mb-4">
+            Không tìm thấy livestream.
+          </p>
+          <Link href="/shop/livestreams">
+            <Button variant="outline" className="cursor-pointer">
+              Quay lại
+            </Button>
+          </Link>
+        </Card>
       </div>
     );
   }

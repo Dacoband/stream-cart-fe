@@ -33,7 +33,7 @@ const header = (
 
 function TableOrder() {
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState<TabValue>("all"); // mặc định là "all"
+  const [activeTab, setActiveTab] = useState<TabValue>("all");
   const [loading, setLoading] = useState(true);
   const [orders, setOrders] = useState<Order[]>([]);
   const [accountMap, setAccountMap] = useState<
@@ -203,8 +203,17 @@ function TableOrder() {
               ))}
             </>
           ) : orders.length === 0 ? (
-            <div className="text-center py-10 text-gray-500">
-              Không có đơn hàng
+            <div>
+              <Image
+                src="/assets/emptydata.png"
+                alt="No data"
+                width={180}
+                height={200}
+                className="mt-14 mx-auto"
+              />
+              <div className="text-center mt-4 text-xl text-lime-700/60  font-medium">
+                Hiện chưa có đơn nào
+              </div>
             </div>
           ) : (
             orders.map((order) => {
