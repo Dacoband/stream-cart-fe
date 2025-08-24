@@ -106,7 +106,7 @@ function Advertisement() {
       <div className="w-[25%] mr-5 flex flex-col gap-3">
         <div className="relative flex-1 rounded-md overflow-hidden cursor-pointer">
           <Image
-            src="/qc1.jfif"
+            src="/qc11.jpg"
             alt="QC1"
             fill
             className="object-cover object-center"

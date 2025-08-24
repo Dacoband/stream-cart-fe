@@ -59,10 +59,8 @@ export default function LoginForm() {
       toast.success("Đăng nhập thành công!");
 
       switch (userInfor.role) {
-        case 0:
         case 4:
-          router.push("/admin/dashboard");
-          break;
+
         case 1:
           router.push(redirect);
           await refreshCart();
@@ -86,6 +84,9 @@ export default function LoginForm() {
           break;
         case 5:
           router.push("/manager/dashboard");
+          break;
+        case 6:
+          router.push("/admin/dashboard");
           break;
         default:
           console.log("Role không hợp lệ");
