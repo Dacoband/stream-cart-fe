@@ -21,6 +21,18 @@ export type ProductStockUpdatedPayload = {
   UpdatedBy?: string;
   Timestamp?: string;
   Message?: string;
+  // Also support lowercase variants that come from server
+  id?: string;
+  livestreamId?: string;
+  productId?: string;
+  variantId?: string | null;
+  newStock?: number;
+  originalPrice?: number;
+  price?: number;
+  productName?: string;
+  updatedBy?: string;
+  timestamp?: string;
+  message?: string;
 };
 
 export type ProductDeletedPayload = {
@@ -61,22 +73,131 @@ class LivestreamProductsClient {
   private async bindHandlers() {
     if (this.handlersBound) return;
     const conn = (await chatHubService.getConnection()) as HubConnection;
-  try { conn.off("LivestreamProductsLoaded"); } catch {}
-  try { conn.off("LivestreamProductStockUpdated"); } catch {}
-  try { conn.off("LivestreamProductDeleted"); } catch {}
-  try { conn.off("Error"); } catch {}
-
-    conn.on("LivestreamProductsLoaded", (payload: ProductsLoadedPayload) => {
-      const list = Array.isArray(payload?.Products) ? payload.Products : [];
+    
+    // Helper to map list payloads into typed products and fan-out to onLoaded
+    const handleList = (payload: ProductsLoadedPayload | Record<string, unknown>) => {
+      const raw = payload as unknown as Record<string, unknown>;
+      const list = Array.isArray((payload as ProductsLoadedPayload)?.Products)
+        ? (payload as ProductsLoadedPayload).Products
+        : (Array.isArray(raw?.["Products"]) ? (raw["Products"] as unknown[]) : []);
       const products = list.map((x) => mapProduct((x as Record<string, unknown>) ?? {}));
-      const livestreamId = String(payload?.LivestreamId ?? "");
+      const livestreamId = String((payload as ProductsLoadedPayload)?.LivestreamId ?? raw?.["LivestreamId"] ?? "");
       this.onLoadedCbs.forEach((cb) => cb(livestreamId, products));
+    };
+
+    // Id-based stock updates
+    const handleIdStock = (payload: ProductStockUpdatedPayload | Record<string, unknown>) => {
+      try {
+        const p = payload as ProductStockUpdatedPayload ?? ({} as ProductStockUpdatedPayload);
+        this.onStockUpdatedCbs.forEach((cb) => cb(p));
+      } catch {}
+    };
+
+    // Add generic event listener to catch all events including new backend events
+    const eventNames = [
+      'LivestreamProductStockUpdated', 'livestreamproductstockupdated',
+      'ProductStockUpdated', 'productstockupdated',
+      'StockChanged', 'stockchanged',
+      'StockUpdated', 'stockupdated',
+      'UpdateSuccess', 'updatesuccess',
+      'LivestreamProductUpdated', 'livestreamproductupdated',
+      'TestBroadcast', 'testbroadcast',
+      'ViewingStarted', 'viewingstarted', // New confirmation event
+      'Error', 'error'
+    ];
+    
+    eventNames.forEach(eventName => {
+      conn.on(eventName as string, (...args: unknown[]) => {
+        // Handle ViewingStarted confirmation
+        if (eventName.toLowerCase() === 'viewingstarted') {
+          // Connection confirmed - viewer joined group successfully
+        }
+        
+        // If this is a stock update event, also trigger the stock handler
+        if (eventName.toLowerCase().includes('stock')) {
+          const payload = args[0] as Record<string, unknown>;
+          if (payload) {
+            handleIdStock(payload);
+          }
+        }
+      });
+    });
+  // Clean up possible previous handlers (both casings)
+  try { conn.off("LivestreamProductsLoaded"); } catch {}
+  try { conn.off("livestreamproductsloaded" as unknown as string); } catch {}
+  try { conn.off("LivestreamProductsRefreshed"); } catch {}
+  try { conn.off("livestreamproductsrefreshed" as unknown as string); } catch {}
+  try { conn.off("LivestreamProductStockUpdated"); } catch {}
+  try { conn.off("livestreamproductstockupdated" as unknown as string); } catch {}
+  try { conn.off("LivestreamProductUpdated"); } catch {}
+  try { conn.off("livestreamproductupdated" as unknown as string); } catch {}
+  try { conn.off("ProductStockUpdated"); } catch {}
+  try { conn.off("productstockupdated" as unknown as string); } catch {}
+  try { conn.off("StockChanged"); } catch {}
+  try { conn.off("stockchanged" as unknown as string); } catch {}
+  try { conn.off("LivestreamProductDeleted"); } catch {}
+  try { conn.off("livestreamproductdeleted" as unknown as string); } catch {}
+  try { conn.off("Error"); } catch {}
+  try { conn.off("error" as unknown as string); } catch {}
+
+    // Loaded/Refreshed events (treat the same)
+    conn.on("LivestreamProductsLoaded", (payload: ProductsLoadedPayload) => {
+      console.log("[DEBUG] ✅ LivestreamProductsLoaded event received:", payload);
+      handleList(payload);
+    });
+    conn.on("livestreamproductsloaded" as unknown as string, (payload: ProductsLoadedPayload) => {
+      console.log("[DEBUG] ✅ livestreamproductsloaded event received:", payload);
+      handleList(payload);
+    });
+    conn.on("LivestreamProductsRefreshed", (payload: ProductsLoadedPayload) => {
+      handleList(payload);
+    });
+    conn.on("livestreamproductsrefreshed" as unknown as string, (payload: ProductsLoadedPayload) => {
+      handleList(payload);
     });
 
     conn.on("LivestreamProductStockUpdated", (payload: ProductStockUpdatedPayload) => {
+      handleIdStock(payload);
+    });
+    conn.on("livestreamproductstockupdated" as unknown as string, (payload: ProductStockUpdatedPayload) => {
+      handleIdStock(payload);
+    });
+
+    // Generic update by Id that may include new stock
+    conn.on("LivestreamProductUpdated", (raw: Record<string, unknown>) => {
       try {
-        const p = payload ?? ({} as ProductStockUpdatedPayload);
-        this.onStockUpdatedCbs.forEach((cb) => cb(p));
+        const payload: ProductStockUpdatedPayload = {
+          Id: String(raw?.["Id"] ?? raw?.["id"] ?? ""),
+          LivestreamId: String(raw?.["LivestreamId"] ?? raw?.["livestreamId"] ?? ""),
+          ProductId: String(raw?.["ProductId"] ?? raw?.["productId"] ?? ""),
+          VariantId: (raw?.["VariantId"] ?? raw?.["variantId"]) as string | null | undefined,
+          NewStock: Number(raw?.["Stock"] ?? raw?.["stock"] ?? NaN),
+          OriginalPrice: Number(raw?.["OriginalPrice"] ?? raw?.["originalPrice"] ?? NaN),
+          Price: Number(raw?.["Price"] ?? raw?.["price"] ?? NaN),
+          ProductName: String(raw?.["ProductName"] ?? raw?.["productName"] ?? ""),
+          UpdatedBy: String(raw?.["UpdatedBy"] ?? raw?.["updatedBy"] ?? ""),
+          Timestamp: String(raw?.["Timestamp"] ?? raw?.["timestamp"] ?? new Date().toISOString()),
+          Message: String(raw?.["Message"] ?? raw?.["message"] ?? ""),
+        };
+        this.onStockUpdatedCbs.forEach((cb) => cb(payload));
+      } catch {}
+    });
+    conn.on("livestreamproductupdated" as unknown as string, (raw: Record<string, unknown>) => {
+      try {
+        const payload: ProductStockUpdatedPayload = {
+          Id: String(raw?.["Id"] ?? raw?.["id"] ?? ""),
+          LivestreamId: String(raw?.["LivestreamId"] ?? raw?.["livestreamId"] ?? ""),
+          ProductId: String(raw?.["ProductId"] ?? raw?.["productId"] ?? ""),
+          VariantId: (raw?.["VariantId"] ?? raw?.["variantId"]) as string | null | undefined,
+          NewStock: Number(raw?.["Stock"] ?? raw?.["stock"] ?? NaN),
+          OriginalPrice: Number(raw?.["OriginalPrice"] ?? raw?.["originalPrice"] ?? NaN),
+          Price: Number(raw?.["Price"] ?? raw?.["price"] ?? NaN),
+          ProductName: String(raw?.["ProductName"] ?? raw?.["productName"] ?? ""),
+          UpdatedBy: String(raw?.["UpdatedBy"] ?? raw?.["updatedBy"] ?? ""),
+          Timestamp: String(raw?.["Timestamp"] ?? raw?.["timestamp"] ?? new Date().toISOString()),
+          Message: String(raw?.["Message"] ?? raw?.["message"] ?? ""),
+        };
+        this.onStockUpdatedCbs.forEach((cb) => cb(payload));
       } catch {}
     });
 
@@ -86,8 +207,42 @@ class LivestreamProductsClient {
         this.onDeletedCbs.forEach((cb) => cb(p));
       } catch {}
     });
+    conn.on("livestreamproductdeleted" as unknown as string, (payload: ProductDeletedPayload) => {
+      try {
+        const p = payload ?? ({} as ProductDeletedPayload);
+        this.onDeletedCbs.forEach((cb) => cb(p));
+      } catch {}
+    });
+
+    // Product-level stock updates that don't include Id
+    const handleProdStock = (raw: Record<string, unknown>) => {
+      try {
+        const payload: ProductStockUpdatedPayload = {
+          Id: "",
+          LivestreamId: String(raw?.["LivestreamId"] ?? raw?.["livestreamId"] ?? ""),
+          ProductId: String(raw?.["ProductId"] ?? raw?.["productId"] ?? ""),
+          VariantId: (raw?.["VariantId"] ?? raw?.["variantId"]) as string | null | undefined,
+          NewStock: Number(raw?.["NewStock"] ?? raw?.["newStock"] ?? NaN),
+          OriginalPrice: Number(raw?.["OriginalPrice"] ?? raw?.["originalPrice"] ?? NaN),
+          Price: Number(raw?.["Price"] ?? raw?.["price"] ?? NaN),
+          ProductName: String(raw?.["ProductName"] ?? raw?.["productName"] ?? ""),
+          UpdatedBy: String(raw?.["UpdatedBy"] ?? raw?.["updatedBy"] ?? ""),
+          Timestamp: String(raw?.["Timestamp"] ?? raw?.["timestamp"] ?? new Date().toISOString()),
+          Message: String(raw?.["Message"] ?? raw?.["message"] ?? ""),
+        };
+        this.onStockUpdatedCbs.forEach((cb) => cb(payload));
+      } catch {}
+    };
+    conn.on("ProductStockUpdated", (raw: Record<string, unknown>) => handleProdStock(raw));
+    conn.on("productstockupdated" as unknown as string, (raw: Record<string, unknown>) => handleProdStock(raw));
+    conn.on("StockChanged", (raw: Record<string, unknown>) => handleProdStock(raw));
+    conn.on("stockchanged" as unknown as string, (raw: Record<string, unknown>) => handleProdStock(raw));
 
     conn.on("Error", (msg: unknown) => {
+      const text = typeof msg === "string" ? msg : JSON.stringify(msg);
+      this.onErrorCbs.forEach((cb) => cb(text));
+    });
+    conn.on("error" as unknown as string, (msg: unknown) => {
       const text = typeof msg === "string" ? msg : JSON.stringify(msg);
       this.onErrorCbs.forEach((cb) => cb(text));
     });
@@ -98,7 +253,18 @@ class LivestreamProductsClient {
   async ensureReady(livestreamId?: string) {
     await chatHubService.ensureStarted();
     if (livestreamId) {
-      try { await chatHubService.joinLivestream(livestreamId); } catch {}
+      // Important: join the viewers group to receive product broadcasts
+      try { 
+        await chatHubService.startViewingLivestream(livestreamId); 
+      } catch {
+        // Even if startViewingLivestream fails (auth issue), still try to join chat
+      }
+      // Also join the chat room for chat-related events
+      try { 
+        await chatHubService.joinLivestream(livestreamId); 
+      } catch {
+        // Ignore join chat errors
+      }
     }
     await this.bindHandlers();
   }
