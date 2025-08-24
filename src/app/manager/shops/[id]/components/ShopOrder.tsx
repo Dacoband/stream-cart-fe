@@ -45,7 +45,7 @@ import {
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
 import { OrderDetailModal } from "./OrderDetailModal";
-import { getOrderDetail } from "@/fake data/shop";
+import { getOrderDetail } from "../../../../../fake data/shop";
 
 type Order = {
   orderId: string;
@@ -344,7 +344,7 @@ export const ShopOrderList = ({ orders }: { orders: Order[] }) => {
                         <Eye className="w-4 h-4 mr-1" /> Xem
                       </Button>
                     </DialogTrigger>
-                    {selectedId === order.orderId && (
+                    {selectedId === order.orderId && selectedDetail && (
                       <OrderDetailModal order={selectedDetail} />
                     )}
                   </Dialog>

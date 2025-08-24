@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react'
-import { Loader2, UserRound, Calendar } from 'lucide-react'
+import React, { useState, useEffect } from "react";
+import { UserRound, Calendar } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -7,21 +7,21 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table'
-import { Avatar, AvatarImage } from '@/components/ui/avatar'
-import { AvatarFallback } from '@radix-ui/react-avatar'
-import { formatDateVN } from '@/components/common/FormatDate'
-import { Shop } from '@/types/shop/shop'
-import { User } from '@/types/auth/user'
-import { Address } from '@/types/address/address'
+} from "@/components/ui/table";
+import { Avatar, AvatarImage } from "@/components/ui/avatar";
+import { AvatarFallback } from "@radix-ui/react-avatar";
+import { formatDateVN } from "@/components/common/FormatDate";
+import { Shop } from "@/types/shop/shop";
+import { User } from "@/types/auth/user";
+import { Address } from "@/types/address/address";
 
 type Props = {
-  shop: Shop
-  seller?: User | null
-  address?: Address | null
-  shopOwner?: User | null
-  moderators?: User[]
-}
+  shop: Shop;
+  seller?: User | null;
+  address?: Address | null;
+  shopOwner?: User | null;
+  moderators?: User[];
+};
 
 export const ShopInfo = ({
   shop,
@@ -30,39 +30,39 @@ export const ShopInfo = ({
   shopOwner,
   moderators = [],
 }: Props) => {
-  const [clientRendered, setClientRendered] = useState(false)
+  const [clientRendered, setClientRendered] = useState(false);
 
   useEffect(() => {
-    setClientRendered(true)
-  }, [])
+    setClientRendered(true);
+  }, []);
 
   const shopInfo = [
-    ['Mã số thuế', shop.taxNumber || '—'],
+    ["Mã số thuế", shop.taxNumber || "—"],
     [
-      'Ngày tham gia',
+      "Ngày tham gia",
       clientRendered
-        ? new Date(shop.registrationDate).toLocaleDateString('vi-VN')
-        : '',
+        ? new Date(shop.registrationDate).toLocaleDateString("vi-VN")
+        : "",
     ],
-  ]
+  ];
 
   const ownerInfo = [
-    ['Họ và tên', shopOwner?.fullname || seller?.fullname || '—'],
-    ['Email', shopOwner?.email || seller?.email || '—'],
-    ['Số điện thoại', shopOwner?.phoneNumber || seller?.phoneNumber || '—'],
+    ["Họ và tên", shopOwner?.fullname || seller?.fullname || "—"],
+    ["Email", shopOwner?.email || seller?.email || "—"],
+    ["Số điện thoại", shopOwner?.phoneNumber || seller?.phoneNumber || "—"],
     [
-      'Tài khoản ngân hàng',
+      "Tài khoản ngân hàng",
       shop.bankAccountNumber && shop.bankName
         ? `${shop.bankAccountNumber} - ${shop.bankName}`
-        : '—',
+        : "—",
     ],
     [
-      'Địa chỉ',
+      "Địa chỉ",
       address
         ? `${address.street}, ${address.ward}, ${address.district}, ${address.city}`
-        : '—',
+        : "—",
     ],
-  ]
+  ];
 
   return (
     <div className="space-y-6">
@@ -161,16 +161,16 @@ export const ShopInfo = ({
                         className={`inline-flex items-center gap-2 px-2 py-1 rounded-full text-sm font-medium
                           ${
                             moderator.isActive
-                              ? 'bg-green-100 text-green-700'
-                              : 'bg-red-100 text-red-700'
+                              ? "bg-green-100 text-green-700"
+                              : "bg-red-100 text-red-700"
                           }`}
                       >
                         <span
                           className={`w-2 h-2 rounded-full ${
-                            moderator.isActive ? 'bg-green-600' : 'bg-red-600'
+                            moderator.isActive ? "bg-green-600" : "bg-red-600"
                           }`}
                         />
-                        {moderator.isActive ? 'Hoạt động' : 'Ngừng hoạt động'}
+                        {moderator.isActive ? "Hoạt động" : "Ngừng hoạt động"}
                       </span>
                     </TableCell>
                   </TableRow>
@@ -181,5 +181,5 @@ export const ShopInfo = ({
         </div>
       </div>
     </div>
-  )
-}
+  );
+};

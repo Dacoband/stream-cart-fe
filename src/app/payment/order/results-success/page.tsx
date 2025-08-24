@@ -7,26 +7,16 @@ import { ShoppingCart } from "lucide-react";
 import Link from "next/link";
 import { withRoleProtection } from "@/lib/requireRole";
 
-interface LottieAnimationProps {
-  loop?: boolean;
-  autoplay?: boolean;
-  className?: string;
-}
-
-const PaymentSuccess: React.FC<LottieAnimationProps> = ({
-  loop = false,
-  autoplay = true,
-  className = "w-36",
-}) => {
+const PaymentSuccess = () => {
   return (
     <Card className="w-[60vw]  py-14  gap-0 flex items-center ">
       <CardContent className="w-[65%] flex justify-center flex-col items-center mx-auto">
         <div className="h-36 mx-auto">
           <Lottie
             animationData={successAnimation}
-            loop={loop}
-            autoplay={autoplay}
-            className={className}
+            loop={false}
+            autoplay={true}
+            className="w-36"
           />
         </div>
         <h1 className="text-2xl font-bold text-gray-900 mb-2">
@@ -40,14 +30,14 @@ const PaymentSuccess: React.FC<LottieAnimationProps> = ({
             <span className=" text-gray-600">Mã đơn hàng:</span>
             <span className="font-medium">#SC-2024-001</span>
           </div>
-          <div className="flex justify-between items-center mb-2.5">
+          {/* <div className="flex justify-between items-center mb-2.5">
             <span className=" text-gray-600">Tổng tiền:</span>
             <span className=" font-medium">1.299.000 VNĐ</span>
-          </div>
-          <div className="flex justify-between items-center">
+          </div> */}
+          {/* <div className="flex justify-between items-center">
             <span className=" text-gray-600">Thanh toán:</span>
             <span className=" font-medium">Chờ thanh toán</span>
-          </div>
+          </div> */}
         </div>
         {/* Action Buttons */}
         <div className="grid grid-cols-2 gap-5 w-full mb-5">

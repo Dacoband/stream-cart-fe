@@ -1,4 +1,6 @@
-import React from "react";
+"use client";
+
+import React, { useState } from "react";
 import { Avatar, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -10,10 +12,27 @@ import {
 } from "lucide-react";
 import { ProductDetail } from "@/types/product/product";
 import Link from "next/link";
+import { useRouter } from 'next/navigation';
 interface InforShopProps {
   product: ProductDetail;
 }
 function InforShop({ product }: InforShopProps) {
+  const router = useRouter();
+  const [loadingChat, setLoadingChat] = useState(false);
+
+  const openChat = async () => {
+    if (!product?.shopId) return;
+    setLoadingChat(true);
+    try {
+  // navigation only; ChatProvider will create/join room for customer users
+  router.push(`/customer/chat?shopId=${product.shopId}`);
+    } catch (err) {
+      console.error('Open chat failed', err);
+    } finally {
+      setLoadingChat(false);
+    }
+  };
+
   return (
     <div className="mx-auto px-8 flex justify-between items-center ">
       <div className="flex gap-5 items-center">
@@ -52,12 +71,16 @@ function InforShop({ product }: InforShopProps) {
         <Button
           variant="outline"
           className="gap-1 text-black border-black hover:bg-white hover:text-black/70 hover:border-black/70 cursor-pointer"
+          onClick={openChat}
+          disabled={loadingChat}
         >
           <BotMessageSquare className="w-4 h-4" /> Chat nhanh
         </Button>
         <Button
           variant="outline"
           className="gap-1 text-black border-black hover:bg-white hover:text-black/70 hover:border-black/70 cursor-pointer"
+          onClick={openChat}
+          disabled={loadingChat}
         >
           <MessageSquareMore className="w-4 h-4" /> Chat với shop
         </Button>

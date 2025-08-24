@@ -108,3 +108,17 @@ export const getProductsByShop = async (shopId: string, filter: ProductFilter): 
     throw new Error('Không thể tải danh sách sản phẩm')
   }
 }
+
+export const getProductCountByShop = async (shopId: string, activeOnly = true): Promise<number> => {
+  try {
+    const response = await rootApi.get(`products/shop/${shopId}/count`, {
+      params: { activeOnly },
+    });
+
+    if (response.data && response.data.success) return response.data.data;
+    throw new Error(response.data?.message || 'Invalid response from product count');
+  } catch (error) {
+    console.error('Error fetching product count by shop:', error);
+    throw error;
+  }
+};

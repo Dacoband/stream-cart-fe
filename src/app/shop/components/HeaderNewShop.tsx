@@ -27,23 +27,15 @@ export function HeaderNewShop() {
   return (
     <NavigationMenu className="w-full bg-[#202328] max-w-none h-full px-32 flex items-center justify-between">
       <div className="flex gap-2 items-center">
-        <div
-          className="flex items-center justify-center flex-row 
-             hover:text-[#B0F847] hover:bg-[#202328]
-             active:bg-[#202328] active:text-[#B0F847] 
-             focus:bg-[#202328] focus:text-[#B0F847] 
-              px-2 py-1 rounded-md"
-        >
-          <Image
-            src="/logo2 .png"
-            alt="Stream Card Logo"
-            width={96}
-            height={96}
-            className="w-14 h-14 object-contain"
-          />
-          <div className="text-3xl text-[#B0F847] font-semibold font-sans">
-            Stream Cart
-          </div>
+        <Image
+          src="/logo2 .png"
+          alt="Stream Card Logo"
+          width={96}
+          height={96}
+          className="w-11 h-11 object-contain"
+        />
+        <div className="text-xl text-[#B0F847] font-semibold font-sans">
+          Stream Cart
         </div>
       </div>
       <div className="flex items-center justify-end h-full">

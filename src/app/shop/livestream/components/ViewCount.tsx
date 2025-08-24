@@ -1,32 +1,74 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import {
-  useParticipants,
-  useLocalParticipant,
-} from "@livekit/components-react";
-import { Track } from "livekit-client";
+import {} from "@livekit/components-react";
 import { UserRound } from "lucide-react";
+import React from "react";
+import { chatHubService, ViewerStatsPayload } from "@/services/signalr/chatHub";
 
-export function ViewerCount() {
-  const participants = useParticipants();
-  const { localParticipant } = useLocalParticipant();
+interface ViewerCountProps {
+  livestreamId?: string;
+}
 
-  const filtered = participants.filter((p) => {
-    // Loại chính mình
-    if (p.identity === localParticipant.identity) return false;
+export function ViewerCount({ livestreamId }: ViewerCountProps) {
+  // Viewer stats come from server via SignalR; no need to inspect LiveKit participants here
+  const [stats, setStats] = React.useState<ViewerStatsPayload | null>(null);
 
-    // Kiểm tra xem participant có đang share màn hình không
-    const screenTrackPub = p.getTrackPublication(Track.Source.ScreenShare);
-    const screenAudioPub = p.getTrackPublication(Track.Source.ScreenShareAudio);
+  // We rely on server stats for viewer count; do not derive from LiveKit participants
+  // Requirement: count viewers with roles Customer + Unknown only
+  const viewerCount = React.useMemo(() => {
+    if (!stats) return 0;
+    const roleMap = stats.viewersByRole || {};
 
-    const isSharingScreen =
-      (screenTrackPub?.track && !screenTrackPub.track.isMuted) ||
-      (screenAudioPub?.track && !screenAudioPub.track.isMuted);
+    // Helper to read a role value case-insensitively
+    const getRoleCount = (roleName: string) => {
+      for (const [role, count] of Object.entries(roleMap)) {
+        if (String(role).toLowerCase() === roleName.toLowerCase()) {
+          return Number(count) || 0;
+        }
+      }
+      return 0;
+    };
 
-    // Chỉ giữ những người KHÔNG share màn hình
-    return !isSharingScreen;
-  });
+    // Prefer server-provided CustomerViewers when available and add Unknown from role map
+    if (
+      typeof stats.customerViewers === "number" &&
+      Number.isFinite(stats.customerViewers)
+    ) {
+      const unknown = getRoleCount("Unknown");
+      return stats.customerViewers + unknown;
+    }
+
+    // Fallback: sum counts for Customer + Unknown from ViewersByRole
+    const customer = getRoleCount("Customer");
+    const unknown = getRoleCount("Unknown");
+    return customer + unknown;
+  }, [stats]);
+
+  React.useEffect(() => {
+    if (!livestreamId) return;
+    let mounted = true;
+    (async () => {
+      try {
+        await chatHubService.ensureStarted();
+        // Join group to receive stats; do NOT startViewing here to avoid double counting
+        await chatHubService.joinLivestream(livestreamId);
+        chatHubService.onViewerStats((payload) => {
+          if (!mounted) return;
+          if (
+            payload.livestreamId?.toLowerCase?.() === livestreamId.toLowerCase()
+          ) {
+            setStats(payload);
+          }
+        });
+      } catch {
+        // ignore
+      }
+    })();
+    return () => {
+      mounted = false;
+    };
+  }, [livestreamId]);
 
   return (
     <div className="flex ml-2">
@@ -40,7 +82,7 @@ export function ViewerCount() {
 
       <Button className="rounded-none">
         <UserRound />
-        {filtered.length}
+        {viewerCount}
       </Button>
     </div>
   );

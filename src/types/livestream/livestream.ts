@@ -19,6 +19,8 @@ export interface Livestream {
   approvalStatusContent: boolean;
   approvedByUserId: string | null;
   approvalDateContent: string | null;
+  livestreamHostId:string;
+  livestreamHostName:string;
   isPromoted: boolean;
   tags: string;
   products: LivestreamProduct[];}
@@ -44,6 +46,7 @@ export interface CreateLivestream {
   scheduledStartTime: Date; 
   thumbnailUrl: string;
   tags: string;
+  livestreamHostId:string;
   products: CreateLivestreamProduct[];
 }
 export interface CreateLivestreamProduct {

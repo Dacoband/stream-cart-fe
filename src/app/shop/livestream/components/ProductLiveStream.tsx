@@ -3,23 +3,68 @@
 import React from "react";
 import { ProductLiveStream } from "@/types/livestream/productLivestream";
 import { Card, CardContent, CardTitle } from "@/components/ui/card";
-import { getProductByLiveStreamId } from "@/services/api/livestream/productLivestream";
+// realtime-first: use SignalR via useLivestreamRealtime; API fallback not needed here
 import Image from "next/image";
 import { Input } from "@/components/ui/input";
-import { Edit, ImageIcon, Pin, PinOff, Search, Trash2 } from "lucide-react";
+import { ImageIcon, Pin, Search } from "lucide-react";
 import PriceTag from "@/components/common/PriceTag";
 import { Button } from "@/components/ui/button";
+import { useLivestreamRealtime } from "@/services/signalr/useLivestreamRealtime";
 
-function ProductsLiveStream({ livestreamId }: { livestreamId: string }) {
+type ProductsProps = {
+  livestreamId: string;
+};
+
+function ProductsLiveStream({ livestreamId }: ProductsProps) {
   const [products, setProducts] = React.useState<ProductLiveStream[]>([]);
   const [search, setSearch] = React.useState("");
+  const realtime = useLivestreamRealtime(livestreamId);
 
+  // map realtime products (normalized in hook) to typed ProductLiveStream when possible
   React.useEffect(() => {
-    const fetchProducts = async () => {
-      const data = await getProductByLiveStreamId(livestreamId);
-      setProducts(data);
-    };
-    fetchProducts();
+    const list = (realtime.products ?? []) as unknown[];
+    // best-effort shape mapping, tolerate backend casing/fields
+    const mapped = list.map((raw) => {
+      const r = raw as Record<string, unknown>;
+      const get = (keys: string[]) => {
+        for (const k of keys) if (r[k] !== undefined) return r[k];
+        return undefined;
+      };
+      const toStr = (v: unknown) => (v == null ? undefined : String(v));
+      const toNum = (v: unknown) => {
+        const n = Number(v);
+        return Number.isFinite(n) ? (n as number) : undefined;
+      };
+      const toBool = (v: unknown) => (v == null ? undefined : Boolean(v));
+      return {
+        id: toStr(get(["id", "Id", "ID"])) || "",
+        livestreamId:
+          toStr(get(["livestreamId", "LivestreamId"])) || livestreamId,
+        productId: toStr(get(["productId", "ProductId"])) || "",
+        variantId: toStr(get(["variantId", "VariantId"])) || undefined,
+        isPin: (toBool(get(["isPin", "IsPin"])) ?? false) as boolean,
+        price: toNum(get(["price", "Price"])) ?? 0,
+        originalPrice:
+          toNum(get(["originalPrice", "OriginalPrice"])) ?? undefined,
+        stock: toNum(get(["stock", "Stock"])) ?? 0,
+        productName: toStr(get(["productName", "ProductName"])) || "",
+        productImageUrl:
+          toStr(
+            get(["productImageUrl", "ProductImageUrl", "imageUrl", "ImageUrl"])
+          ) || undefined,
+        variantName: toStr(get(["variantName", "VariantName"])) || undefined,
+        sku: toStr(get(["sku", "SKU", "Sku"])) || undefined,
+      } as ProductLiveStream;
+    });
+    setProducts(mapped);
+  }, [realtime.products, livestreamId]);
+
+  // no manual debounce needed; hook mutates products on events
+
+  // initial load: ask server to push the current products to this client
+  React.useEffect(() => {
+    realtime.refreshProducts?.();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [livestreamId]);
 
   // Lọc sản phẩm theo tên
@@ -48,20 +93,16 @@ function ProductsLiveStream({ livestreamId }: { livestreamId: string }) {
       <CardContent className="overflow-y-auto flex-1 mt-5 px-2 space-y-3">
         {filteredProducts.length > 0 ? (
           filteredProducts.map((product) => (
-            <Card key={product.id} className=" py-2 px-2 rounded-sm gap-2 ">
+            <Card key={product.id} className=" py-2 px-2 rounded-none gap-2 ">
               <div className="flex justify-between border-b pb-1">
-                <Button className="bg-[#B0F847]/90 text-black rounded-full h-8 w-8  cursor-pointer flex items-center justify-center hover:bg-[#B0F847]/70">
-                  {product.isPinned ? <PinOff size={16} /> : <Pin size={16} />}
-                </Button>
-
-                <div>
-                  <Button className=" text-blue-500 bg-white rounded-none cursor-pointer shadow-none hover:bg-white hover:text-blue-400">
-                    <Edit /> Chỉnh sửa
-                  </Button>
-                  <Button className=" text-red-500 bg-white rounded-none cursor-pointer shadow-none hover:bg-white hover:text-red-400">
-                    <Trash2 /> Xóa
-                  </Button>
+                <div className="text-sm flex items-center text-gray-500">
+                  Số lượng: {product.stock}
                 </div>
+                {product.isPin && (
+                  <Button variant="outline" size="icon">
+                    <Pin className="w-4 h-4" />
+                  </Button>
+                )}
               </div>
               <div className="flex gap-3">
                 {product.productImageUrl ? (
@@ -70,7 +111,7 @@ function ProductsLiveStream({ livestreamId }: { livestreamId: string }) {
                     width={85}
                     src={product.productImageUrl}
                     alt={product.productName}
-                    className="rounded object-cover"
+                    className="rounded object-cover h-[85px] w-[85px]"
                   />
                 ) : (
                   <div className="h-[85px] w-[85px] bg-gray-200 flex items-center justify-center rounded">
@@ -78,17 +119,25 @@ function ProductsLiveStream({ livestreamId }: { livestreamId: string }) {
                   </div>
                 )}
                 <div className="flex-1 flex flex-col items-start">
-                  <h3 className="font-medium text-sm line-clamp-2">
+                  <h3 className="font-medium text-sm mb-2 line-clamp-1">
                     {product.productName}
                   </h3>
-                  <p className="text-red-500 font-semibold text-sm">
-                    <PriceTag value={product.price} />
-                  </p>
+                  <p className="text-xs text-gray-500">SKU: {product.sku}</p>
                   {product.variantName && (
                     <p className="text-xs text-gray-500">
                       Phân loại: {product.variantName}
                     </p>
                   )}
+                  <div className="flex gap-4">
+                    <p className="text-red-500 font-semibold mt-2">
+                      <PriceTag value={product.price} />
+                    </p>
+                    {typeof product.originalPrice !== "undefined" && (
+                      <p className="text-gray-500 font-semibold mt-2 line-through">
+                        <PriceTag value={product.originalPrice} />
+                      </p>
+                    )}
+                  </div>
                 </div>
               </div>
             </Card>

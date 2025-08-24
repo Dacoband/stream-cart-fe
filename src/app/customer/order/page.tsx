@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Wallet } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import AddressOrder from "./components/AddressOrder";
 import ProductsOrder from "./components/ProductsOrder";
 import MethodOrder from "./components/MethodOrder";
@@ -11,6 +11,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import PriceTag from "@/components/common/PriceTag";
 import { previewOrder } from "@/services/api/cart/cart";
 import { PreviewOrder } from "@/types/Cart/Cart";
+import { previewOrderLive } from "@/services/api/livestream/livestreamCart";
+import { PreviewOrderLive } from "@/types/livestream/cartLive";
 import { CreateOrder, Order } from "@/types/order/order";
 import { createOrder } from "@/services/api/order/order";
 import { Address } from "@/types/address/address";
@@ -20,9 +22,10 @@ import {
 } from "@/types/deliveries/deliveries";
 import { previewDeliveries } from "@/services/api/deliveries/deliveries";
 import { deleteCart } from "@/services/api/cart/cart";
+import { livestreamCartClient } from "@/services/signalr/livestreamCartClient";
 
 import { toast } from "sonner";
-export default function OrderPage() {
+function OrderPageInner() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [cartItemIds, setCartItemIds] = useState<string[]>([]);
@@ -55,21 +58,29 @@ export default function OrderPage() {
 
     router.push(`?${params.toString()}`);
   };
-  const [orderProduct, setOrderProduct] = useState<PreviewOrder | null>(null);
+  const [orderProduct, setOrderProduct] = useState<
+    PreviewOrder | PreviewOrderLive | null
+  >(null);
 
   useEffect(() => {
     const fetchPreview = async () => {
       try {
         if (cartItemIds.length === 0) return;
-        const res: PreviewOrder = await previewOrder(cartItemIds);
-        setOrderProduct(res);
+        const isLive = !!(searchParams.get("live") ?? searchParams.has("live"));
+        if (isLive) {
+          const res: PreviewOrderLive = await previewOrderLive(cartItemIds);
+          setOrderProduct(res);
+        } else {
+          const res: PreviewOrder = await previewOrder(cartItemIds);
+          setOrderProduct(res);
+        }
       } catch (error) {
         console.error("Lỗi khi xem trước đơn hàng:", error);
       }
     };
 
     fetchPreview();
-  }, [cartItemIds]);
+  }, [cartItemIds, searchParams]);
 
   useEffect(() => {
     const fetchDeliveries = async () => {
@@ -134,10 +145,13 @@ export default function OrderPage() {
         })),
       };
     });
+    const isLive = !!(searchParams.get("live") ?? searchParams.has("live"));
+    const liveId = searchParams.get("livestreamId");
+
     const payload: CreateOrder = {
       paymentMethod: selectedPaymentMethod,
       addressId: AddressInfo.id,
-      livestreamId: null,
+      livestreamId: isLive ? liveId : null,
       createdFromCommentId: null,
       ordersByShop,
     };
@@ -155,7 +169,11 @@ export default function OrderPage() {
         return;
       }
       try {
-        await deleteCart(cartItemIds);
+        if (isLive && liveId) {
+          await livestreamCartClient.clearCart(liveId);
+        } else {
+          await deleteCart(cartItemIds);
+        }
       } catch (err) {
         console.warn("Không thể xóa giỏ hàng:", err);
       }
@@ -240,7 +258,7 @@ export default function OrderPage() {
                 <div className=" text-rose-500 font-medium text-2xl">
                   <PriceTag
                     value={
-                      (orderProduct?.subTotal || 0) +
+                      (orderProduct?.totalAmount || 0) +
                       (deliveryInfo?.totalAmount || 0)
                     }
                   />
@@ -263,5 +281,13 @@ export default function OrderPage() {
         </Card>
       </div>
     </div>
+  );
+}
+
+export default function OrderPage() {
+  return (
+    <Suspense fallback={<div className="p-4">Đang tải trang đặt hàng...</div>}>
+      <OrderPageInner />
+    </Suspense>
   );
 }

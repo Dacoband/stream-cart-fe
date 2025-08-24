@@ -18,6 +18,7 @@ export default async function LayoutCustomer({
             <div className="w-full mt-[8vh]">{children}</div>
           </div>
         </div>
+
         <Footer />
       </div>
     </CartProvider>

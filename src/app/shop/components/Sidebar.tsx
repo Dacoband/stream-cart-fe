@@ -9,6 +9,7 @@ import {
   ScanBarcode,
   Video,
   UsersRound,
+  Zap,
 } from "lucide-react";
 import {
   Sidebar,
@@ -19,7 +20,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-
+import { useAuth } from "@/lib/AuthContext";
 const items = [
   {
     title: "Thống kê",
@@ -33,7 +34,7 @@ const items = [
   },
   {
     title: "Đơn hàng",
-    url: "/shop/order",
+    url: "/shop/manage-orders",
     icon: Package,
   },
 
@@ -42,10 +43,14 @@ const items = [
     url: "/shop/livestreams",
     icon: Video,
   },
-
+  {
+    title: "Flash Sale",
+    url: "/shop/manager-flashSale",
+    icon: Zap,
+  },
   {
     title: "Voucher",
-    url: "/admin/vouchers",
+    url: "/shop/manager-vouchers",
     icon: TicketPercent,
   },
 
@@ -63,6 +68,14 @@ const items = [
 
 export function AppSidebar() {
   const pathname = usePathname();
+  const { user } = useAuth();
+  const visibleItems =
+    user?.role === 3
+      ? items.filter(
+          (it) =>
+            it.url !== "/admin/transactions" && it.url !== "/shop/moderators"
+        )
+      : items;
 
   return (
     <Sidebar
@@ -73,7 +86,7 @@ export function AppSidebar() {
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
-              {items.map((item) => (
+              {visibleItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton
                     asChild

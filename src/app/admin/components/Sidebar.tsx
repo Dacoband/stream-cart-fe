@@ -1,15 +1,7 @@
-'use client'
+"use client";
 
-import { usePathname } from 'next/navigation'
-import {
-  LayoutDashboard,
-  Store,
-  TicketPercent,
-  PieChart,
-  ShieldCheck,
-  Package,
-  Wallet,
-} from 'lucide-react'
+import { usePathname } from "next/navigation";
+import { PieChart, ShieldCheck } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -18,48 +10,28 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-} from '@/components/ui/sidebar'
+} from "@/components/ui/sidebar";
 
 const items = [
   {
-    title: 'Thống kê',
-    url: '/admin/dashboard',
+    title: "Thống kê",
+    url: "/admin/dashboard",
     icon: PieChart,
   },
   {
-    title: 'Chính sách',
-    url: '/admin/policy',
+    title: "Tài khoản",
+    url: "/admin/accounts",
     icon: ShieldCheck,
   },
   {
-    title: 'Quản lý cửa hàng',
-    url: '/admin/shops',
-    icon: Store,
+    title: "Đánh giá live",
+    url: "/admin/live-reviews",
+    icon: ShieldCheck,
   },
-  {
-    title: 'Danh mục',
-    url: '/admin/categories',
-    icon: LayoutDashboard,
-  },
-  {
-    title: 'Voucher',
-    url: '/admin/vouchers',
-    icon: TicketPercent,
-  },
-  {
-    title: 'Đơn hoàn trả',
-    url: '/admin/refunds',
-    icon: Package,
-  },
-  {
-    title: 'Giao dịch',
-    url: '/admin/transactions',
-    icon: Wallet,
-  },
-]
+];
 
 export function AppSidebar() {
-  const pathname = usePathname()
+  const pathname = usePathname();
 
   return (
     <Sidebar
@@ -76,8 +48,8 @@ export function AppSidebar() {
                     asChild
                     className={
                       pathname === item.url
-                        ? 'bg-base text-black mx-auto '
-                        : 'text-white hover:bg-gray-800 hover:text-gray-400 mx-auto'
+                        ? "bg-base text-black mx-auto "
+                        : "text-white hover:bg-gray-800 hover:text-gray-400 mx-auto"
                     }
                   >
                     <a
@@ -97,5 +69,5 @@ export function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
     </Sidebar>
-  )
+  );
 }

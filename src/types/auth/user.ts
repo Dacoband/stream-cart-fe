@@ -85,3 +85,9 @@ export interface Moderator{
   lastModifiedAt:string;
   lastModifieBy:string;
 }
+export interface UserShop{
+ id:string;
+ fullname:string;
+ role:number
+  
+}

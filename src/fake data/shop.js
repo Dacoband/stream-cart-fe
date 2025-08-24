@@ -1,6 +1,6 @@
-import { format } from 'date-fns'
 
-export const getShopProducts = async (shopId) => {
+
+export const getShopProducts = async () => {
   return {
     data: [
       {
@@ -108,7 +108,7 @@ export const getShopProducts = async (shopId) => {
     ],
   }
 }
-export const getShopActivities = async (shopId) => {
+export const getShopActivities = async () => {
   return {
     data: [
       {
@@ -211,7 +211,7 @@ export const getShopAddress = async (shopId) => {
     },
   }
 }
-export const getShopTransactions = async (shopId) => {
+export const getShopTransactions = async () => {
   return {
     data: [
       {
@@ -245,7 +245,7 @@ export const getShopTransactions = async (shopId) => {
 }
 // services/api/shop/membership.ts
 
-export const getShopMemberships = async (shopId) => {
+export const getShopMemberships = async () => {
   return {
     data: [
       {
@@ -280,7 +280,7 @@ export const getShopMemberships = async (shopId) => {
     ],
   }
 }
-export const getShopOrders = async (shopId) => {
+export const getShopOrders = async () => {
   return {
     data: [
       {
@@ -312,7 +312,7 @@ export const getOrderDetail = async (id) => {
   return {
     data: [
       {
-        orderId: 'ORD001',
+        orderId: id,
         customerName: 'Nguyễn Văn A',
         totalAmount: 350000,
         status: 'COMPLETED',

@@ -1,15 +1,15 @@
-'use client'
-import React, { useEffect, useState } from 'react'
-import { useParams } from 'next/navigation'
+"use client";
+import React, { useEffect, useState } from "react";
+import { useParams } from "next/navigation";
 // import { Button } from "@/components/ui/button";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
-import { getShopDetail, getShopMembers } from '@/services/api/shop/shop'
-import { getAddressByShopId } from '@/services/api/address/address'
-import { getUserById } from '@/services/api/auth/account'
-import { getPagedProducts } from '@/services/api/product/product'
-import { ShopInfo } from '@/app/manager/shops/[id]/components/ShopInfo'
-import { ShopProductList } from '@/app/manager/shops/[id]/components/ShopProduct'
-import { TransactionHistory } from '@/app/manager/shops/[id]/components/TransactionHistory'
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { getShopDetail, getShopMembers } from "@/services/api/shop/shop";
+import { getAddressByShopId } from "@/services/api/address/address";
+import { getUserById } from "@/services/api/auth/account";
+import { getPagedProducts } from "@/services/api/product/product";
+import { ShopInfo } from "@/app/manager/shops/[id]/components/ShopInfo";
+import { ShopProductList } from "@/app/manager/shops/[id]/components/ShopProduct";
+import { TransactionHistory } from "@/app/manager/shops/[id]/components/TransactionHistory";
 // import Image from 'next/image'
 import {
   // Star,
@@ -20,105 +20,105 @@ import {
   Boxes,
   CreditCard,
   CalendarClock,
-} from 'lucide-react'
-import { toast } from 'sonner'
-import type { Shop } from '@/types/shop/shop' // adjust path if needed
-import type { Product } from '@/types/product/product' // adjust path if needed
-import type { User } from '@/types/auth/user'
-import type { Address } from '@/types/address/address'
-import ShopHeader from './components/ShopHeader'
-import { ShopMembership } from './components/ShopMembership'
-import { ShopOrderList } from './components/ShopOrder'
+} from "lucide-react";
+import { toast } from "sonner";
+import type { Shop } from "@/types/shop/shop"; // adjust path if needed
+import type { Product } from "@/types/product/product"; // adjust path if needed
+import type { User } from "@/types/auth/user";
+import type { Address } from "@/types/address/address";
+import ShopHeader from "./components/ShopHeader";
+import { ShopMembership } from "./components/ShopMembership";
+import { ShopOrderList } from "./components/ShopOrder";
 
 type Transaction = {
-  transactionId: string
-  type: 'PAYMENT' | 'REFUND' | 'WITHDRAW' | 'DEPOSIT'
-  amount: number
-  description: string
-  status: 'PENDING' | 'COMPLETED' | 'FAILED'
-  createdAt: string
-  orderId?: string
-  refundId?: string
-}
+  transactionId: string;
+  type: "PAYMENT" | "REFUND" | "WITHDRAW" | "DEPOSIT";
+  amount: number;
+  description: string;
+  status: "PENDING" | "COMPLETED" | "FAILED";
+  createdAt: string;
+  orderId?: string;
+  refundId?: string;
+};
 
 type Membership = {
-  membershipId: string
-  name: string
-  description?: string
-  price: number
-  startDate: string
-  endDate: string
-  duration?: string
-  maxProduct?: number
-  maxLivestream?: number
-  commission: number // <-- ensure this is number, not boolean or optional
-  createdAt?: string
-  updatedAt?: string
-}
+  membershipId: string;
+  name: string;
+  description?: string;
+  price: number;
+  startDate: string;
+  endDate: string;
+  duration?: string;
+  maxProduct?: number;
+  maxLivestream?: number;
+  commission: number; // <-- ensure this is number, not boolean or optional
+  createdAt?: string;
+  updatedAt?: string;
+};
 type Order = {
-  orderId: string
-  customerName: string
-  totalAmount: number
-  status: string
-  createdAt: string
-}
+  orderId: string;
+  customerName: string;
+  totalAmount: number;
+  status: string;
+  createdAt: string;
+};
 const ShopDetailPage = () => {
-  const params = useParams()
+  const params = useParams();
   // const router = useRouter();
-  const [shop, setShop] = useState<Shop | null>(null)
-  const [products, setProducts] = useState<Product[]>([])
+  const [shop, setShop] = useState<Shop | null>(null);
+  const [products, setProducts] = useState<Product[]>([]);
 
-  const [loading, setLoading] = useState(true)
-  const [seller, setSeller] = useState<User | null>(null)
-  const [address, setAddress] = useState<Address | null>(null)
-  const [transactions, setTransactions] = useState<Transaction[]>([])
-  const [memberships, setMemberships] = useState<Membership[]>([])
-  const [orders, setOrders] = useState<Order[]>([])
-  const [shopOwner, setShopOwner] = useState<User | null>(null)
-  const [moderators, setModerators] = useState<User[]>([])
+  const [loading, setLoading] = useState(true);
+  const [seller, setSeller] = useState<User | null>(null);
+  const [address, setAddress] = useState<Address | null>(null);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [memberships, setMemberships] = useState<Membership[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [shopOwner, setShopOwner] = useState<User | null>(null);
+  const [moderators, setModerators] = useState<User[]>([]);
 
   useEffect(() => {
     const fetchAll = async () => {
-      if (typeof params.id !== 'string') {
-        toast.error('Không tìm thấy ID shop')
-        setLoading(false)
-        return
+      if (typeof params.id !== "string") {
+        toast.error("Không tìm thấy ID shop");
+        setLoading(false);
+        return;
       }
 
       try {
-        const id = params.id
+        const id = params.id;
 
         // Fetch shop detail
-        const shopRes = await getShopDetail(id)
-        setShop(shopRes.data || shopRes)
+        const shopRes = await getShopDetail(id);
+        setShop(shopRes.data || shopRes);
 
         // Fetch address
         try {
-          const addressRes = await getAddressByShopId(id)
-          setAddress(addressRes)
+          const addressRes = await getAddressByShopId(id);
+          setAddress(addressRes);
         } catch (error) {
-          console.error('Error fetching address:', error)
-          setAddress(null)
+          console.error("Error fetching address:", error);
+          setAddress(null);
         }
 
         // Fetch shop owner and moderators
         try {
-          const shopData = shopRes.data || shopRes
+          const shopData = shopRes.data || shopRes;
           if (shopData?.createdBy) {
-            const owner = await getUserById(shopData.createdBy)
-            setShopOwner(owner)
+            const owner = await getUserById(shopData.createdBy);
+            setShopOwner(owner);
           }
         } catch (error) {
-          console.error('Error fetching shop owner:', error)
+          console.error("Error fetching shop owner:", error);
         }
 
         try {
-          const members = await getShopMembers(id)
-          console.log('member', members)
-          setModerators(Array.isArray(members) ? members : [])
+          const members = await getShopMembers(id);
+          console.log("member", members);
+          setModerators(Array.isArray(members) ? members : []);
         } catch (error) {
-          console.error('Error fetching moderators:', error)
-          setModerators([])
+          console.error("Error fetching moderators:", error);
+          setModerators([]);
         }
 
         // Fetch products for the shop
@@ -128,34 +128,37 @@ const ShopDetailPage = () => {
             pageNumber: 1,
             pageSize: 50,
             activeOnly: false,
-          })
-          setProducts(Array.isArray(productsRes) ? productsRes : [])
+            sortOption: null,
+            categoryId: null,
+            inStockOnly: false,
+          });
+          setProducts(Array.isArray(productsRes) ? productsRes : []);
         } catch (error) {
-          console.error('Error fetching products:', error)
-          setProducts([])
+          console.error("Error fetching products:", error);
+          setProducts([]);
         }
 
         // Set empty arrays for other data that doesn't have real APIs yet
-        setTransactions([])
-        setSeller(null)
-        setMemberships([])
-        setOrders([])
+        setTransactions([]);
+        setSeller(null);
+        setMemberships([]);
+        setOrders([]);
       } catch (error) {
-        console.log(error)
-        toast.error('Không thể tải dữ liệu')
+        console.log(error);
+        toast.error("Không thể tải dữ liệu");
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
-    }
+    };
 
-    fetchAll()
-  }, [params.id])
+    fetchAll();
+  }, [params.id]);
 
-  if (loading) return <div className="p-8 text-center">Đang tải...</div>
+  if (loading) return <div className="p-8 text-center">Đang tải...</div>;
   if (!shop)
     return (
       <div className="p-8 text-center text-red-500">Không tìm thấy shop</div>
-    )
+    );
 
   return (
     <div className="max-w-6xl mx-auto p-6">
@@ -234,7 +237,7 @@ const ShopDetailPage = () => {
         </TabsContent>
       </Tabs>
     </div>
-  )
-}
+  );
+};
 
-export default ShopDetailPage
+export default ShopDetailPage;

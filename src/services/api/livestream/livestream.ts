@@ -89,6 +89,26 @@ export const getLivestreamByShopId = async (shopId: string) => {
     throw error;
   }
 };
+
+export const getLivestreamStatisticsByShop = async (shopId: string) => {
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      throw new Error("Not found token.");
+    }
+
+    const response = await rootApi.get(`/livestreams/shop/${shopId}/statistics`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    return response.data.data;
+  } catch (error) {
+    console.error("Error fetching livestream statistics:", error);
+    throw error;
+  }
+};
 export const startLivestreamById = async (Id: string) => {
   try {
     const token = localStorage.getItem("token");
@@ -150,7 +170,7 @@ export const deleteLivestream = async (Id: string) => {
     if (!token) {
       throw new Error("Not found token.");
     }
-    const response = await rootApi.delete(`/livestreams/${Id}/start`, {
+    const response = await rootApi.delete(`/livestreams/${Id}`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },

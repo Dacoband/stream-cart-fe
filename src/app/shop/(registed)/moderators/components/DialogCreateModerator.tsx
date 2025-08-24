@@ -132,10 +132,10 @@ const DialogCreateModerator = ({ onSuccess }: DialogCreate) => {
               </div>
               <div>
                 <DialogTitle className="text-xl font-semibold">
-                  Cập nhật thông tin nhân viên
+                  Tạo thông tin nhân viên
                 </DialogTitle>
                 <DialogDescription className="text-gray-500">
-                  Chỉnh sửa thông tin nhân viên trong hệ thống
+                  Tạo mới thông tin nhân viên trong hệ thống
                 </DialogDescription>
               </div>
             </div>
@@ -344,7 +344,7 @@ const DialogCreateModerator = ({ onSuccess }: DialogCreate) => {
                     ) : (
                       <>
                         <CheckCircle className="mr-1" />
-                        Lưu thay đổi
+                        Tạo nhân viên
                       </>
                     )}
                   </Button>

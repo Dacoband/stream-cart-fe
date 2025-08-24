@@ -151,7 +151,7 @@ function Page() {
         localStorage.setItem("userData", JSON.stringify(userData));
       }
       toast.success("Đơn đăng ký cửa hàng thành công");
-      router.push("/shop/registerAddress");
+      router.push("/shop/pending-register");
     } catch (error: unknown) {
       const err = error as AxiosError<{ error: string }>;
       const message = err?.response?.data?.error || "Có lỗi xảy ra!";

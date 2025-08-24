@@ -233,22 +233,19 @@ const HasVariant: React.FC<HasVariantProps> = ({
                       />
 
                       {/* Các giá trị */}
-                      <div className="grid grid-cols-3 gap-5 mt-2">
+                      <div className="grid grid-cols-3 w-full gap-5 mt-2">
                         {attr.values.map((value: string, valIndex: number) => (
-                          <div
-                            key={valIndex}
-                            className="flex items-center gap-2"
-                          >
+                          <div key={valIndex} className="relative w-full">
                             <FormField
                               control={form.control}
                               name={`attributes.${attrIndex}.values.${valIndex}`}
                               render={({ field }) => (
-                                <FormItem>
+                                <FormItem className="w-full">
                                   <FormControl>
                                     <Input
                                       {...field}
                                       placeholder={`Giá trị ${valIndex + 1}`}
-                                      className="bg-white rounded-none"
+                                      className="bg-white rounded-none w-full pr-8"
                                     />
                                   </FormControl>
                                   <FormMessage />
@@ -270,7 +267,7 @@ const HasVariant: React.FC<HasVariantProps> = ({
                                   );
                                   form.setValue("attributes", currentAttrs);
                                 }}
-                                className="ml-1"
+                                className="absolute right-1 top-1/2 -translate-y-1/2"
                               >
                                 <Trash className="text-red-500 w-4 h-4" />
                               </Button>

@@ -2,7 +2,28 @@ import type { NextConfig } from 'next'
 
 const nextConfig: NextConfig = {
   images: {
-    domains: ['i.pinimg.com', 'fra.cloud.appwrite.io',  'qr.sepay.vn','api.vietqr.io',"vietqr.net"],
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "i.pinimg.com",
+      },
+      {
+        protocol: "https",
+        hostname: "fra.cloud.appwrite.io",
+      },
+      {
+        protocol: "https",
+        hostname: "qr.sepay.vn",
+      },
+      {
+        protocol: "https",
+        hostname: "api.vietqr.io",
+      },
+      {
+        protocol: "https",
+        hostname: "vietqr.net",
+      },
+    ],
   },
 }
 
