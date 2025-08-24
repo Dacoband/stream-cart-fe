@@ -123,6 +123,19 @@ class ChatHubService {
           c.on('receiveviewerstats', () => {});
           c.on('userjoined', () => {});
           c.on('livestreamproductsloaded', () => {});
+          c.on('pinnedproductsupdated', () => {});
+          c.on('livestreamproductstockupdated', () => {});
+          c.on('livestreamproductupdated', () => {});
+          c.on('livestreamproductdeleted', () => {});
+          c.on('productstockupdated', () => {});
+          c.on('stockchanged', () => {});
+          c.on('error', () => {});
+          c.on('updatesuccess', (payload) => {
+            console.log('[DEBUG] ✅ updatesuccess event received:', payload);
+          });
+          c.on('UpdateSuccess', (payload) => {
+            console.log('[DEBUG] ✅ UpdateSuccess event received:', payload);
+          });
         } catch {
           /* ignore */
         }
@@ -194,18 +207,39 @@ class ChatHubService {
   }
 
   private async invokeWhenConnected<T = unknown>(method: string, ...args: unknown[]): Promise<T> {
+    console.log("[DEBUG] invokeWhenConnected called with method:", method, "args:", args);
     const conn = await this.waitForConnected(8000);
     // Type cast is safe as invoke is generic
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return (conn.invoke as any)(method, ...args);
+    const result = (conn.invoke as any)(method, ...args);
+    console.log("[DEBUG] invokeWhenConnected result for", method, ":", result);
+    return result;
   }
 
   async joinLivestream(livestreamId: string) {
-    await this.invokeWhenConnected('JoinLivestreamChatRoom', livestreamId);
+    console.log("[DEBUG] chatHub.joinLivestream called with:", livestreamId);
+    const result = await this.invokeWhenConnected('JoinLivestreamChatRoom', livestreamId);
+    console.log("[DEBUG] joinLivestream result:", result);
+    return result;
   }
 
   async startViewingLivestream(livestreamId: string) {
-    await this.invokeWhenConnected('StartViewingLivestream', livestreamId);
+    console.log("[DEBUG] chatHub.startViewingLivestream called with:", livestreamId);
+    const result = await this.invokeWhenConnected('StartViewingLivestream', livestreamId);
+    console.log("[DEBUG] startViewingLivestream result:", result);
+    console.log(`[DEBUG] 📡 Viewer should now be in group: livestream_viewers_${livestreamId}`);
+    
+    // Add debugging for group membership verification
+    setTimeout(async () => {
+      console.log('[DEBUG] 🔍 Checking if viewer is properly in group after 2 seconds...');
+      try {
+        await this.invokeWhenConnected('VerifyGroupMembership', livestreamId);
+      } catch (error) {
+        console.log('[DEBUG] ❌ Group membership verification failed:', error);
+      }
+    }, 2000);
+    
+    return result;
   }
 
   async stopViewingLivestream(livestreamId: string) {
@@ -344,6 +378,10 @@ class ChatHubService {
   }
 
   async getPinnedProducts(livestreamId: string) {
+    const key = `getPinned|${livestreamId}`;
+    const last = this.lastPinAt.get(key) ?? 0;
+    if (Date.now() - last < 1000) return []; // throttle to 1 second
+    this.lastPinAt.set(key, Date.now());
     return this.invokeWhenConnected('GetPinnedProducts', livestreamId);
   }
 
@@ -366,7 +404,16 @@ class ChatHubService {
   }
 
   async updateLivestreamProductStockById(id: string, newStock: number) {
-    return this.invokeWhenConnected('UpdateLivestreamProductStockById', id, newStock);
+    console.log("[DEBUG] updateLivestreamProductStockById called with id:", id, "newStock:", newStock);
+    const result = await this.invokeWhenConnected('UpdateLivestreamProductStockById', id, newStock);
+    console.log("[DEBUG] updateLivestreamProductStockById result:", result);
+    return result;
+  }
+
+  // Add test method to broadcast to ALL connections (for debugging group issues)
+  async testBroadcastToAll(livestreamId: string, message: string) {
+    console.log('[DEBUG] 🧪 Testing broadcast to ALL connections:', { livestreamId, message });
+    return await this.invokeWhenConnected('TestBroadcastToAll', livestreamId, message);
   }
 
   async deleteLivestreamProductById(id: string) {

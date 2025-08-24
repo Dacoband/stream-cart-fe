@@ -319,7 +319,10 @@ export function useLivestreamRealtime(livestreamId?: string): LivestreamRealtime
         lastPinAtRef.current.set(key, Date.now());
       });
     },
-    updateStockById: (id, newStock) => chatHubService.updateLivestreamProductStockById(id, newStock),
+    updateStockById: (id, newStock) => {
+      console.log("[DEBUG realtime] updateStockById called with id:", id, "newStock:", newStock);
+      return chatHubService.updateLivestreamProductStockById(id, newStock);
+    },
     deleteById: (id) => chatHubService.deleteLivestreamProductById(id),
     softDeleteById: (id, reason) => chatHubService.softDeleteLivestreamProductById(id, reason),
 
