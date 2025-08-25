@@ -49,6 +49,18 @@ function LiveStreamPage() {
     useState<Livestream | null>(null);
   const [loadingDelete, setLoadingDelete] = useState(false);
   const router = useRouter();
+  // Determine the correct label based on host and livestream state
+  const getActionLabel = React.useCallback(
+    (ls: Livestream) => {
+      if (ls.actualEndTime) return "Đã kết thúc";
+      const isHost = user && ls.livestreamHostId === user.id;
+      if (ls.status) {
+        return isHost ? "Tiếp tục" : "Hỗ trợ live";
+      }
+      return isHost ? "Bắt đầu" : "Hỗ trợ live";
+    },
+    [user]
+  );
   const fetchLivestreams = React.useCallback(async () => {
     try {
       if (!user?.shopId) return;
@@ -269,7 +281,7 @@ function LiveStreamPage() {
                               handleContinueLivestream(livestream.id)
                             }
                           >
-                            Vào live
+                            {getActionLabel(livestream)}
                           </Button>
                         ) : (
                           <Button
@@ -286,9 +298,7 @@ function LiveStreamPage() {
                             }
                             disabled={!!livestream.actualEndTime}
                           >
-                            {livestream.actualEndTime
-                              ? "Đã kết thúc"
-                              : "Bắt đầu "}
+                            {getActionLabel(livestream)}
                           </Button>
                         )}
                       </TableCell>
