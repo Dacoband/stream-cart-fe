@@ -119,7 +119,7 @@ const StatusIcon = ({ status }: { status: string }) => {
    Page
 =========================== */
 export default function MyMembershipPage() {
-  const { user, loading: authLoading = false } = useAuth() as any
+  const { user, loading: authLoading = false } = useAuth()
 
   // UI/state
   const [mounted, setMounted] = useState(false)
@@ -145,7 +145,7 @@ export default function MyMembershipPage() {
       shopId: user.shopId,
       pageIndex: 1,
       pageSize: 50,
-      status: activeTab as any,
+      status: activeTab,
       startDate: fromDate ? new Date(fromDate) : undefined,
       endDate: toDate ? new Date(toDate) : undefined,
     }
@@ -299,7 +299,7 @@ export default function MyMembershipPage() {
                 {!!m.maxProduct && (
                   <div className="flex items-center gap-2">
                     <Package className="h-4 w-4 text-gray-500" />
-                    <span>Tối đa: {m.maxProduct} sản phẩm</span>
+                    <span>Tối đa: {m.maxProduct} nhân viên</span>
                   </div>
                 )}
                 {!!m.commission && (

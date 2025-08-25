@@ -74,11 +74,10 @@ export default function MembershipsPage() {
       pageSize: 12,
       sortBy: SortByMembershipEnum.Price,
       sortDirection,
-      name: debouncedSearch || undefined,
-      ...(debouncedSearch ? { keyword: debouncedSearch } : {}),
-      fromPrice: priceFrom ? Number(priceFrom) : undefined,
-      toPrice: priceTo ? Number(priceTo) : undefined,
-    } as any
+      ...(debouncedSearch && { type: debouncedSearch }),
+      ...(priceFrom && { fromPrice: Number(priceFrom) }),
+      ...(priceTo && { toPrice: Number(priceTo) }),
+    }
 
     const paramsKey = JSON.stringify({
       q: debouncedSearch || '',
