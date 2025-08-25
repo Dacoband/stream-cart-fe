@@ -24,7 +24,6 @@ const ChatUI: React.FC = () => {
       if (raw) {
         const parsed = JSON.parse(raw) as Record<string, unknown>;
         setCurrentUserId((parsed.id as string) ?? null);
-        // try multiple possible keys for user avatar
         const avatar =
           (parsed["avatarUrl"] as string) ||
           (parsed["avatarURL"] as string) ||
