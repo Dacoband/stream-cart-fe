@@ -109,6 +109,35 @@ export const getLivestreamStatisticsByShop = async (shopId: string) => {
     throw error;
   }
 };
+
+export const getLivestreamStatisticsByShopWithDateFilter = async (
+  shopId: string, 
+  fromDate?: string, 
+  toDate?: string
+) => {
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      throw new Error("Not found token.");
+    }
+
+    const query = new URLSearchParams();
+    if (fromDate) query.set("fromDate", fromDate);
+    if (toDate) query.set("toDate", toDate);
+
+    const url = `/livestreams/shop/${shopId}/statistics${query.toString() ? `?${query.toString()}` : ""}`;
+    const response = await rootApi.get(url, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    return response.data.data;
+  } catch (error) {
+    console.error("Error fetching livestream statistics with date filter:", error);
+    throw error;
+  }
+};
 export const startLivestreamById = async (Id: string) => {
   try {
     const token = localStorage.getItem("token");
