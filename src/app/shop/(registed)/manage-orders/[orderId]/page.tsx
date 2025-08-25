@@ -467,10 +467,17 @@ function OrderDetailPage() {
                 </div>
               )}
               <hr />
-              <div className="flex justify-between font-medium text-lg">
+              <div className="flex justify-between font-medium text-base">
                 <span>Tổng thanh toán:</span>
                 <span className="text-rose-600">
                   <PriceTag value={order.finalAmount} />
+                </span>
+              </div>
+              <hr />
+              <div className="flex justify-between font-medium text-lg">
+                <span>Doanh thu:</span>
+                <span className="text-rose-600">
+                  <PriceTag value={order.netAmount} />
                 </span>
               </div>
             </div>

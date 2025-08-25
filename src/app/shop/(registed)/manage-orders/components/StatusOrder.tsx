@@ -323,7 +323,7 @@ export default function StatusOrder({ order, onStatusUpdated }: Props) {
                 }
               }}
               disabled={updating}
-              className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-medium px-6"
+              className="bg-[#B0F847] text-black font-medium px-6 hover:bg-[#B0F847]/80 cursor-pointer"
             >
               {updating
                 ? "Đang cập nhật..."
