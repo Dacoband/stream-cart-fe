@@ -1,7 +1,6 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import {} from "@livekit/components-react";
 import { UserRound } from "lucide-react";
 import React from "react";
 import { chatHubService, ViewerStatsPayload } from "@/services/signalr/chatHub";
@@ -11,48 +10,42 @@ interface ViewerCountProps {
 }
 
 export function ViewerCount({ livestreamId }: ViewerCountProps) {
-  // Viewer stats come from server via SignalR; no need to inspect LiveKit participants here
   const [stats, setStats] = React.useState<ViewerStatsPayload | null>(null);
 
-  // We rely on server stats for viewer count; do not derive from LiveKit participants
-  // Requirement: count viewers with roles Customer + Unknown only
+  // Chỉ tính Customer viewers
   const viewerCount = React.useMemo(() => {
     if (!stats) return 0;
-    const roleMap = stats.viewersByRole || {};
 
-    // Helper to read a role value case-insensitively
-    const getRoleCount = (roleName: string) => {
-      for (const [role, count] of Object.entries(roleMap)) {
-        if (String(role).toLowerCase() === roleName.toLowerCase()) {
-          return Number(count) || 0;
-        }
-      }
-      return 0;
-    };
-
-    // Prefer server-provided CustomerViewers when available and add Unknown from role map
+    // Nếu server trả trực tiếp customerViewers thì dùng luôn
     if (
       typeof stats.customerViewers === "number" &&
       Number.isFinite(stats.customerViewers)
     ) {
-      const unknown = getRoleCount("Unknown");
-      return stats.customerViewers + unknown;
+      return stats.customerViewers;
     }
 
-    // Fallback: sum counts for Customer + Unknown from ViewersByRole
-    const customer = getRoleCount("Customer");
-    const unknown = getRoleCount("Unknown");
-    return customer + unknown;
+    // Nếu không, fallback sang ViewersByRole
+    const roleMap = stats.viewersByRole || {};
+    for (const [role, count] of Object.entries(roleMap)) {
+      if (String(role).toLowerCase() === "customer") {
+        return Number(count) || 0;
+      }
+    }
+
+    return 0;
   }, [stats]);
 
+  // Lắng nghe viewer stats từ SignalR
   React.useEffect(() => {
     if (!livestreamId) return;
     let mounted = true;
+
     (async () => {
       try {
         await chatHubService.ensureStarted();
-        // Join group to receive stats; do NOT startViewing here to avoid double counting
+        // join livestream group để nhận thống kê
         await chatHubService.joinLivestream(livestreamId);
+
         chatHubService.onViewerStats((payload) => {
           if (!mounted) return;
           if (
@@ -62,9 +55,10 @@ export function ViewerCount({ livestreamId }: ViewerCountProps) {
           }
         });
       } catch {
-        // ignore
+        // ignore errors
       }
     })();
+
     return () => {
       mounted = false;
     };
@@ -80,8 +74,8 @@ export function ViewerCount({ livestreamId }: ViewerCountProps) {
         Live
       </Button>
 
-      <Button className="rounded-none">
-        <UserRound />
+      <Button className="rounded-none flex items-center gap-1">
+        <UserRound className="w-4 h-4" />
         {viewerCount}
       </Button>
     </div>
