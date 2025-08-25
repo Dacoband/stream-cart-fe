@@ -55,19 +55,19 @@ function getStatusInfo(status: number) {
       icon: Package,
       description: "Shop đang chuẩn bị hàng",
     },
-    4: {
+    7: {
       label: "Đang giao hàng",
       color: "bg-orange-100 text-orange-800 border-orange-200",
       icon: Truck,
       description: "Đơn hàng đang được vận chuyển",
     },
-    5: {
+    4: {
       label: "Đã giao hàng",
       color: "bg-green-100 text-green-800 border-green-200",
       icon: CheckCircle,
       description: "Đơn hàng đã được giao thành công",
     },
-    6: {
+    5: {
       label: "Đã hủy",
       color: "bg-red-100 text-red-800 border-red-200",
       icon: XCircle,
