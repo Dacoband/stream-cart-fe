@@ -279,8 +279,89 @@ export const getLivestreamActive = async () => {
  
 
 
+// Gọi API mới từ brightpa.me
+export const getLivestreamByIdFromAPI = async (livestreamId: string) => {
+  try {
+    const response = await fetch(`https://brightpa.me/api/livestreams/${livestreamId}`);
+    const result = await response.json();
+    
+    if (!response.ok) {
+      throw new Error(result.message || 'Failed to fetch livestream');
+    }
+    
+    if (!result.success) {
+      throw new Error(result.message || 'API returned unsuccessful response');
+    }
+    
+    return result.data;
+  } catch (error) {
+    console.error("Error fetching livestream from API:", error);
+    throw error;
+  }
+};
 
+// Gọi API để lấy sản phẩm của livestream
+export const getLivestreamProducts = async (livestreamId: string) => {
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      throw new Error("Not found token.");
+    }
 
-  
+    const response = await fetch(`https://brightpa.me/api/livestream-products/livestream/${livestreamId}`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    });
+    
+    const result = await response.json();
+    
+    if (!response.ok) {
+      throw new Error(result.message || 'Failed to fetch livestream products');
+    }
+    
+    if (!result.success) {
+      throw new Error(result.message || 'API returned unsuccessful response');
+    }
+    
+    return result.data;
+  } catch (error) {
+    console.error("Error fetching livestream products:", error);
+    throw error;
+  }
+};
+
+// Gọi API để lấy sản phẩm bán chạy nhất của livestream
+export const getBestSellingProducts = async (livestreamId: string, limit: number = 3) => {
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      throw new Error("Not found token.");
+    }
+
+    const response = await fetch(`https://brightpa.me/api/livestream-products/livestream/${livestreamId}/best-selling?limit=${limit}`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    });
+    
+    const result = await response.json();
+    
+    if (!response.ok) {
+      throw new Error(result.message || 'Failed to fetch best selling products');
+    }
+    
+    if (!result.success) {
+      throw new Error(result.message || 'API returned unsuccessful response');
+    }
+    
+    return result.data;
+  } catch (error) {
+    console.error("Error fetching best selling products:", error);
+    throw error;
+  }
+};
 
  
