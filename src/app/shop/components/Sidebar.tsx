@@ -1,6 +1,6 @@
-"use client";
+'use client'
 
-import { usePathname } from "next/navigation";
+import { usePathname } from 'next/navigation'
 import {
   TicketPercent,
   PieChart,
@@ -10,7 +10,8 @@ import {
   Video,
   UsersRound,
   Zap,
-} from "lucide-react";
+  Crown,
+} from 'lucide-react'
 import {
   Sidebar,
   SidebarContent,
@@ -19,63 +20,73 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-} from "@/components/ui/sidebar";
-import { useAuth } from "@/lib/AuthContext";
+} from '@/components/ui/sidebar'
+import { useAuth } from '@/lib/AuthContext'
 const items = [
   {
-    title: "Thống kê",
-    url: "/shop/dashboard",
+    title: 'Thống kê',
+    url: '/shop/dashboard',
     icon: PieChart,
   },
   {
-    title: "Sản phẩm",
-    url: "/shop/manager-products",
+    title: 'Sản phẩm',
+    url: '/shop/manager-products',
     icon: ScanBarcode,
   },
   {
-    title: "Đơn hàng",
-    url: "/shop/manage-orders",
+    title: 'Đơn hàng',
+    url: '/shop/manage-orders',
     icon: Package,
   },
 
   {
-    title: "Livestrems",
-    url: "/shop/livestreams",
+    title: 'Livestrems',
+    url: '/shop/livestreams',
     icon: Video,
   },
   {
-    title: "Flash Sale",
-    url: "/shop/manager-flashSale",
+    title: 'Flash Sale',
+    url: '/shop/manager-flashSale',
     icon: Zap,
   },
   {
-    title: "Voucher",
-    url: "/shop/manager-vouchers",
+    title: 'Voucher',
+    url: '/shop/manager-vouchers',
     icon: TicketPercent,
   },
 
   {
-    title: "Giao dịch",
-    url: "/admin/transactions",
+    title: 'Giao dịch',
+    url: '/admin/transactions',
     icon: Wallet,
   },
   {
-    title: "Nhân viên",
-    url: "/shop/moderators",
+    title: 'Nhân viên',
+    url: '/shop/moderators',
     icon: UsersRound,
   },
-];
+  {
+    title: 'Gói thành viên',
+    url: '/shop/memberships',
+    icon: Crown,
+  },
+  {
+    title: 'Gói của tôi',
+    url: '/shop/my-membership',
+    icon: Crown,
+  },
+]
 
 export function AppSidebar() {
-  const pathname = usePathname();
-  const { user } = useAuth();
+  const pathname = usePathname()
+  const { user } = useAuth()
   const visibleItems =
     user?.role === 3
       ? items.filter(
           (it) =>
-            it.url !== "/admin/transactions" && it.url !== "/shop/moderators"
+            it.url !== '/admin/transactions' && it.url !== '/shop/moderators'
         )
-      : items;
+      : items
 
   return (
     <Sidebar
@@ -93,8 +104,8 @@ export function AppSidebar() {
                     className={
                       `active:bg-[#202328] active:text-[#B0F847] focus:bg-[#202328] focus:text-[#B0F847] ` +
                       (pathname.startsWith(item.url)
-                        ? "bg-base text-black mx-auto "
-                        : "text-white hover:bg-[#202328] hover:text-[#B0F847] mx-auto")
+                        ? 'bg-base text-black mx-auto '
+                        : 'text-white hover:bg-[#202328] hover:text-[#B0F847] mx-auto')
                     }
                   >
                     <a
@@ -114,5 +125,5 @@ export function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
     </Sidebar>
-  );
+  )
 }
