@@ -1,6 +1,6 @@
 "use client";
 
-import React, { Suspense, useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { ChatProvider, useChat } from "../../../lib/ChatContext";
 import { getShopDetail } from "@/services/api/shop/shop";
 import { useSearchParams } from "next/navigation";
@@ -194,22 +194,15 @@ const ChatUI: React.FC = () => {
   );
 };
 
-// Child component that uses useSearchParams must be wrapped by Suspense
-const ChatPageInner: React.FC = () => {
+const Page: React.FC = () => {
+  // Determine shop id from query using Next navigation hook
   const searchParams = useSearchParams();
   const shopId = searchParams.get("shopId");
+
   return (
     <ChatProvider shopId={shopId ?? undefined}>
       <ChatUI />
     </ChatProvider>
-  );
-};
-
-const Page: React.FC = () => {
-  return (
-    <Suspense fallback={<div className="p-4">Đang tải trò chuyện...</div>}>
-      <ChatPageInner />
-    </Suspense>
   );
 };
 

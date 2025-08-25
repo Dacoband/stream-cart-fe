@@ -57,17 +57,17 @@ import { toast } from "sonner";
 
 // Role mapping theo backend enum
 const ROLE_LABELS = {
-  1: "Customer",        // Customer
-  2: "Seller",          // Seller  
-  3: "Moderator",       // Moderator
-  5: "OperationManager" // OperationManager
+  1: "Khách",
+  2: "Chủ cửa hàng",
+  3: "Nhân viên cửa hàng",
+  5: "Quản lý hoạt động",
 } as const;
 
 const ROLE_COLORS = {
-  1: "bg-blue-100 text-blue-700",     // Customer
-  2: "bg-orange-100 text-orange-700", // Seller
-  3: "bg-green-100 text-green-700",   // Moderator
-  5: "bg-purple-100 text-purple-700"  // OperationManager
+  1: "bg-blue-100 text-blue-700",
+  2: "bg-orange-100 text-orange-700",
+  3: "bg-green-100 text-green-700",
+  5: "bg-purple-100 text-purple-700",
 } as const;
 
 export default function TableAccount() {
@@ -76,14 +76,16 @@ export default function TableAccount() {
   const [searchTerm, setSearchTerm] = React.useState("");
   const [selectedRole, setSelectedRole] = React.useState<string>("all");
   const [loadingDelete, setLoadingDelete] = React.useState(false);
-  const [confirmDeleteUser, setConfirmDeleteUser] = React.useState<User | null>(null);
+  const [confirmDeleteUser, setConfirmDeleteUser] = React.useState<User | null>(
+    null
+  );
 
   // Fetch users
   const fetchUsers = React.useCallback(async () => {
     setLoading(true);
     try {
       let userData: User[] = [];
-      
+
       if (selectedRole === "all") {
         // Chỉ lấy users từ role 1, 2, 3, 5 (Customer, Seller, Moderator, OperationManager)
         const allowedRoles = [1, 2, 3, 5];
@@ -98,7 +100,7 @@ export default function TableAccount() {
       } else {
         userData = await getUsersByRole(parseInt(selectedRole));
       }
-      
+
       setUsers(userData);
     } catch (error) {
       console.error("Error fetching users:", error);
@@ -113,10 +115,11 @@ export default function TableAccount() {
   }, [fetchUsers]);
 
   // Filter users based on search term
-  const filteredUsers = users.filter((user) =>
-    user.fullname?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.username?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.email?.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredUsers = users.filter(
+    (user) =>
+      user.fullname?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.username?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.email?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   // Handle delete user
@@ -163,7 +166,7 @@ export default function TableAccount() {
             )}
           </div>
         </div>
-        
+
         <div className="flex items-center gap-2">
           <Filter className="text-gray-600" size={20} />
           <Select value={selectedRole} onValueChange={setSelectedRole}>
@@ -172,10 +175,10 @@ export default function TableAccount() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Tất cả</SelectItem>
-              <SelectItem value="1">Customer</SelectItem>
-              <SelectItem value="2">Seller</SelectItem>
-              <SelectItem value="3">Moderator</SelectItem>
-              <SelectItem value="5">OperationManager</SelectItem>
+              <SelectItem value="1">Khách</SelectItem>
+              <SelectItem value="2">Chủ cửa hàng</SelectItem>
+              <SelectItem value="3">Nhân viên cửa hàng</SelectItem>
+              <SelectItem value="5">Quản lý hoạt động</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -188,7 +191,7 @@ export default function TableAccount() {
               <TableHead className="font-semibold pl-6">Tài khoản</TableHead>
               <TableHead className="font-semibold">Số điện thoại</TableHead>
               <TableHead className="font-semibold">Email</TableHead>
-              <TableHead className="font-semibold">Role</TableHead>
+              <TableHead className="font-semibold">Vai trò</TableHead>
               <TableHead className="font-semibold">Ngày tạo</TableHead>
               <TableHead className="font-semibold">Trạng thái</TableHead>
               <TableHead className="font-semibold text-right w-24 pr-6">
@@ -210,11 +213,21 @@ export default function TableAccount() {
                       </div>
                     </div>
                   </TableCell>
-                  <TableCell><Skeleton className="h-4 w-24" /></TableCell>
-                  <TableCell><Skeleton className="h-4 w-32" /></TableCell>
-                  <TableCell><Skeleton className="h-6 w-20" /></TableCell>
-                  <TableCell><Skeleton className="h-4 w-20" /></TableCell>
-                  <TableCell><Skeleton className="h-6 w-20" /></TableCell>
+                  <TableCell>
+                    <Skeleton className="h-4 w-24" />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className="h-4 w-32" />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className="h-6 w-20" />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className="h-4 w-20" />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className="h-6 w-20" />
+                  </TableCell>
                   <TableCell className="text-right">
                     <Skeleton className="h-8 w-8 ml-auto" />
                   </TableCell>
@@ -233,7 +246,9 @@ export default function TableAccount() {
                       className="mt-14 mx-auto"
                     />
                     <div className="text-center mt-4 text-xl text-lime-700/60 font-medium">
-                      {searchTerm ? "Không tìm thấy tài khoản nào" : "Hiện chưa có tài khoản nào"}
+                      {searchTerm
+                        ? "Không tìm thấy tài khoản nào"
+                        : "Hiện chưa có tài khoản nào"}
                     </div>
                   </div>
                 </TableCell>
@@ -269,32 +284,42 @@ export default function TableAccount() {
 
                   <TableCell>{user.phoneNumber || "Chưa cập nhật"}</TableCell>
                   <TableCell>{user.email || "Chưa cập nhật"}</TableCell>
-                  
+
                   <TableCell>
-                    <span className={`inline-flex items-center px-2 py-1 rounded-full text-sm font-medium ${
-                      ROLE_COLORS[user.role as keyof typeof ROLE_COLORS] || "bg-gray-100 text-gray-700"
-                    }`}>
-                      {ROLE_LABELS[user.role as keyof typeof ROLE_LABELS] || `Role ${user.role}`}
+                    <span
+                      className={`inline-flex items-center px-2 py-1 rounded-full text-sm font-medium ${
+                        ROLE_COLORS[user.role as keyof typeof ROLE_COLORS] ||
+                        "bg-gray-100 text-gray-700"
+                      }`}
+                    >
+                      {ROLE_LABELS[user.role as keyof typeof ROLE_LABELS] ||
+                        `Role ${user.role}`}
                     </span>
                   </TableCell>
 
                   <TableCell>
                     <div className="flex gap-2 items-baseline">
                       <Calendar size={15} />
-                      {user.registrationDate ? formatDateVN(user.registrationDate) : formatDateVN(user.createdAt)}
+                      {user.registrationDate
+                        ? formatDateVN(user.registrationDate)
+                        : formatDateVN(user.createdAt)}
                     </div>
                   </TableCell>
-                  
+
                   <TableCell>
                     <div className="flex items-center gap-2">
-                      <span className={`inline-flex items-center gap-2 px-2 py-1 rounded-full text-sm font-medium ${
-                        user.isActive
-                          ? "bg-green-100 text-green-700"
-                          : "bg-red-100 text-red-700"
-                      }`}>
-                        <span className={`w-2 h-2 rounded-full ${
-                          user.isActive ? "bg-green-600" : "bg-red-600"
-                        }`} />
+                      <span
+                        className={`inline-flex items-center gap-2 px-2 py-1 rounded-full text-sm font-medium ${
+                          user.isActive
+                            ? "bg-green-100 text-green-700"
+                            : "bg-red-100 text-red-700"
+                        }`}
+                      >
+                        <span
+                          className={`w-2 h-2 rounded-full ${
+                            user.isActive ? "bg-green-600" : "bg-red-600"
+                          }`}
+                        />
                         {user.isActive ? "Hoạt động" : "Ngừng hoạt động"}
                       </span>
                       {user.isVerified && (
@@ -351,8 +376,10 @@ export default function TableAccount() {
             <AlertDialogTitle>Xác nhận xóa tài khoản</AlertDialogTitle>
             <AlertDialogDescription>
               Bạn có chắc chắn muốn xóa tài khoản{" "}
-              <strong>{confirmDeleteUser?.fullname || confirmDeleteUser?.username}</strong> không?
-              Hành động này không thể hoàn tác.
+              <strong>
+                {confirmDeleteUser?.fullname || confirmDeleteUser?.username}
+              </strong>{" "}
+              không? Hành động này không thể hoàn tác.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
