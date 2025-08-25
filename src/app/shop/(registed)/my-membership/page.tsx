@@ -1,17 +1,17 @@
-'use client'
+"use client";
 
-import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef } from "react";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Input } from '@/components/ui/input'
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
 import {
   Crown,
   Clock,
@@ -21,53 +21,53 @@ import {
   Filter,
   CheckCircle,
   XCircle,
-} from 'lucide-react'
-import { filterShopMembership } from '@/services/api/membership/shopMembership'
+} from "lucide-react";
+import { filterShopMembership } from "@/services/api/membership/shopMembership";
 import {
   DetailShopMembershipDTO,
   FilterShopMembership,
-} from '@/types/membership/shopMembership'
-import { toast } from 'sonner'
-import { useAuth } from '@/lib/AuthContext'
+} from "@/types/membership/shopMembership";
+import { toast } from "sonner";
+import { useAuth } from "@/lib/AuthContext";
 
 /* ===========================
    Constants & helpers
 =========================== */
 const STATUS = {
-  Ongoing: 'Ongoing', // Đang hoạt động
-  Waiting: 'Waiting', // Chờ hoạt động
-  Cancelled: 'Cancelled', // Đã hủy
-  Overdue: 'Overdue', // Hết hạn
-} as const
+  Ongoing: "Ongoing", // Đang hoạt động
+  Waiting: "Waiting", // Chờ hoạt động
+  Cancelled: "Cancelled", // Đã hủy
+  Overdue: "Overdue", // Hết hạn
+} as const;
 
 const VI_LABEL: Record<string, string> = {
-  [STATUS.Ongoing]: 'Đang hoạt động',
-  [STATUS.Waiting]: 'Chờ hoạt động',
-  [STATUS.Cancelled]: 'Đã hủy',
-  [STATUS.Overdue]: 'Hết hạn',
-}
+  [STATUS.Ongoing]: "Đang hoạt động",
+  [STATUS.Waiting]: "Chờ hoạt động",
+  [STATUS.Cancelled]: "Đã hủy",
+  [STATUS.Overdue]: "Hết hạn",
+};
 
 const fmtDate = (d: Date | string) =>
-  new Date(d).toLocaleDateString('vi-VN', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-  })
+  new Date(d).toLocaleDateString("vi-VN", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  });
 
 const statusAccent = (s: string) => {
   switch (s) {
     case STATUS.Ongoing:
-      return 'bg-emerald-500'
+      return "bg-emerald-500";
     case STATUS.Waiting:
-      return 'bg-amber-500'
+      return "bg-amber-500";
     case STATUS.Overdue:
-      return 'bg-rose-500'
+      return "bg-rose-500";
     case STATUS.Cancelled:
-      return 'bg-slate-400'
+      return "bg-slate-400";
     default:
-      return 'bg-gray-300'
+      return "bg-gray-300";
   }
-}
+};
 
 const StatusBadge = ({ status }: { status: string }) => {
   switch (status) {
@@ -76,150 +76,150 @@ const StatusBadge = ({ status }: { status: string }) => {
         <Badge className="bg-emerald-100 text-emerald-800 border border-emerald-200">
           {VI_LABEL[status]}
         </Badge>
-      )
+      );
     case STATUS.Waiting:
       return (
         <Badge className="bg-amber-100 text-amber-800 border border-amber-200">
           {VI_LABEL[status]}
         </Badge>
-      )
+      );
     case STATUS.Overdue:
       return (
         <Badge className="bg-rose-100 text-rose-800 border border-rose-200">
           {VI_LABEL[status]}
         </Badge>
-      )
+      );
     case STATUS.Cancelled:
       return (
         <Badge className="bg-slate-100 text-slate-700 border border-slate-200">
           {VI_LABEL[status]}
         </Badge>
-      )
+      );
     default:
-      return <Badge variant="secondary">{status}</Badge>
+      return <Badge variant="secondary">{status}</Badge>;
   }
-}
+};
 
 const StatusIcon = ({ status }: { status: string }) => {
   switch (status) {
     case STATUS.Ongoing:
-      return <CheckCircle className="h-4 w-4 text-emerald-600" />
+      return <CheckCircle className="h-4 w-4 text-emerald-600" />;
     case STATUS.Waiting:
-      return <Clock className="h-4 w-4 text-amber-600" />
+      return <Clock className="h-4 w-4 text-amber-600" />;
     case STATUS.Overdue:
-      return <XCircle className="h-4 w-4 text-rose-600" />
+      return <XCircle className="h-4 w-4 text-rose-600" />;
     case STATUS.Cancelled:
-      return <XCircle className="h-4 w-4 text-slate-500" />
+      return <XCircle className="h-4 w-4 text-slate-500" />;
     default:
-      return <Clock className="h-4 w-4 text-gray-600" />
+      return <Clock className="h-4 w-4 text-gray-600" />;
   }
-}
+};
 
 /* ===========================
    Page
 =========================== */
 export default function MyMembershipPage() {
-  const { user, loading: authLoading = false } = useAuth() as any
+  const { user, loading: authLoading = false } = useAuth();
 
   // UI/state
-  const [mounted, setMounted] = useState(false)
-  const [loading, setLoading] = useState(false)
+  const [mounted, setMounted] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   // Data
-  const [items, setItems] = useState<DetailShopMembershipDTO[]>([])
+  const [items, setItems] = useState<DetailShopMembershipDTO[]>([]);
 
   // Filters
-  const [activeTab, setActiveTab] = useState<string>(STATUS.Ongoing) // trạng thái = tab
-  const [fromDate, setFromDate] = useState('') // yyyy-mm-dd
-  const [toDate, setToDate] = useState('') // yyyy-mm-dd
+  const [activeTab, setActiveTab] = useState<string>(STATUS.Ongoing); // trạng thái = tab
+  const [fromDate, setFromDate] = useState(""); // yyyy-mm-dd
+  const [toDate, setToDate] = useState(""); // yyyy-mm-dd
 
   // tránh fetch lặp (StrictMode / params trùng)
-  const lastParamsKey = useRef<string>('')
+  const lastParamsKey = useRef<string>("");
 
-  useEffect(() => setMounted(true), [])
+  useEffect(() => setMounted(true), []);
 
   const fetchMemberships = useCallback(async () => {
-    if (!user?.shopId) return
+    if (!user?.shopId) return;
 
     const payload: FilterShopMembership = {
       shopId: user.shopId,
       pageIndex: 1,
       pageSize: 50,
-      status: activeTab as any,
+      status: activeTab as keyof typeof STATUS,
       startDate: fromDate ? new Date(fromDate) : undefined,
       endDate: toDate ? new Date(toDate) : undefined,
-    }
+    };
 
     const paramsKey = JSON.stringify({
       shopId: payload.shopId,
       status: payload.status,
       start: payload.startDate?.toISOString() ?? null,
       end: payload.endDate?.toISOString() ?? null,
-    })
+    });
     if (lastParamsKey.current === paramsKey) {
       // bỏ qua fetch trùng
-      return
+      return;
     }
-    lastParamsKey.current = paramsKey
+    lastParamsKey.current = paramsKey;
 
     try {
-      setLoading(true)
-      const res = await filterShopMembership(payload)
+      setLoading(true);
+      const res = await filterShopMembership(payload);
       const normalized: DetailShopMembershipDTO[] =
-        res?.detailShopMembership ?? res?.items ?? res?.data ?? []
-      setItems(Array.isArray(normalized) ? normalized : [])
+        res?.detailShopMembership ?? res?.items ?? res?.data ?? [];
+      setItems(Array.isArray(normalized) ? normalized : []);
       if (!normalized?.length) {
         // không toast ở đây để tránh phiền, chỉ log
         // console.debug('API ok, nhưng không có dữ liệu.')
       }
     } catch (e) {
-      console.error(e)
-      toast.error('Không thể tải danh sách gói thành viên')
+      console.error(e);
+      toast.error("Không thể tải danh sách gói thành viên");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }, [user?.shopId, activeTab, fromDate, toDate])
+  }, [user?.shopId, activeTab, fromDate, toDate]);
 
   // fetch khi auth xong + có shopId
   useEffect(() => {
-    if (!mounted || authLoading || !user?.shopId) return
-    fetchMemberships()
+    if (!mounted || authLoading || !user?.shopId) return;
+    fetchMemberships();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mounted, authLoading, user?.shopId])
+  }, [mounted, authLoading, user?.shopId]);
 
   // fetch khi đổi tab
   useEffect(() => {
-    if (!mounted || authLoading || !user?.shopId) return
-    fetchMemberships()
-  }, [activeTab, mounted, authLoading, user?.shopId, fetchMemberships])
+    if (!mounted || authLoading || !user?.shopId) return;
+    fetchMemberships();
+  }, [activeTab, mounted, authLoading, user?.shopId, fetchMemberships]);
 
   // đếm (lưu ý: vì fetch theo tab nên chỉ có số của tab hiện tại)
-  const counts = useMemo(
-    () => ({
-      Ongoing: activeTab === STATUS.Ongoing ? items.length : 0,
-      Waiting: activeTab === STATUS.Waiting ? items.length : 0,
-      Overdue: activeTab === STATUS.Overdue ? items.length : 0,
-      Cancelled: activeTab === STATUS.Cancelled ? items.length : 0,
-    }),
-    [activeTab, items.length]
-  )
+  // const counts = useMemo(
+  //   () => ({
+  //     Ongoing: activeTab === STATUS.Ongoing ? items.length : 0,
+  //     Waiting: activeTab === STATUS.Waiting ? items.length : 0,
+  //     Overdue: activeTab === STATUS.Overdue ? items.length : 0,
+  //     Cancelled: activeTab === STATUS.Cancelled ? items.length : 0,
+  //   }),
+  //   [activeTab, items.length]
+  // );
 
   // Hủy gói (Ongoing/Waiting)
   const handleCancel = async (m: DetailShopMembershipDTO) => {
-    const ok = window.confirm(`Xác nhận hủy gói #${m.id}?`)
-    if (!ok) return
+    const ok = window.confirm(`Xác nhận hủy gói #${m.id}?`);
+    if (!ok) return;
     try {
       // TODO: call API cancel thật
-      toast.success(`Đã hủy gói #${m.id}`)
+      toast.success(`Đã hủy gói #${m.id}`);
       setItems((prev) =>
         prev.map((x) =>
           x.id === m.id ? { ...x, status: STATUS.Cancelled } : x
         )
-      )
+      );
     } catch {
-      toast.error('Hủy gói thất bại. Vui lòng thử lại.')
+      toast.error("Hủy gói thất bại. Vui lòng thử lại.");
     }
-  }
+  };
 
   const renderGrid = (list: DetailShopMembershipDTO[]) => {
     if (loading) {
@@ -240,7 +240,7 @@ export default function MyMembershipPage() {
             </Card>
           ))}
         </div>
-      )
+      );
     }
 
     if (!list.length) {
@@ -254,7 +254,7 @@ export default function MyMembershipPage() {
             <p className="text-gray-500">Hãy điều chỉnh bộ lọc</p>
           </CardContent>
         </Card>
-      )
+      );
     }
 
     return (
@@ -326,8 +326,8 @@ export default function MyMembershipPage() {
           </Card>
         ))}
       </div>
-    )
-  }
+    );
+  };
 
   if (!mounted) {
     return (
@@ -354,7 +354,7 @@ export default function MyMembershipPage() {
           ))}
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -403,9 +403,9 @@ export default function MyMembershipPage() {
             <Button
               variant="outline"
               onClick={() => {
-                setFromDate('')
-                setToDate('')
-                lastParamsKey.current = '' // clear để lần fetch sau không bị block
+                setFromDate("");
+                setToDate("");
+                lastParamsKey.current = ""; // clear để lần fetch sau không bị block
               }}
               className="border-emerald-300 text-emerald-700 hover:bg-emerald-50"
             >
@@ -413,8 +413,8 @@ export default function MyMembershipPage() {
             </Button>
             <Button
               onClick={() => {
-                lastParamsKey.current = '' // thay đổi filter -> ép fetch
-                fetchMemberships()
+                lastParamsKey.current = ""; // thay đổi filter -> ép fetch
+                fetchMemberships();
               }}
               disabled={loading || authLoading}
               className="bg-emerald-600 hover:bg-emerald-500 text-white"
@@ -429,8 +429,8 @@ export default function MyMembershipPage() {
       <Tabs
         value={activeTab}
         onValueChange={(v) => {
-          setActiveTab(v)
-          lastParamsKey.current = '' // đổi tab -> cho phép fetch
+          setActiveTab(v);
+          lastParamsKey.current = ""; // đổi tab -> cho phép fetch
         }}
         className="space-y-6"
       >
@@ -475,5 +475,5 @@ export default function MyMembershipPage() {
         )}
       </Tabs>
     </div>
-  )
+  );
 }

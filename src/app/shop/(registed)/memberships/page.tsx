@@ -1,16 +1,16 @@
-'use client'
+"use client";
 
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef } from "react";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Badge } from '@/components/ui/badge'
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import {
   Search,
   Filter,
@@ -21,52 +21,52 @@ import {
   Package,
   ArrowUpAZ,
   ArrowDownAZ,
-} from 'lucide-react'
-import { filterMembership } from '@/services/api/membership/membership'
+} from "lucide-react";
+import { filterMembership } from "@/services/api/membership/membership";
 import {
   Membership,
   FilterMembershipDTO,
   SortByMembershipEnum,
   SortDirectionEnum,
-} from '@/types/membership/membership'
-import { toast } from 'sonner'
-import PurchaseDialog from './components/PurchaseDialog'
+} from "@/types/membership/membership";
+import { toast } from "sonner";
+import PurchaseDialog from "./components/PurchaseDialog";
 
 const formatCurrency = (v?: number) =>
-  typeof v === 'number' ? v.toLocaleString('vi-VN') + 'đ' : '-'
+  typeof v === "number" ? v.toLocaleString("vi-VN") + "đ" : "-";
 
 const useDebouncedState = <T,>(value: T, delay = 400) => {
-  const [debounced, setDebounced] = useState(value)
+  const [debounced, setDebounced] = useState(value);
   useEffect(() => {
-    const t = setTimeout(() => setDebounced(value), delay)
-    return () => clearTimeout(t)
-  }, [value, delay])
-  return debounced
-}
+    const t = setTimeout(() => setDebounced(value), delay);
+    return () => clearTimeout(t);
+  }, [value, delay]);
+  return debounced;
+};
 
 export default function MembershipsPage() {
-  const [mounted, setMounted] = useState(false)
-  const [memberships, setMemberships] = useState<Membership[]>([])
-  const [loading, setLoading] = useState(false)
+  const [mounted, setMounted] = useState(false);
+  const [memberships, setMemberships] = useState<Membership[]>([]);
+  const [loading, setLoading] = useState(false);
 
   // Filters: name, price range, sort by price only
-  const [searchTerm, setSearchTerm] = useState('')
-  const debouncedSearch = useDebouncedState(searchTerm, 400)
+  const [searchTerm, setSearchTerm] = useState("");
+  const debouncedSearch = useDebouncedState(searchTerm, 400);
   const [sortDirection, setSortDirection] = useState<SortDirectionEnum>(
     SortDirectionEnum.Asc
-  )
-  const [priceFrom, setPriceFrom] = useState<string>('')
-  const [priceTo, setPriceTo] = useState<string>('')
+  );
+  const [priceFrom, setPriceFrom] = useState<string>("");
+  const [priceTo, setPriceTo] = useState<string>("");
 
   // Dialog
   const [selectedMembership, setSelectedMembership] =
-    useState<Membership | null>(null)
-  const [purchaseDialogOpen, setPurchaseDialogOpen] = useState(false)
+    useState<Membership | null>(null);
+  const [purchaseDialogOpen, setPurchaseDialogOpen] = useState(false);
 
-  useEffect(() => setMounted(true), [])
+  useEffect(() => setMounted(true), []);
 
   // Avoid duplicate fetches
-  const lastParamsKey = useRef<string>('')
+  const lastParamsKey = useRef<string>("");
 
   const fetchMemberships = useCallback(async () => {
     const payload: FilterMembershipDTO = {
@@ -74,52 +74,52 @@ export default function MembershipsPage() {
       pageSize: 12,
       sortBy: SortByMembershipEnum.Price,
       sortDirection,
-      name: debouncedSearch || undefined,
+      // name: debouncedSearch || undefined,
       ...(debouncedSearch ? { keyword: debouncedSearch } : {}),
       fromPrice: priceFrom ? Number(priceFrom) : undefined,
       toPrice: priceTo ? Number(priceTo) : undefined,
-    } as any
+    };
 
     const paramsKey = JSON.stringify({
-      q: debouncedSearch || '',
+      q: debouncedSearch || "",
       from: payload.fromPrice ?? null,
       to: payload.toPrice ?? null,
       dir: sortDirection,
-    })
-    if (lastParamsKey.current === paramsKey) return
-    lastParamsKey.current = paramsKey
+    });
+    if (lastParamsKey.current === paramsKey) return;
+    lastParamsKey.current = paramsKey;
 
     try {
-      setLoading(true)
-      const response = await filterMembership(payload)
+      setLoading(true);
+      const response = await filterMembership(payload);
 
-      setMemberships(response.memberships)
+      setMemberships(response.memberships);
       if (response.memberships.length === 0)
-        toast.info('Không tìm thấy gói phù hợp với bộ lọc hiện tại')
+        toast.info("Không tìm thấy gói phù hợp với bộ lọc hiện tại");
     } catch (error) {
-      console.error('Error fetching memberships:', error)
-      toast.error('Không thể tải danh sách gói thành viên')
+      console.error("Error fetching memberships:", error);
+      toast.error("Không thể tải danh sách gói thành viên");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }, [debouncedSearch, priceFrom, priceTo, sortDirection])
+  }, [debouncedSearch, priceFrom, priceTo, sortDirection]);
 
   useEffect(() => {
-    if (mounted) fetchMemberships()
-  }, [fetchMemberships, mounted])
+    if (mounted) fetchMemberships();
+  }, [fetchMemberships, mounted]);
 
   const clearAll = () => {
-    setSearchTerm('')
-    setPriceFrom('')
-    setPriceTo('')
-    setSortDirection(SortDirectionEnum.Asc)
-    lastParamsKey.current = ''
-  }
+    setSearchTerm("");
+    setPriceFrom("");
+    setPriceTo("");
+    setSortDirection(SortDirectionEnum.Asc);
+    lastParamsKey.current = "";
+  };
 
   const handlePurchase = (m: Membership) => {
-    setSelectedMembership(m)
-    setPurchaseDialogOpen(true)
-  }
+    setSelectedMembership(m);
+    setPurchaseDialogOpen(true);
+  };
 
   return (
     <div className="p-6 space-y-6">
@@ -153,8 +153,8 @@ export default function MembershipsPage() {
                 placeholder="Nhập tên gói..."
                 value={searchTerm}
                 onChange={(e) => {
-                  setSearchTerm(e.target.value)
-                  lastParamsKey.current = ''
+                  setSearchTerm(e.target.value);
+                  lastParamsKey.current = "";
                 }}
                 className="pl-10"
               />
@@ -171,8 +171,8 @@ export default function MembershipsPage() {
                     d === SortDirectionEnum.Asc
                       ? SortDirectionEnum.Desc
                       : SortDirectionEnum.Asc
-                  )
-                  lastParamsKey.current = ''
+                  );
+                  lastParamsKey.current = "";
                 }}
               >
                 {sortDirection === SortDirectionEnum.Asc ? (
@@ -196,8 +196,8 @@ export default function MembershipsPage() {
                 placeholder="Giá từ"
                 value={priceFrom}
                 onChange={(e) => {
-                  setPriceFrom(e.target.value.replace(/[^0-9]/g, ''))
-                  lastParamsKey.current = ''
+                  setPriceFrom(e.target.value.replace(/[^0-9]/g, ""));
+                  lastParamsKey.current = "";
                 }}
               />
               <Input
@@ -205,8 +205,8 @@ export default function MembershipsPage() {
                 placeholder="Giá đến"
                 value={priceTo}
                 onChange={(e) => {
-                  setPriceTo(e.target.value.replace(/[^0-9]/g, ''))
-                  lastParamsKey.current = ''
+                  setPriceTo(e.target.value.replace(/[^0-9]/g, ""));
+                  lastParamsKey.current = "";
                 }}
               />
             </div>
@@ -289,15 +289,15 @@ export default function MembershipsPage() {
                   </div>
                   <div className="flex items-center gap-2">
                     <Users className="h-4 w-4 text-gray-500" />
-                    Tối đa {m.maxModerator ?? '—'} nhân viên
+                    Tối đa {m.maxModerator ?? "—"} nhân viên
                   </div>
                   <div className="flex items-center gap-2">
                     <Video className="h-4 w-4 text-gray-500" />
-                    Tối đa {m.maxLivestream ?? '—'} livestream
+                    Tối đa {m.maxLivestream ?? "—"} livestream
                   </div>
                   <div className="flex items-center gap-2">
                     <Package className="h-4 w-4 text-gray-500" />
-                    Hoa hồng: {m.commission ?? '—'}%
+                    Hoa hồng: {m.commission ?? "—"}%
                   </div>
                 </div>
 
@@ -339,5 +339,5 @@ export default function MembershipsPage() {
         onOpenChange={setPurchaseDialogOpen}
       />
     </div>
-  )
+  );
 }
