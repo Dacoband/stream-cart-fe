@@ -137,7 +137,7 @@ export default function ChatWithShop({ open, setOpen }: ChatWithShopProps) {
         <div className="fixed bottom-0 right-22 w-[40rem] h-[55%] bg-white shadow-xl z-50 flex flex-col overflow-hidden rounded-t-xl rounded-l-xl">
           {/* Header */}
           <div className="bg-gradient-to-r from-[#B0F847] to-[#8AD62F] p-3 text-black font-bold flex justify-between items-center">
-            <span>Chat With Shop</span>
+            <span>Tin nhắn</span>
             <button onClick={() => setOpen(false)} className="text-black font-bold">
               ✖
             </button>
@@ -147,7 +147,7 @@ export default function ChatWithShop({ open, setOpen }: ChatWithShopProps) {
             {/* Sidebar danh sách shop */}
             <div className="w-48 border-r border-gray-200 flex flex-col overflow-hidden">
               <div className="px-3 py-2 text-[12px] font-semibold text-gray-600 bg-gray-50">
-                Lịch sử shop
+                Lịch sử Shop
               </div>
               <div className="flex-1 overflow-y-auto">
                 {mockShops.map((shop) => (
