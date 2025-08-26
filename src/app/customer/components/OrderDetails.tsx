@@ -83,7 +83,7 @@ function getStatusInfo(status: number) {
   };
 }
 
-function OrderDetails() {
+function CustomerOrderDetailPage() {
   const params = useParams();
   const orderId = params.orderId as string;
 
@@ -101,12 +101,15 @@ function OrderDetails() {
       try {
         setLoading(true);
         const orderData = await getOrderById(orderId);
+        console.log("mmm", orderData);
         const orderInfo = orderData?.data || orderData;
         setOrder(orderInfo);
 
         // Fetch order items separately
         try {
           const itemsData = await getOrderProductByOrderId(orderId);
+        console.log("mmm", itemsData);
+
 
           let items = [];
           if (Array.isArray(itemsData)) {
@@ -250,9 +253,12 @@ function OrderDetails() {
                   </p>
                 </div>
               </div>
-              <Badge className={`px-4 py-2 text-sm font-medium ${statusInfo.color}`}>
+              {/* <Badge className={`px-4 py-2 text-sm font-medium ${statusInfo.color}`}>
                 {statusInfo.label}
-              </Badge>
+              </Badge> */}
+              <span className={`px-4 py-2 text-sm font-medium rounded-full border ${statusInfo.color}`}>
+                {statusInfo.label}
+              </span>
             </div>
             <p className="text-gray-700 mt-3 text-sm">{statusInfo.description}</p>
           </div>
@@ -478,4 +484,4 @@ function OrderDetails() {
   );
 }
 
-export default OrderDetails;
+export default CustomerOrderDetailPage;
