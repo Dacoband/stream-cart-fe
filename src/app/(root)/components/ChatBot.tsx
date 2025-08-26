@@ -1,22 +1,27 @@
 "use client";
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { Bot } from "lucide-react"; // icon đẹp hơn
+import { Bot } from "lucide-react";
 import { getChatBot, createChatBot } from "@/services/api/chat/chat";
 import { ChatMess, ChatHistory } from "@/types/chat/chatbot";
-export default function ChatBot() {
-  const [open, setOpen] = useState(false);
+
+interface ChatBotProps {
+  open: boolean;
+  setOpen: (open: boolean) => void;
+}
+
+export default function ChatBot({ open, setOpen }: ChatBotProps) {
   const [loading, setLoading] = useState(false);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [history, setHistory] = useState<ChatMess[]>([]);
   const [input, setInput] = useState("");
   const listRef = useRef<HTMLDivElement | null>(null);
+
   const questions = useMemo(
     () => history.filter((m) => !!m.user_message),
     [history]
   );
 
-  // Auto scroll to bottom on new messages
   useEffect(() => {
     if (!open) return;
     const el = listRef.current;
@@ -28,8 +33,7 @@ export default function ChatBot() {
       setLoading(true);
       setError(null);
       const res = (await getChatBot()) as ChatHistory["data"] | undefined;
-      const msgs = res?.history ?? [];
-      setHistory(msgs);
+      setHistory(res?.history ?? []);
     } catch {
       setError("Không tải được lịch sử chat");
     } finally {
@@ -37,7 +41,6 @@ export default function ChatBot() {
     }
   };
 
-  // Load when opening the widget
   useEffect(() => {
     if (!open) return;
     loadHistory();
@@ -49,7 +52,6 @@ export default function ChatBot() {
     setSending(true);
     setError(null);
 
-    // Optimistic append user message
     const userMsg: ChatMess = {
       timestamp: new Date().toISOString(),
       user_message: text,
@@ -60,12 +62,10 @@ export default function ChatBot() {
 
     try {
       const data = await createChatBot(text);
-      // API: data = { response, status, metadata }
-      const ai = (data?.response as string) ?? "";
       const aiMsg: ChatMess = {
         timestamp: new Date().toISOString(),
         user_message: "",
-        ai_response: ai,
+        ai_response: (data?.response as string) ?? "",
       };
       setHistory((prev) => [...prev, aiMsg]);
     } catch {
@@ -77,34 +77,32 @@ export default function ChatBot() {
 
   return (
     <>
-      {/* Nút ChatBot nổi */}
       <button
         onClick={() => setOpen(!open)}
-        className="fixed bottom-5 right-5 z-50 w-14 h-14 flex items-center justify-center
-                   rounded-full shadow-lg transition-all duration-300
-                   bg-gradient-to-r from-[#B0F847] to-[#8AD62F]
-                   hover:scale-110 hover:rotate-6"
+        className={`fixed bottom-24 right-5 z-50 w-14 h-14 flex items-center justify-center
+                  rounded-full shadow-lg transition-all duration-300
+                  hover:scale-110 hover:rotate-6
+                  ${open
+                    ? "bg-gradient-to-r from-[#FFD700] to-[#FFA500]"  // màu khi mở
+                    : "bg-gradient-to-r from-[#B0F847] to-[#8AD62F]"} // màu mặc định
+        `}
       >
         <Bot className="w-7 h-7 text-black" />
       </button>
 
-      {/* Hộp chat */}
       {open && (
-        <div className="fixed bottom-20 right-5 w-[28rem] h-96 bg-white shadow-xl rounded-xl z-50 flex flex-col overflow-hidden">
+        <div className="fixed bottom-30 right-22 w-[28rem] h-[55%] bg-white shadow-xl rounded-t-xl rounded-l-xl z-50 flex flex-col overflow-hidden">
           {/* Header */}
           <div className="bg-gradient-to-r from-[#B0F847] to-[#8AD62F] p-3 text-black font-bold flex justify-between items-center">
             <span>ChatBot</span>
-            <button
-              onClick={() => setOpen(false)}
-              className="text-black font-bold"
-            >
+            <button onClick={() => setOpen(false)} className="text-black font-bold">
               ✖
             </button>
           </div>
 
-          {/* Nội dung: Sidebar lịch sử + Khung chat */}
+          {/* Nội dung chat */}
           <div className="flex-1 flex overflow-hidden">
-            {/* Sidebar lịch sử câu hỏi */}
+            {/* Sidebar lịch sử */}
             <div className="w-36 border-r border-gray-200 flex flex-col overflow-hidden">
               <div className="px-3 py-2 text-[12px] font-semibold text-gray-600 bg-gray-50">
                 Lịch sử
@@ -125,9 +123,7 @@ export default function ChatBot() {
                         : ""
                     }`}
                   >
-                    <div className="line-clamp-2 break-words text-gray-700">
-                      {q.user_message}
-                    </div>
+                    <div className="line-clamp-2 break-words text-gray-700">{q.user_message}</div>
                     <div className="text-[10px] text-gray-400 mt-1">
                       {new Date(q.timestamp).toLocaleTimeString()}
                     </div>
@@ -136,22 +132,10 @@ export default function ChatBot() {
               </div>
             </div>
 
-            {/* Khung chat chính */}
             <div className="flex-1 flex flex-col">
-              <div
-                ref={listRef}
-                className="flex-1 p-3 overflow-y-auto text-sm space-y-2"
-              >
-                {loading && (
-                  <div className="text-center text-xs text-gray-500">
-                    Đang tải...
-                  </div>
-                )}
-                {error && (
-                  <div className="text-center text-xs text-red-500">
-                    {error}
-                  </div>
-                )}
+              <div ref={listRef} className="flex-1 p-3 overflow-y-auto text-sm space-y-2">
+                {loading && <div className="text-center text-xs text-gray-500">Đang tải...</div>}
+                {error && <div className="text-center text-xs text-red-500">{error}</div>}
                 {!loading && history.length === 0 && !error && (
                   <div className="self-start bg-gray-200 p-2 rounded-lg w-fit max-w-[70%]">
                     Xin chào, mình có thể giúp gì cho bạn? 🤖
@@ -173,7 +157,6 @@ export default function ChatBot() {
                 ))}
               </div>
 
-              {/* Ô nhập tin nhắn */}
               <div className="p-2 border-t flex">
                 <input
                   type="text"
