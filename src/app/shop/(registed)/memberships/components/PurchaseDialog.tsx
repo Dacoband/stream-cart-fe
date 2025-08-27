@@ -1,8 +1,8 @@
-'use client'
+"use client";
 
-import { useState, useEffect } from 'react'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
+import { useState, useEffect } from "react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -10,8 +10,8 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog'
-import { Card, CardContent } from '@/components/ui/card'
+} from "@/components/ui/dialog";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Crown,
   Clock,
@@ -20,43 +20,43 @@ import {
   Package,
   RotateCw,
   Sparkles,
-} from 'lucide-react'
-import type { Membership } from '@/types/membership/membership'
-import { toast } from 'sonner'
-import { purchaseShopMembership } from '@/services/api/membership/shopMembership'
+} from "lucide-react";
+import type { Membership } from "@/types/membership/membership";
+import { toast } from "sonner";
+import { purchaseShopMembership } from "@/services/api/membership/shopMembership";
 
 const formatCurrency = (v?: number) =>
-  typeof v === 'number' ? v.toLocaleString('vi-VN') + 'đ' : '-'
+  typeof v === "number" ? v.toLocaleString("vi-VN") + "đ" : "-";
 
 export default function PurchaseDialog({
   membership,
   open,
   onOpenChange,
 }: {
-  membership: Membership | null
-  open: boolean
-  onOpenChange: (open: boolean) => void
+  membership: Membership | null;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
 }) {
-  const [mounted, setMounted] = useState(false)
-  const [loading, setLoading] = useState(false)
-  useEffect(() => setMounted(true), [])
+  const [mounted, setMounted] = useState(false);
+  const [loading, setLoading] = useState(false);
+  useEffect(() => setMounted(true), []);
 
   const handlePurchase = async () => {
-    if (!membership) return
+    if (!membership) return;
     try {
-      setLoading(true)
-      const response = await purchaseShopMembership(membership.membershipId)
-      toast.success(`Đăng ký thành công gói ${membership.name}!`)
-      onOpenChange(false)
+      setLoading(true);
+      await purchaseShopMembership(membership.membershipId);
+      toast.success(`Đăng ký thành công gói ${membership.name}!`);
+      onOpenChange(false);
     } catch (error) {
-      console.error('Purchase error:', error)
-      toast.error('Không thể đăng ký gói thành viên. Vui lòng thử lại.')
+      console.error("Purchase error:", error);
+      toast.error("Không thể đăng ký gói thành viên. Vui lòng thử lại.");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
-  if (!membership || !mounted) return null
+  if (!membership || !mounted) return null;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -162,5 +162,5 @@ export default function PurchaseDialog({
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

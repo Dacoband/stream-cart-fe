@@ -12,11 +12,15 @@ import LoadingScreen from "@/components/common/LoadingScreen";
 const ORDER_TABS = [
   { label: "Tất cả", value: "all" },
   { label: "Chờ thanh toán", value: "0", count: 0 },
-  { label: "Vận chuyển", value: "1", count: 0 },
-  { label: "Chờ giao hàng", value: "2", count: 0 },
-  { label: "Hoàn thành", value: "3", count: 0 },
-  { label: "Đã hủy", value: "4", count: 0 },
-  { label: "Trả hàng/Hoàn tiền", value: "5", count: 0 },
+  { label: "Chờ xác nhận", value: "1", count: 0 },
+  { label: "Chờ đóng gói", value: "2", count: 0 },
+  // combined tab for 3 and 7
+  { label: "Chờ giao hàng", value: "3-7", count: 0 },
+  // combined tab for 4 and 10
+  { label: "Thành công", value: "4-10", count: 0 },
+  { label: "Hủy đơn", value: "5", count: 0 },
+  // returns/refunds combined 8,9 (optional)
+  // { label: "Trả hàng/Hoàn tiền", value: "8-9", count: 0 },
 ];
 
 function ManageOrders() {
@@ -25,7 +29,6 @@ function ManageOrders() {
   const [tabCounts, setTabCounts] = useState<Record<string, number>>({});
   const [loadingCounts, setLoadingCounts] = useState(true);
 
-  // Fetch counts for each tab
   useEffect(() => {
     const fetchTabCounts = async () => {
       if (!user?.id) return;
@@ -34,7 +37,6 @@ function ManageOrders() {
       const counts: Record<string, number> = {};
 
       try {
-        // Fetch count for all orders
         const allOrdersResponse = await getCustomerOrders({
           accountId: user.id,
           PageIndex: 1,

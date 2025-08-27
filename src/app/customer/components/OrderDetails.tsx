@@ -55,19 +55,19 @@ function getStatusInfo(status: number) {
       icon: Package,
       description: "Shop đang chuẩn bị hàng",
     },
-    4: {
+    7: {
       label: "Đang giao hàng",
       color: "bg-orange-100 text-orange-800 border-orange-200",
       icon: Truck,
       description: "Đơn hàng đang được vận chuyển",
     },
-    5: {
+    4: {
       label: "Đã giao hàng",
       color: "bg-green-100 text-green-800 border-green-200",
       icon: CheckCircle,
       description: "Đơn hàng đã được giao thành công",
     },
-    6: {
+    5: {
       label: "Đã hủy",
       color: "bg-red-100 text-red-800 border-red-200",
       icon: XCircle,
@@ -167,7 +167,7 @@ function OrderDetails() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen ">
         <div className="bg-white shadow-sm">
           <div className="max-w-4xl mx-auto px-4 py-6">
             <Skeleton className="h-6 w-48" />
@@ -184,7 +184,7 @@ function OrderDetails() {
 
   if (!order) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen ">
         <div className="bg-white shadow-sm">
           <div className="max-w-4xl mx-auto px-4 py-6">
             <h2 className="text-xl font-bold">Đơn hàng không tồn tại</h2>
@@ -210,7 +210,7 @@ function OrderDetails() {
   const StatusIcon = statusInfo.icon;
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen ">
       {/* Header */}
       <div className="bg-white shadow-sm sticky top-0 z-10">
         <div className="max-w-4xl mx-auto px-4 py-6">

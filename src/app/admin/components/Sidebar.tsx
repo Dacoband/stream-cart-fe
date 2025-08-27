@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { PieChart, ShieldCheck } from "lucide-react";
+import { Star, UserRound } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -14,19 +14,14 @@ import {
 
 const items = [
   {
-    title: "Thống kê",
-    url: "/admin/dashboard",
-    icon: PieChart,
-  },
-  {
     title: "Tài khoản",
     url: "/admin/accounts",
-    icon: ShieldCheck,
+    icon: UserRound,
   },
   {
     title: "Đánh giá live",
     url: "/admin/live-reviews",
-    icon: ShieldCheck,
+    icon: Star,
   },
 ];
 
