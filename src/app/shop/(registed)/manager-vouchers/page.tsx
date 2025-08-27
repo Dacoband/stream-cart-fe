@@ -48,7 +48,7 @@ import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import DialogUpdateVoucher from "./components/DialogupdateVocher";
 
-function VouchersPage() {
+export default function VouchersPage() {
   const { user } = useAuth();
   const [loading, setLoading] = React.useState(true);
   const [vouchers, setVouchers] = React.useState<Voucher[]>([]);
@@ -467,5 +467,3 @@ function VouchersPage() {
     </div>
   );
 }
-
-export default VouchersPage;

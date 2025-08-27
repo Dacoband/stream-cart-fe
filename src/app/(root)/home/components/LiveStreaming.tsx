@@ -8,8 +8,13 @@ import { getLivestreamActive } from "@/services/api/livestream/livestream";
 import { ArrowRight, Play } from "lucide-react";
 import { Livestream } from "@/types/livestream/livestream";
 import LoadingCard from "./LoadingCard";
-import Link from "next/link";
+import { useAuth } from "@/lib/AuthContext";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+
 function LiveStreaming() {
+  const { user } = useAuth();
+  const router = useRouter();
   const [liveStreamList, setLiveStreamList] = useState<Livestream[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -19,7 +24,7 @@ function LiveStreaming() {
         const data = await getLivestreamActive();
         setLiveStreamList(data);
       } catch (err) {
-        console.error("Lỗi khi tải sản phẩm:", err);
+        console.error("Lỗi khi tải livestream:", err);
       } finally {
         setLoading(false);
       }
@@ -27,6 +32,21 @@ function LiveStreaming() {
 
     fetchLive();
   }, []);
+
+  const handleGoLive = (liveId: string) => {
+    const currentPath = `/live/${liveId}`;
+
+    if (!user || user.role !== 1) {
+      toast.error("Vui lòng đăng nhập.");
+      router.push(
+        `/authentication/login?redirect=${encodeURIComponent(currentPath)}`
+      );
+      return;
+    }
+
+    router.push(currentPath);
+  };
+
   return (
     <div className="flex flex-col px-10 py-5 w-full bg-white rounded-xl shadow">
       <div className="flex items-center justify-between mb-6">
@@ -65,37 +85,36 @@ function LiveStreaming() {
 
           <div className="grid grid-cols-5 justify-between pt-2 gap-2 mb-5">
             {liveStreamList.map((live, index) => (
-              <Link href={`/live/${live.id}`} key={live.id}>
-                <Card
-                  key={index}
-                  className="p-0 hover:shadow-lg transition-all duration-300 cursor-pointer rounded-none hover:scale-102 shadow-none"
-                >
-                  <div className="aspect-square w-full relative overflow-hidden">
-                    <Image
-                      src={live.thumbnailUrl}
-                      alt={live.title}
-                      fill
-                      className="object-cover "
-                    />
+              <Card
+                key={index}
+                onClick={() => handleGoLive(live.id)}
+                className="p-0 hover:shadow-lg transition-all duration-300 cursor-pointer rounded-none hover:scale-102 shadow-none"
+              >
+                <div className="aspect-square w-full relative overflow-hidden">
+                  <Image
+                    src={live.thumbnailUrl}
+                    alt={live.title}
+                    fill
+                    className="object-cover"
+                  />
 
-                    {/* LIVE Badge */}
-                    <div className="absolute top-3 left-3 bg-red-500 text-white px-3 py-1 rounded-full text-xs font-semibold flex items-center space-x-1 z-10 shadow">
-                      <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
-                      <span>LIVE</span>
+                  {/* LIVE Badge */}
+                  <div className="absolute top-3 left-3 bg-red-500 text-white px-3 py-1 rounded-full text-xs font-semibold flex items-center space-x-1 z-10 shadow">
+                    <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
+                    <span>LIVE</span>
+                  </div>
+
+                  {/* Text overlay */}
+                  <div className="absolute bottom-0 left-0 w-full bg-gradient-to-t from-black/70 to-transparent px-3 py-2.5 text-white">
+                    <div className="text-base font-medium truncate">
+                      {live.shopName}
                     </div>
-
-                    {/* Text overlay (title + shop name) */}
-                    <div className="absolute bottom-0 left-0 w-full bg-gradient-to-t from-black/70 to-transparent px-3 py-2.5 text-white">
-                      <div className="text-base font-medium truncate">
-                        {live.shopName}
-                      </div>
-                      <div className="text-sm text-gray-200 truncate min-h-8">
-                        {live.title}
-                      </div>
+                    <div className="text-sm text-gray-200 truncate min-h-8">
+                      {live.title}
                     </div>
                   </div>
-                </Card>
-              </Link>
+                </div>
+              </Card>
             ))}
           </div>
         </>

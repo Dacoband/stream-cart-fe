@@ -10,6 +10,7 @@ import {
   Video,
   UsersRound,
   Zap,
+  Crown,
 } from "lucide-react";
 import {
   Sidebar,
@@ -56,13 +57,23 @@ const items = [
 
   {
     title: "Giao dịch",
-    url: "/admin/transactions",
+    url: "/shop/manager-wallet",
     icon: Wallet,
   },
   {
     title: "Nhân viên",
     url: "/shop/moderators",
     icon: UsersRound,
+  },
+  {
+    title: "Gói thành viên",
+    url: "/shop/memberships",
+    icon: Crown,
+  },
+  {
+    title: "Gói của tôi",
+    url: "/shop/my-membership",
+    icon: Crown,
   },
 ];
 

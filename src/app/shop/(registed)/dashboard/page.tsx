@@ -2,8 +2,10 @@ import React from "react";
 
 import ReviewOrders from "./components/ReviewOrders";
 import Statistical from "./components/Statistical";
-import { LineChartComponent } from "./components/LineChart";
 import BestSelling from "./components/BestSelling";
+import LivestreamStatistics from "./components/LivestreamStatistics";
+import OrderClassificationChart from "./components/OrderClassificationChart";
+
 function page() {
   return (
     <div className="flex flex-col gap-5 min-h-full">
@@ -16,12 +18,21 @@ function page() {
       <div className="flex flex-col gap-5 mx-5 mb-10">
         <Statistical />
         <ReviewOrders />
-        <div className="flex gap-5">
-          <div className="w-[65%] ">
-            <LineChartComponent />
+        <div className="grid grid-cols-3 gap-6 h-[500px]">
+          {/* Grid 3 cột bằng nhau hoàn toàn */}
+          
+          {/* Cột 1: Thống kê Livestream */}
+          <div className="col-span-1">
+            <LivestreamStatistics />
+          </div>
+          
+          {/* Cột 2: Phân loại đơn hàng */}
+          <div className="col-span-1">
+            <OrderClassificationChart />
           </div>
 
-          <div className="flex-1">
+          {/* Cột 3: Sản phẩm bán chạy */}
+          <div className="col-span-1">
             <BestSelling />
           </div>
         </div>

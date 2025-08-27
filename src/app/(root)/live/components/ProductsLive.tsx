@@ -118,14 +118,17 @@ function ProductsLive({ livestreamId }: { livestreamId: string }) {
                         onClick={async () => {
                           try {
                             await addOne(product.id);
-                            toast.success("Đã thêm vào giỏ hàng");
+                            toast.success("Đã thêm vào giỏ hàng", {
+                              position: "bottom-center",
+                            });
                           } catch (e) {
-                            // Log detailed error for troubleshooting
                             console.error("[UI] Add to cart failed", {
                               livestreamProductId: product.id,
                               error: e,
                             });
-                            toast.error("Không thể thêm vào giỏ hàng");
+                            toast.error("Không thể thêm vào giỏ hàng", {
+                              position: "bottom-center",
+                            });
                           }
                         }}
                       >
