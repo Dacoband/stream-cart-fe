@@ -171,3 +171,60 @@ export interface GetPagedProductsParams {
   categoryId: string | null
   inStockOnly: boolean | null
 }
+export interface ProductSearchParams {
+  searchTerm: string
+  pageNumber?: number
+  pageSize?: number
+  categoryId?: string
+  minPrice?: number
+  maxPrice?: number
+  shopId?: string
+  sortBy?: string
+  inStockOnly?: boolean
+  minRating?: number
+  onSaleOnly?: boolean
+}
+export interface SearchProduct extends Product {
+  categoryName?: string
+  shopName?: string
+  shopLocation?: string
+  shopRating?: number
+  discountPercentage?: number
+  isOnSale?: boolean
+  averageRating?: number
+  reviewCount?: number
+  highlightedName?: string
+}
+
+export interface SearchProductsPage {
+  currentPage: number
+  pageSize: number
+  totalCount: number
+  totalPages: number
+  hasPrevious: boolean
+  hasNext: boolean
+  items: SearchProduct[]
+}
+
+export interface ProductSearchResponse {
+  success: boolean
+  message: string
+  data: {
+    products: SearchProductsPage
+    totalResults: number
+    searchTerm: string
+    searchTimeMs: number
+    suggestedKeywords: string[]
+    appliedFilters: {
+      categoryId: string | null
+      minPrice: number | null
+      maxPrice: number | null
+      shopId: string | null
+      sortBy: string | null
+      inStockOnly: boolean
+      minRating: number | null
+      onSaleOnly: boolean | null
+    }
+  }
+  errors: string[]
+}
