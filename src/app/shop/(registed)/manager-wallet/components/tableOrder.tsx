@@ -1,6 +1,6 @@
-"use client";
+'use client'
 
-import React from "react";
+import React from 'react'
 import {
   Table,
   TableBody,
@@ -8,75 +8,56 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import { formatFullDateTimeVN } from "@/components/common/formatFullDateTimeVN";
-import { ArrowUpRight } from "lucide-react";
-
-interface OrderIncomeItem {
-  id: string; // order id/code
-  title: string; // mô tả đơn
-  income: number; // số tiền +
-  createdAt: string | Date;
-  status: "COMPLETED" | "PENDING" | "CANCELLED";
-  source?: string; // From order/livestream
-}
+} from '@/components/ui/table'
+import { Badge } from '@/components/ui/badge'
+import { formatFullDateTimeVN } from '@/components/common/formatFullDateTimeVN'
+import { ArrowUpRight } from 'lucide-react'
 
 function formatVND(n?: number) {
-  return typeof n === "number"
-    ? new Intl.NumberFormat("vi-VN", {
-        style: "currency",
-        currency: "VND",
+  return typeof n === 'number'
+    ? new Intl.NumberFormat('vi-VN', {
+        style: 'currency',
+        currency: 'VND',
       }).format(n)
-    : "—";
+    : '—'
 }
 
-const badge = (status: OrderIncomeItem["status"]) => {
+const badge = (status: 'COMPLETED' | 'PENDING' | 'CANCELLED') => {
   switch (status) {
-    case "COMPLETED":
+    case 'COMPLETED':
       return (
         <Badge className="bg-green-100 text-green-700 border-green-200">
           Hoàn thành
         </Badge>
-      );
-    case "PENDING":
+      )
+    case 'PENDING':
       return (
         <Badge className="bg-yellow-100 text-yellow-700 border-yellow-200">
           Đang xử lý
         </Badge>
-      );
+      )
     default:
       return (
         <Badge className="bg-red-100 text-red-700 border-red-200">Hủy</Badge>
-      );
+      )
   }
-};
+}
 
-const fallbackRows: OrderIncomeItem[] = [
-  {
-    id: "ORD-20250825-462525",
-    title: "ORD-20250825-675009 ",
-    income: 125000,
-    createdAt: "2025-01-26T17:30:00Z",
-    status: "COMPLETED",
-    source: "Từ đơn hàng",
-  },
-  {
-    id: "ORD-20250825-462325",
-    title: " ORD-20250825-462325 ",
-    income: 89000,
-    createdAt: "2025-01-26T16:15:00Z",
-    status: "COMPLETED",
-    source: "Từ đơn hàng",
-  },
-];
+type Row = {
+  id: string
+  title: string
+  income: number
+  createdAt: string | Date
+  status: 'COMPLETED' | 'PENDING' | 'CANCELLED'
+  source?: string
+}
 
 interface Props {
-  rows?: OrderIncomeItem[];
+  rows?: Row[]
 }
 
 export default function TableOrder({ rows }: Props) {
-  const data = rows && rows.length ? rows : fallbackRows;
+  const data = rows ?? []
 
   return (
     <Table>
@@ -102,7 +83,7 @@ export default function TableOrder({ rows }: Props) {
                 <div className="flex flex-col">
                   <span className="font-medium">Thu nhập</span>
                   <span className="text-muted-foreground text-xs">
-                    {it.source ?? "—"}
+                    {it.source ?? '—'}
                   </span>
                 </div>
               </div>
@@ -121,5 +102,5 @@ export default function TableOrder({ rows }: Props) {
         ))}
       </TableBody>
     </Table>
-  );
+  )
 }

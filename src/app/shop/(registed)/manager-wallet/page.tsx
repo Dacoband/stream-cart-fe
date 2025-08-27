@@ -1,52 +1,181 @@
-"use client";
+'use client'
 
-import { Card, CardContent, CardTitle } from "@/components/ui/card";
-import React from "react";
-import { Wallet, Banknote } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { useAuth } from "@/lib/AuthContext";
-import { getWalletShopId } from "@/services/api/wallet/wallet";
-import { WalletDTO } from "@/types/wallet/wallet";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import TableOrder from "./components/tableOrder";
-import TableTransaction from "./components/tableTransaction";
+import { Card, CardContent, CardTitle } from '@/components/ui/card'
+import React from 'react'
+import { Wallet, Banknote } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { useAuth } from '@/lib/AuthContext'
+import { getWalletShopId } from '@/services/api/wallet/wallet'
+import { WalletDTO } from '@/types/wallet/wallet'
+import { Skeleton } from '@/components/ui/skeleton'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import TableOrder from './components/tableOrder'
+import TableTransaction from './components/tableTransaction'
+import { filterWalletTransactions } from '@/services/api/wallet/walletTransaction'
+import {
+  WalletTransactionDTO,
+  WalletTransactionStatus,
+  WalletTransactionType,
+} from '@/types/wallet/walletTransactionDTO'
 function Page() {
-  const { user } = useAuth();
-  const [wallet, setWallet] = React.useState<WalletDTO | null>(null);
-  const [loading, setLoading] = React.useState<boolean>(true);
-  const [error, setError] = React.useState<string | null>(null);
+  const { user } = useAuth()
+  const [wallet, setWallet] = React.useState<WalletDTO | null>(null)
+  const [loading, setLoading] = React.useState<boolean>(true)
+  const [error, setError] = React.useState<string | null>(null)
+  const [orders, setOrders] = React.useState<
+    {
+      id: string
+      title: string
+      income: number
+      createdAt: string | Date
+      status: 'COMPLETED' | 'PENDING' | 'CANCELLED'
+      source?: string
+    }[]
+  >([])
+  const [withdrawals, setWithdrawals] = React.useState<
+    {
+      id: string
+      bankName?: string
+      bankAccountNumber?: string
+      bankAccountName?: string
+      amount: number
+      fee?: number
+      netAmount?: number
+      status: 'PENDING' | 'COMPLETED' | 'FAILED'
+      createdAt: string | Date
+      processedAt?: string | Date | null
+      transactionId?: string | null
+    }[]
+  >([])
+  const [deposits, setDeposits] = React.useState<typeof withdrawals>([])
+  const [systems, setSystems] = React.useState<typeof withdrawals>([])
+  const [activeTab, setActiveTab] = React.useState<
+    'orders' | 'withdrawals' | 'deposits' | 'systems'
+  >('orders')
 
   const formatVND = (n?: number) =>
-    typeof n === "number"
-      ? new Intl.NumberFormat("vi-VN", {
-          style: "currency",
-          currency: "VND",
+    typeof n === 'number'
+      ? new Intl.NumberFormat('vi-VN', {
+          style: 'currency',
+          currency: 'VND',
         }).format(n)
-      : "—";
+      : '—'
 
   React.useEffect(() => {
     const run = async () => {
       if (!user?.shopId) {
-        setLoading(false);
-        return;
+        setLoading(false)
+        return
       }
-      setLoading(true);
-      setError(null);
+      setLoading(true)
+      setError(null)
       try {
-        const res = await getWalletShopId(user.shopId);
-        const data: WalletDTO | null = res && res.id ? res : res?.data ?? null;
-        setWallet(data ?? null);
+        const res = await getWalletShopId(user.shopId)
+        const data: WalletDTO | null = res && res.id ? res : res?.data ?? null
+        setWallet(data ?? null)
+        // fetch transactions only for the current tab/type
+        // Backend returns numeric enums starting from 0
+        // Assume order: 0 Withdraw, 1 Deposit, 2 Commission, 3 System
+        const typeToFetch: number =
+          activeTab === 'orders'
+            ? 2
+            : activeTab === 'withdrawals'
+            ? 0
+            : activeTab === 'deposits'
+            ? 1
+            : 3
+
+        const resList = await filterWalletTransactions({
+          ShopId: user.shopId,
+          Types: [typeToFetch],
+          PageIndex: 1,
+          PageSize: 50,
+        })
+
+        type ListShape =
+          | { items?: WalletTransactionDTO[] }
+          | { data?: { items?: WalletTransactionDTO[] } }
+          | null
+          | undefined
+        const extractItems = (res: ListShape): WalletTransactionDTO[] => {
+          if (!res) return []
+          if ('items' in res && Array.isArray(res.items)) return res.items
+          if ('data' in res && res?.data && Array.isArray(res.data.items))
+            return res.data.items
+          return []
+        }
+        const itemsSelected: WalletTransactionDTO[] = extractItems(
+          resList as ListShape
+        )
+
+        const mapStatusTx = (
+          s: number | string
+        ): 'PENDING' | 'COMPLETED' | 'FAILED' => {
+          // numeric enums: 0=Success,1=Failed,2=Pending,3=Canceled
+          if (typeof s === 'number') {
+            if (s === 0) return 'COMPLETED'
+            if (s === 2) return 'PENDING'
+            return 'FAILED'
+          }
+          const normalized = s.toString()
+          if (normalized === 'Success') return 'COMPLETED'
+          if (normalized === 'Pending') return 'PENDING'
+          return 'FAILED'
+        }
+
+        if (activeTab === 'orders') {
+          setOrders(
+            itemsSelected.map((it) => ({
+              id: it.orderId || it.id,
+              title:
+                it.description ||
+                `Đơn hàng #${(it.orderId || it.id).slice(0, 8)}`,
+              income: it.amount,
+              createdAt: it.createdAt,
+              status:
+                mapStatusTx(it.status) === 'COMPLETED'
+                  ? 'COMPLETED'
+                  : mapStatusTx(it.status) === 'PENDING'
+                  ? 'PENDING'
+                  : 'CANCELLED',
+              source: 'Từ đơn hàng',
+            }))
+          )
+        }
+
+        const mapTxRow = (it: WalletTransactionDTO) => {
+          const anyIt = it as unknown as Record<string, unknown>
+          const txId = (anyIt['transactionId'] ||
+            anyIt['TransactionId'] ||
+            anyIt['transactionID']) as string | undefined
+          return {
+            id: it.id,
+            bankName: it.bankAccount || '',
+            bankAccountNumber: it.bankNumber || '',
+            bankAccountName: '',
+            amount: it.amount,
+            status: mapStatusTx(it.status),
+            createdAt: it.createdAt,
+            processedAt: it.lastModifiedAt ?? null,
+            transactionId: txId ?? null,
+            description: it.description ?? null,
+          }
+        }
+
+        if (activeTab === 'withdrawals')
+          setWithdrawals(itemsSelected.map(mapTxRow))
+        if (activeTab === 'deposits') setDeposits(itemsSelected.map(mapTxRow))
+        if (activeTab === 'systems') setSystems(itemsSelected.map(mapTxRow))
       } catch (e) {
-        console.error(e);
-        setError("Không thể tải thông tin ví");
-        setWallet(null);
+        console.error(e)
+        setError('Không thể tải thông tin ví')
+        setWallet(null)
       } finally {
-        setLoading(false);
+        setLoading(false)
       }
-    };
-    run();
-  }, [user?.shopId]);
+    }
+    run()
+  }, [user?.shopId, activeTab])
 
   return (
     <div className="flex flex-col gap-5 min-h-full">
@@ -106,7 +235,7 @@ function Page() {
                 <div className="flex flex-col flex-1">
                   <div className="flex justify-between items-center">
                     <CardTitle className="text-green-700">
-                      Tài khoản: {wallet?.bankName || "Chưa cập nhật"}
+                      Tài khoản: {wallet?.bankName || 'Chưa cập nhật'}
                     </CardTitle>
                     <Button
                       size="sm"
@@ -126,8 +255,8 @@ function Page() {
                       <p className="text-red-600">{error}</p>
                     ) : (
                       <p className="font-medium text-green-800">
-                        Số tài khoản:{" "}
-                        {wallet?.bankAccountNumber || "Chưa cập nhật"}
+                        Số tài khoản:{' '}
+                        {wallet?.bankAccountNumber || 'Chưa cập nhật'}
                       </p>
                     )}
                   </div>
@@ -136,7 +265,10 @@ function Page() {
             </Card>
           </div>
           <div className="mt-5">
-            <Tabs defaultValue="orders">
+            <Tabs
+              value={activeTab}
+              onValueChange={(v) => setActiveTab(v as typeof activeTab)}
+            >
               <TabsList className="rounded-none bg-gray-200 border">
                 <TabsTrigger
                   value="orders"
@@ -151,20 +283,57 @@ function Page() {
                 >
                   Yêu cầu rút tiền
                 </TabsTrigger>
+
+                <TabsTrigger
+                  value="deposits"
+                  className="rounded-none p-4 data-[state=active]:bg-[#B0F847]/50 data-[state=active]:text-black"
+                >
+                  Nạp tiền vào ví
+                </TabsTrigger>
+
+                <TabsTrigger
+                  value="systems"
+                  className="rounded-none p-4 data-[state=active]:bg-[#B0F847]/50 data-[state=active]:text-black"
+                >
+                  Thanh toán hệ thống
+                </TabsTrigger>
               </TabsList>
               <div className="mt-4" />
               <TabsContent value="orders">
-                <TableOrder />
+                <TableOrder rows={orders} />
               </TabsContent>
               <TabsContent value="withdrawals">
-                <TableTransaction />
+                <TableTransaction
+                  rows={withdrawals}
+                  typeLabel="Yêu cầu rút tiền"
+                  accountHeaderLabel="Tài khoản nhận"
+                  amountPositive={false}
+                />
+              </TabsContent>
+              <TabsContent value="deposits">
+                <TableTransaction
+                  rows={deposits}
+                  typeLabel="Nạp tiền vào ví"
+                  accountHeaderLabel="Tài khoản nạp"
+                  amountPositive={true}
+                />
+              </TabsContent>
+              <TabsContent value="systems">
+                <TableTransaction
+                  rows={systems}
+                  typeLabel="Thanh toán hệ thống"
+                  accountHeaderLabel="Tài khoản nạp"
+                  amountPositive={false}
+                  showDetails={true}
+                  hideTransactionId={true}
+                />
               </TabsContent>
             </Tabs>
           </div>
         </Card>
       </div>
     </div>
-  );
+  )
 }
 
-export default Page;
+export default Page
