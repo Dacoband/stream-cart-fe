@@ -23,6 +23,7 @@ import {
 import { previewDeliveries } from "@/services/api/deliveries/deliveries";
 import { deleteCart } from "@/services/api/cart/cart";
 import { livestreamCartClient } from "@/services/signalr/livestreamCartClient";
+import { VoucherAvailableItem } from "@/types/voucher/voucher";
 
 import { toast } from "sonner";
 function OrderPageInner() {
@@ -37,6 +38,9 @@ function OrderPageInner() {
   const [shopNotes, setShopNotes] = useState<{ [shopId: string]: string }>({});
   const [deliveryInfo, setDeliveryInfo] =
     useState<PreviewDeliveriesResponse | null>(null);
+  const [selectedVouchersByShop, setSelectedVouchersByShop] = useState<
+    Record<string, VoucherAvailableItem | null>
+  >({});
 
   useEffect(() => {
     const allIds = searchParams.getAll("cartItemIds");
@@ -134,8 +138,8 @@ function OrderPageInner() {
         shippingProviderId: "3fa85f64-5717-4562-b3fc-2c963f66afa6",
         shippingFee: deliveryForShop?.totalAmount || null,
         expectedDeliveryDay: deliveryForShop?.expectedDeliveryDate || "",
-
-        voucherCode: "",
+        voucherCode:
+          selectedVouchersByShop[shop.shopId]?.voucher?.code || "",
         customerNotes: shopNotes[shop.shopId] || "",
         items: shop.products.map((item) => ({
           productId: item.productId,
@@ -224,6 +228,9 @@ function OrderPageInner() {
           onNoteChange={(shopId, note) => {
             setShopNotes((prev) => ({ ...prev, [shopId]: note }));
           }}
+          onVouchersChange={(selected) =>
+            setSelectedVouchersByShop(selected)
+          }
         />
         <Card className="rounded-none shadow-none py-0 flex-col gap-0 flex">
           <CardHeader className="bg-gradient-to-r from-purple-50 via-pink-50 to-purple-50 border-b-1 border-purple-200">
@@ -241,29 +248,41 @@ function OrderPageInner() {
               onChange={(value) => setSelectedPaymentMethod(value)}
             />
             <div className="flex w-full justify-end py-8 gap-16 text-gray-600 border-b">
+              {(() => {
+                const shippingTotal = deliveryInfo?.totalAmount || 0;
+                const productsTotal = orderProduct?.subTotal || 0;
+                const vouchersTotal = Object.values(
+                  selectedVouchersByShop
+                ).reduce((sum, v) => sum + (v?.discountAmount || 0), 0);
+                const grandTotal = Math.max(
+                  0,
+                  productsTotal + shippingTotal - vouchersTotal
+                );
+                return (
+              <>
               <div className="space-y-4">
                 <div>Tổng tiền hàng:</div>
                 <div>Tổng phí vận chuyển:</div>
+                <div>Tổng tiền voucher giảm:</div>
                 <div>Tổng thanh toán:</div>
               </div>
               <div className="space-y-4 flex  items-end flex-col">
                 <div>
-                  <PriceTag value={orderProduct?.subTotal || 0} />
+                  <PriceTag value={productsTotal} />
                 </div>
                 <div>
-                  <div>
-                    <PriceTag value={deliveryInfo?.totalAmount || 0} />
-                  </div>
+                  +<PriceTag value={shippingTotal} />
+                </div>
+                <div>
+                  -<PriceTag value={vouchersTotal} />
                 </div>
                 <div className=" text-rose-500 font-medium text-2xl">
-                  <PriceTag
-                    value={
-                      (orderProduct?.totalAmount || 0) +
-                      (deliveryInfo?.totalAmount || 0)
-                    }
-                  />
+                  <PriceTag value={grandTotal} />
                 </div>
               </div>
+              </>
+                );
+              })()}
             </div>
             <div className="flex justify-between my-4 items-center">
               <div className="text-gray-600">
