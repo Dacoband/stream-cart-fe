@@ -10,7 +10,7 @@ import { getProductDetailById } from "@/services/api/product/product";
 import { ProductDetail } from "@/types/product/product";
 import NotFound from "@/components/common/NotFound";
 import LoadingScreen from "@/components/common/LoadingScreen";
-import ChatBot from "../../components/ChatBot";
+// import ChatBot from "../../components/ChatBot";
 
 export default function ProductPage() {
   const { productId } = useParams<{ productId: string }>();
@@ -87,7 +87,7 @@ export default function ProductPage() {
           <DescriptionProduct product={product} />
         </div>
       </div>
-      <ChatBot />
+      {/* <ChatBot /> */}
     </div>
   );
 }

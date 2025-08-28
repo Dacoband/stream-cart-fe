@@ -1,6 +1,6 @@
 import { Card } from "@/components/ui/card";
 import { Cart, PreviewOrder } from "@/types/Cart/Cart";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
 import Image from "next/image";
 import { Minus, Plus, Store, Trash2 } from "lucide-react";
@@ -22,12 +22,13 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 interface ShoppingCartProps {
   cart: Cart;
 }
 
 function ShoppingCart({ cart }: ShoppingCartProps) {
+  const searchParams = useSearchParams();
   const [currentCart, setCurrentCart] = useState(cart);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -38,6 +39,31 @@ function ShoppingCart({ cart }: ShoppingCartProps) {
   const allIds = currentCart.cartItemByShop.flatMap((shop) =>
     shop.products.map((p) => p.cartItemId)
   );
+
+  // Preselect item from URL param `cartItemId` if present
+  useEffect(() => {
+    const id = searchParams?.get("cartItemId");
+    if (!id) return;
+
+    const exists = currentCart.cartItemByShop.some((shop) =>
+      shop.products.some((p) => p.cartItemId === id)
+    );
+    if (!exists) return;
+
+    if (selectedIds.length === 0 || !selectedIds.includes(id)) {
+      const newSelected = [id];
+      setSelectedIds(newSelected);
+      // also load preview for this single item
+      (async () => {
+        try {
+          const res = await previewOrder(newSelected);
+          setPreview(res);
+        } catch {
+          // noop
+        }
+      })();
+    }
+  }, [searchParams, currentCart, selectedIds]);
 
   const handleBuy = async () => {
     if (selectedIds.length === 0) return;

@@ -227,15 +227,15 @@ class ChatHubService {
     console.log("[DEBUG] chatHub.startViewingLivestream called with:", livestreamId);
     const result = await this.invokeWhenConnected('StartViewingLivestream', livestreamId);
     console.log("[DEBUG] startViewingLivestream result:", result);
-    console.log(`[DEBUG] 📡 Viewer should now be in group: livestream_viewers_${livestreamId}`);
+    console.log(`[DEBUG]  Viewer should now be in group: livestream_viewers_${livestreamId}`);
     
     // Add debugging for group membership verification
     setTimeout(async () => {
-      console.log('[DEBUG] 🔍 Checking if viewer is properly in group after 2 seconds...');
+      console.log('[DEBUG]  Checking if viewer is properly in group after 2 seconds...');
       try {
         await this.invokeWhenConnected('VerifyGroupMembership', livestreamId);
       } catch (error) {
-        console.log('[DEBUG] ❌ Group membership verification failed:', error);
+        console.log('[DEBUG]  Group membership verification failed:', error);
       }
     }, 2000);
     

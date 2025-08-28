@@ -119,7 +119,40 @@ export default function OperationProduct({ product }: OperationProductPops) {
       console.error(error);
     }
   };
+  const handleClickBuyNow = async () => {
+    const token = localStorage.getItem("token");
 
+    if (!token) {
+      const currentPath = `/product/${product.productId}`;
+      toast.error("Vui lòng đăng nhập.");
+      router.push(
+        `/authentication/login?redirect=${encodeURIComponent(currentPath)}`
+      );
+      return;
+    }
+
+    const hasVariants = product.variants && product.variants.length > 0;
+
+    if (hasVariants && !selectedVariant) {
+      setVariantError("Vui lòng chọn phiên bản sản phẩm.");
+      return;
+    }
+
+    try {
+      setVariantError(null);
+      const res = await createCart({
+        productId: product.productId,
+        variantId: hasVariants ? selectedVariant?.variantId ?? "" : "",
+        quantity: quantity,
+      });
+      await refreshCart();
+      const cartItemId = res?.data?.cartItemId;
+      router.push(`/customer/cart?cartItemId=${cartItemId}`);
+    } catch (error) {
+      toast.error("Không thể thêm vào giỏ hàng!");
+      console.error(error);
+    }
+  };
   return (
     <div className=" mx-auto px-8  pb-8">
       <div className="flex flex-col lg:flex-row gap-10">
@@ -359,7 +392,7 @@ export default function OperationProduct({ product }: OperationProductPops) {
               Thêm vào giỏ hàng
             </Button>
             <Button
-              onClick={handleClickBuy}
+              onClick={handleClickBuyNow}
               size="lg"
               variant="outline"
               className="flex-1 cursor-pointer  bg-black font-medium hover:bg-black/80 text-white hover:text-white"
