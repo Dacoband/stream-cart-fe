@@ -46,6 +46,16 @@ const statusConfig: Record<
     description: string;
   }
 > = {
+  0: {
+    label: "Mới tạo",
+    icon: AlertCircle,
+    color: "bg-gray-400",
+    bgColor: "bg-gray-50",
+    textColor: "text-gray-700",
+    borderColor: "border-gray-200",
+    needsAction: true,
+    description: "Đơn hàng mới tạo, chờ xác nhận",
+  },
   1: {
     label: "Chờ xác nhận",
     icon: AlertCircle,
@@ -124,8 +134,19 @@ export default function StatusOrder({ order, onStatusUpdated }: Props) {
   const [updating, setUpdating] = useState(false);
   const [confirmPickupOpen, setConfirmPickupOpen] = useState(false);
 
-  const currentConfig = statusConfig[order.orderStatus];
-  const currentIndex = statusFlow.indexOf(order.orderStatus);
+  const defaultConfig = {
+    label: "Không xác định",
+    icon: AlertCircle,
+    color: "bg-gray-400",
+    bgColor: "bg-gray-50",
+    textColor: "text-gray-700",
+    borderColor: "border-gray-200",
+    needsAction: false,
+    description: "Trạng thái đơn hàng chưa xác định",
+  } as const;
+
+  const currentConfig = statusConfig[order.orderStatus] || defaultConfig;
+  const currentIndex = Math.max(0, statusFlow.indexOf(order.orderStatus));
 
   const deadlineMessage =
     order.orderStatus === 1

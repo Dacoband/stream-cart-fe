@@ -42,7 +42,6 @@ function maskAddress(address: string) {
 function maskPhone(phone: string) {
   if (!phone) return "";
 
-  if (phone.length <= 6) return phone; // số quá ngắn thì để nguyên
   return phone.slice(0, 3) + "*".repeat(phone.length - 6) + phone.slice(-3);
 }
 function OrderDetailPage() {
@@ -70,7 +69,6 @@ function OrderDetailPage() {
         const orderInfo = orderData?.data || orderData;
         setOrder(orderInfo);
 
-        // Fetch order items separately
         try {
           const itemsData = await getOrderProductByOrderId(orderId);
 
@@ -88,11 +86,8 @@ function OrderDetailPage() {
           setOrderItems(items);
         } catch (error) {
           console.error("Error fetching order items:", error);
-          // Fallback to order.items if API call fails
           setOrderItems(orderInfo?.items || []);
         }
-
-        // Fetch customer info
         if (orderInfo?.accountId) {
           try {
             const customerData = await getUserById(orderInfo.accountId);
@@ -104,9 +99,6 @@ function OrderDetailPage() {
             console.error("Error fetching customer:", error);
           }
         }
-
-        // Fetch product attributes for items with variants
-        // We'll do this after orderItems is set
       } catch (error) {
         console.error("Error fetching order:", error);
         toast.error("Không thể tải thông tin đơn hàng");
@@ -114,11 +106,9 @@ function OrderDetailPage() {
         setLoading(false);
       }
     };
-
     fetchOrderDetail();
   }, [orderId]);
 
-  // Separate useEffect for fetching attributes after orderItems is loaded
   useEffect(() => {
     const fetchAttributes = async () => {
       if (orderItems.length > 0) {
@@ -141,7 +131,6 @@ function OrderDetailPage() {
         setItemAttributes(attrMap);
       }
     };
-
     fetchAttributes();
   }, [orderItems]);
 
@@ -182,8 +171,6 @@ function OrderDetailPage() {
       </div>
     );
   }
-
-  // status info now handled inside StatusOrder component
 
   return (
     <div className="flex flex-col gap-5 min-h-full">
@@ -326,7 +313,6 @@ function OrderDetailPage() {
                 </div>
               ) : (
                 <div className="border rounded-md overflow-hidden">
-                  {/* Header row */}
                   <div className="grid grid-cols-20 bg-gray-50 text-sm font-medium text-gray-600 px-4 py-2">
                     <div className="col-span-1">STT</div>
                     <div className="col-span-7">Sản phẩm</div>
@@ -334,13 +320,9 @@ function OrderDetailPage() {
                     <div className="col-span-4 text-right">Số lượng</div>
                     <div className="col-span-4 text-right">Thành tiền</div>
                   </div>
-
-                  {/* Rows */}
                   {orderItems.map((item, idx) => {
                     const attrs = itemAttributes[item.id];
-                    const isGift =
-                      (item.unitPrice ?? 0) === 0 ||
-                      (item.totalPrice ?? 0) === 0;
+
                     const attrsText = attrs
                       ? Object.entries(attrs)
                           .map(([key, value]) => `${key}: ${value}`)
@@ -366,11 +348,6 @@ function OrderDetailPage() {
                           />
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 flex-wrap">
-                              {isGift && (
-                                <span className="text-xs px-2 py-0.5 rounded-full bg-rose-100 text-rose-700 border border-rose-200">
-                                  Quà tặng
-                                </span>
-                              )}
                               <h4
                                 className="font-medium text-gray-900 truncate"
                                 title={item.productName}
@@ -425,8 +402,6 @@ function OrderDetailPage() {
             </CardContent>
           </div>
         </Card>
-
-        {/* Payment Info Card */}
         <Card className="rounded-none">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -459,7 +434,7 @@ function OrderDetailPage() {
                 </span>
               </div>
               {order.discountAmount > 0 && (
-                <div className="flex justify-between text-green-600">
+                <div className="flex justify-between text-orange-600">
                   <span>Giảm giá:</span>
                   <span>
                     -<PriceTag value={order.discountAmount} />
