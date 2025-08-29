@@ -13,6 +13,21 @@ import { Badge } from '@/components/ui/badge'
 import { formatFullDateTimeVN } from '@/components/common/formatFullDateTimeVN'
 import { ArrowUpRight } from 'lucide-react'
 
+export type Status = 'COMPLETED' | 'PENDING' | 'CANCELLED'
+
+export type OrderRow = {
+  id: string
+  title: string
+  income: number
+  createdAt: string | Date
+  status: Status
+  source?: string
+}
+
+interface Props {
+  rows?: OrderRow[]
+}
+
 function formatVND(n?: number) {
   return typeof n === 'number'
     ? new Intl.NumberFormat('vi-VN', {
@@ -22,7 +37,7 @@ function formatVND(n?: number) {
     : '—'
 }
 
-const badge = (status: 'COMPLETED' | 'PENDING' | 'CANCELLED') => {
+const StatusBadge: React.FC<{ status: Status }> = ({ status }) => {
   switch (status) {
     case 'COMPLETED':
       return (
@@ -38,25 +53,12 @@ const badge = (status: 'COMPLETED' | 'PENDING' | 'CANCELLED') => {
       )
     default:
       return (
-        <Badge className="bg-red-100 text-red-700 border-red-200">Hủy</Badge>
+        <Badge className="bg-red-100 text-red-700 border-red-200">Đã hủy</Badge>
       )
   }
 }
 
-type Row = {
-  id: string
-  title: string
-  income: number
-  createdAt: string | Date
-  status: 'COMPLETED' | 'PENDING' | 'CANCELLED'
-  source?: string
-}
-
-interface Props {
-  rows?: Row[]
-}
-
-export default function TableOrder({ rows }: Props) {
+const TableOrder: React.FC<Props> = ({ rows }) => {
   const data = rows ?? []
 
   return (
@@ -65,7 +67,7 @@ export default function TableOrder({ rows }: Props) {
         <TableRow>
           <TableHead className="font-semibold pl-6">Loại</TableHead>
           <TableHead className="font-semibold">Mã đơn hàng</TableHead>
-          <TableHead className="font-semibold ">Số tiền</TableHead>
+          <TableHead className="font-semibold">Số tiền</TableHead>
           <TableHead className="font-semibold">Trạng thái</TableHead>
           <TableHead className="font-semibold">Thời gian</TableHead>
         </TableRow>
@@ -73,7 +75,7 @@ export default function TableOrder({ rows }: Props) {
       <TableBody>
         {data.map((it) => (
           <TableRow key={it.id}>
-            <TableCell className="">
+            <TableCell>
               <div className="flex items-center gap-3 py-2">
                 <div className="w-8 h-8 rounded-md bg-green-100 flex items-center justify-center">
                   <span className="text-green-600">
@@ -88,15 +90,24 @@ export default function TableOrder({ rows }: Props) {
                 </div>
               </div>
             </TableCell>
+
             <TableCell>
               <div className="flex flex-col">
                 <span className="text-primary text-xs">#{it.id}</span>
+                <span className="text-xs text-muted-foreground">
+                  {it.title}
+                </span>
               </div>
             </TableCell>
-            <TableCell className=" text-green-600 font-medium">
+
+            <TableCell className="text-green-600 font-medium">
               +{formatVND(it.income)}
             </TableCell>
-            <TableCell>{badge(it.status)}</TableCell>
+
+            <TableCell>
+              <StatusBadge status={it.status} />
+            </TableCell>
+
             <TableCell>{formatFullDateTimeVN(it.createdAt)}</TableCell>
           </TableRow>
         ))}
@@ -104,3 +115,5 @@ export default function TableOrder({ rows }: Props) {
     </Table>
   )
 }
+
+export default TableOrder

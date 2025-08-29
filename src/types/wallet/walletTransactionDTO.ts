@@ -57,3 +57,25 @@ export interface ListWalletTransactionDTO {
   totalCount: number
   totalPage: number
 }
+export const TX_STATUS = {
+  PENDING: 'PENDING',
+  COMPLETED: 'COMPLETED',
+  FAILED: 'FAILED',
+  CANCELED: 'CANCELED',
+} as const
+export type TxStatus = (typeof TX_STATUS)[keyof typeof TX_STATUS]
+
+export type TxRow = {
+  id: string
+  bankName?: string // tên ngân hàng (DTO.bankAccount)
+  bankAccountNumber?: string // số tài khoản (DTO.bankNumber)
+  bankAccountName?: string // tên chủ TK (nếu có)
+  amount: number
+  fee?: number
+  netAmount?: number
+  status: TxStatus
+  createdAt: string | Date
+  processedAt?: string | Date | null
+  transactionId?: string | null
+  description?: string | null
+}

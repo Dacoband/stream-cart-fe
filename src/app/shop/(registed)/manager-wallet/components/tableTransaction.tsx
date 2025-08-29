@@ -13,8 +13,9 @@ import { Badge } from '@/components/ui/badge'
 import { formatFullDateTimeVN } from '@/components/common/formatFullDateTimeVN'
 import { ArrowDownLeft, ArrowUpRight } from 'lucide-react'
 
-type TxStatus = 'PENDING' | 'COMPLETED' | 'FAILED'
-type Row = {
+export type TxStatus = 'PENDING' | 'COMPLETED' | 'FAILED' | 'CANCELED'
+
+export type Row = {
   id: string
   bankName?: string
   bankAccountNumber?: string
@@ -27,6 +28,15 @@ type Row = {
   processedAt?: string | Date | null
   transactionId?: string | null
   description?: string | null
+}
+
+export interface Props {
+  rows: Row[] // <- bắt buộc
+  typeLabel?: string
+  accountHeaderLabel?: string
+  amountPositive?: boolean
+  showDetails?: boolean
+  hideTransactionId?: boolean
 }
 
 function formatVND(n?: number) {
@@ -49,7 +59,13 @@ const statusBadge = (status: TxStatus) => {
     case 'PENDING':
       return (
         <Badge className="bg-yellow-100 text-yellow-700 border-yellow-200">
-          Chờ xử lý
+          Đang xử lý
+        </Badge>
+      )
+    case 'CANCELED':
+      return (
+        <Badge className="bg-gray-100 text-gray-700 border-gray-200">
+          Đã hủy
         </Badge>
       )
     default:
@@ -61,15 +77,6 @@ const statusBadge = (status: TxStatus) => {
   }
 }
 
-interface Props {
-  rows?: Row[]
-  typeLabel?: string
-  accountHeaderLabel?: string
-  amountPositive?: boolean // true => green with +, false => red with -/value
-  showDetails?: boolean // show description column
-  hideTransactionId?: boolean // hide mã giao dịch column
-}
-
 export default function TableTransaction({
   rows,
   typeLabel = 'Yêu cầu rút tiền',
@@ -78,7 +85,7 @@ export default function TableTransaction({
   showDetails = false,
   hideTransactionId = false,
 }: Props) {
-  const data = rows ?? []
+  const data = rows
 
   return (
     <Table>
@@ -126,15 +133,18 @@ export default function TableTransaction({
                 </div>
               </div>
             </TableCell>
+
             <TableCell>
               <div className="flex flex-col">
-                <span className="text-foreground flex gap-4">
-                  <span>{it.bankName ?? '—'}</span> -{' '}
-                  <span> {it.bankAccountNumber}</span>
+                <span className="text-foreground flex gap-2">
+                  <span>{it.bankName ?? '—'}</span>
+                  <span>-</span>
+                  <span>{it.bankAccountNumber ?? '—'}</span>
                 </span>
               </div>
             </TableCell>
-            <TableCell className="">
+
+            <TableCell>
               <div className="flex flex-col items-end">
                 <span
                   className={
@@ -149,7 +159,9 @@ export default function TableTransaction({
                 </span>
               </div>
             </TableCell>
+
             <TableCell>{statusBadge(it.status)}</TableCell>
+
             <TableCell>
               <div className="flex flex-col">
                 <span>{formatFullDateTimeVN(it.createdAt)}</span>
@@ -160,6 +172,7 @@ export default function TableTransaction({
                 )}
               </div>
             </TableCell>
+
             {!hideTransactionId && (
               <TableCell>
                 {it.transactionId ? (
@@ -171,11 +184,10 @@ export default function TableTransaction({
                 )}
               </TableCell>
             )}
+
             {showDetails && (
               <TableCell>
-                <span className="text-foreground">
-                  {it.transactionId ?? '—'}
-                </span>
+                <span className="text-foreground">{it.description ?? '—'}</span>
               </TableCell>
             )}
           </TableRow>

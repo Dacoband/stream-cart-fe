@@ -12,8 +12,17 @@ import {
 import { WalletDTO } from '@/types/wallet/wallet'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import TableOrder from './components/tableOrder'
-import TableTransaction from './components/tableTransaction'
+
+import TableOrder, {
+  type OrderRow,
+  type Status as OrderStatus,
+} from './components/tableOrder'
+
+import TableTransaction, {
+  type Row as TxRow,
+  type TxStatus,
+} from './components/tableTransaction'
+
 import {
   filterWalletTransactions,
   createWalletTransaction,
@@ -36,94 +45,111 @@ import {
 import { Input } from '@/components/ui/input'
 import { getListBank } from '@/services/api/listbank/listbank'
 import { Bank } from '@/types/listbank/listbank'
+import { useRouter } from 'next/navigation'
 
-type OrderRow = {
-  id: string
-  title: string
-  income: number
-  createdAt: string | Date
-  status: 'COMPLETED' | 'PENDING' | 'CANCELLED'
-  source?: string
+type TabKey = 'orders' | 'withdrawals' | 'deposits' | 'systems'
+
+const TAB_TO_TYPE: Record<TabKey, number> = {
+  orders: 2,
+  withdrawals: 0,
+  deposits: 1,
+  systems: 3,
 }
 
-type TxStatus = 'PENDING' | 'COMPLETED' | 'FAILED'
-type TxRow = {
-  id: string
-  bankName?: string
-  bankAccountNumber?: string
-  bankAccountName?: string
-  amount: number
-  fee?: number
-  netAmount?: number
-  status: TxStatus
-  createdAt: string | Date
-  processedAt?: string | Date | null
-  transactionId?: string | null
-  description?: string | null
+function formatVND(n?: number) {
+  return typeof n === 'number'
+    ? new Intl.NumberFormat('vi-VN', {
+        style: 'currency',
+        currency: 'VND',
+      }).format(n)
+    : '—'
 }
 
-function Page() {
+const mapStatusTx = (s: number | string): TxStatus => {
+  if (typeof s === 'number') {
+    // tuỳ backend: 0=Success, 1=Failed, 2=Pending, 3=Cancelled
+    if (s === 0) return 'COMPLETED'
+    if (s === 1) return 'FAILED'
+    if (s === 2) return 'PENDING'
+    if (s === 3) return 'CANCELED' // luôn dùng CANCELLED (2 L)
+    return 'FAILED'
+  }
+  const v = String(s).toLowerCase()
+  if (v === 'success') return 'COMPLETED'
+  if (v === 'failed' || v === 'fail' || v === 'error') return 'FAILED'
+  if (v === 'pending' || v === 'retry') return 'PENDING'
+  if (v === 'canceled' || v === 'cancelled') return 'CANCELED'
+  return 'FAILED'
+}
+
+const toStartOfDayIso = (d: string) => new Date(`${d}T00:00:00`).toISOString()
+const toEndOfDayIso = (d: string) => new Date(`${d}T23:59:59.999`).toISOString()
+
+const parseWalletFromResponse = (res: any): WalletDTO | null => {
+  if (!res) return null
+  if ((res as WalletDTO).id) return res as WalletDTO
+  if ((res as { data?: WalletDTO }).data) return (res as any).data as WalletDTO
+  return null
+}
+
+export default function Page() {
   const { user } = useAuth()
+  const router = useRouter()
 
-  // Wallet + loading
   const [wallet, setWallet] = React.useState<WalletDTO | null>(null)
-  const [loading, setLoading] = React.useState<boolean>(true)
+  const [loading, setLoading] = React.useState(true)
   const [error, setError] = React.useState<string | null>(null)
 
-  // Tables data
   const [orders, setOrders] = React.useState<OrderRow[]>([])
   const [withdrawals, setWithdrawals] = React.useState<TxRow[]>([])
   const [deposits, setDeposits] = React.useState<TxRow[]>([])
   const [systems, setSystems] = React.useState<TxRow[]>([])
 
-  // Filters + tabs
-  const [activeTab, setActiveTab] = React.useState<
-    'orders' | 'withdrawals' | 'deposits' | 'systems'
-  >('orders')
-  const [fromDate, setFromDate] = React.useState<string>('')
-  const [toDate, setToDate] = React.useState<string>('')
+  const [activeTab, setActiveTab] = React.useState<TabKey>('orders')
+
+  const [fromDate, setFromDate] = React.useState('')
+  const [toDate, setToDate] = React.useState('')
   const [statusFilter, setStatusFilter] = React.useState<'ALL' | 0 | 1 | 2 | 3>(
     'ALL'
   )
-  const [reloadKey, setReloadKey] = React.useState(0)
 
-  // Deposit/Withdraw modals
   const [withdrawOpen, setWithdrawOpen] = React.useState(false)
   const [depositOpen, setDepositOpen] = React.useState(false)
-  const [txAmount, setTxAmount] = React.useState<string>('')
+  const [txAmount, setTxAmount] = React.useState('')
   const [submitting, setSubmitting] = React.useState(false)
 
-  // Bank update modal
   const [bankOpen, setBankOpen] = React.useState(false)
   const [bankSubmitting, setBankSubmitting] = React.useState(false)
   const [bankList, setBankList] = React.useState<Bank[]>([])
-  const [bankName, setBankName] = React.useState<string>('')
-  const [bankAccountNumber, setBankAccountNumber] = React.useState<string>('')
+  const [bankName, setBankName] = React.useState('')
+  const [bankAccountNumber, setBankAccountNumber] = React.useState('')
 
-  const formatVND = (n?: number) =>
-    typeof n === 'number'
-      ? new Intl.NumberFormat('vi-VN', {
-          style: 'currency',
-          currency: 'VND',
-        }).format(n)
-      : '—'
+  const bankCacheRef = React.useRef<Bank[] | null>(null)
+  const requestSeq = React.useRef(0)
 
-  // Map status (backend: 0=Success,1=Failed,2=Pending,3=Canceled)
-  const mapStatusTx = (s: number | string): TxStatus | 'CANCELLED' => {
-    if (typeof s === 'number') {
-      if (s === 0) return 'COMPLETED'
-      if (s === 2) return 'PENDING'
-      if (s === 3) return 'CANCELLED'
-      return 'FAILED'
-    }
-    if (s === 'Success') return 'COMPLETED'
-    if (s === 'Pending') return 'PENDING'
-    if (s === 'Canceled') return 'CANCELLED'
-    return 'FAILED'
-  }
-
-  // Load wallet + list theo tab
+  // Debounce filter input
+  const [debouncedFilters, setDebouncedFilters] = React.useState({
+    from: '',
+    to: '',
+    status: 'ALL' as 'ALL' | 0 | 1 | 2 | 3,
+  })
   React.useEffect(() => {
+    const t = setTimeout(
+      () =>
+        setDebouncedFilters({
+          from: fromDate,
+          to: toDate,
+          status: statusFilter,
+        }),
+      300
+    )
+    return () => clearTimeout(t)
+  }, [fromDate, toDate, statusFilter])
+
+  const refetch = React.useCallback(() => {
+    requestSeq.current += 1
+    const curSeq = requestSeq.current
+
     const run = async () => {
       if (!user?.shopId) {
         setLoading(false)
@@ -132,56 +158,57 @@ function Page() {
       setLoading(true)
       setError(null)
       try {
-        // Wallet
-        const resWallet = await getWalletShopId(user.shopId)
-        const walletData: WalletDTO | null =
-          resWallet && (resWallet as WalletDTO).id
-            ? (resWallet as WalletDTO)
-            : resWallet && (resWallet as { data?: WalletDTO }).data
-            ? (resWallet as { data?: WalletDTO }).data ?? null
-            : null
+        const [resWallet, resList] = await Promise.all([
+          getWalletShopId(user.shopId),
+          filterWalletTransactions({
+            ShopId: user.shopId,
+            Types: [TAB_TO_TYPE[activeTab]],
+            Status:
+              debouncedFilters.status === 'ALL'
+                ? undefined
+                : debouncedFilters.status,
+            FromTime: debouncedFilters.from
+              ? toStartOfDayIso(debouncedFilters.from)
+              : undefined,
+            ToTime: debouncedFilters.to
+              ? toEndOfDayIso(debouncedFilters.to)
+              : undefined,
+            PageIndex: 1,
+            PageSize: 50,
+          } as any),
+        ])
+
+        if (curSeq !== requestSeq.current) return
+
+        const walletData = parseWalletFromResponse(resWallet)
         setWallet(walletData)
 
-        // Type theo tab
-        const typeToFetch: number =
-          activeTab === 'orders'
-            ? 2
-            : activeTab === 'withdrawals'
-            ? 0
-            : activeTab === 'deposits'
-            ? 1
-            : 3
-
-        const list = await filterWalletTransactions({
-          ShopId: user.shopId,
-          Types: [typeToFetch],
-          Status: statusFilter === 'ALL' ? undefined : statusFilter,
-          FromTime: fromDate ? new Date(fromDate).toISOString() : undefined,
-          ToTime: toDate ? new Date(toDate).toISOString() : undefined,
-          PageIndex: 1,
-          PageSize: 50,
-        })
-
-        const items: WalletTransactionDTO[] = list.items ?? []
+        const items: WalletTransactionDTO[] =
+          (resList as any)?.items ??
+          (Array.isArray(resList) ? resList : []) ??
+          []
 
         if (activeTab === 'orders') {
-          setOrders(
-            items.map((it) => ({
+          const mapped = items.map<OrderRow>((it) => {
+            const st = mapStatusTx(it.status)
+            const orderStatus: OrderStatus =
+              st === 'COMPLETED'
+                ? 'COMPLETED'
+                : st === 'PENDING'
+                ? 'PENDING'
+                : 'CANCELLED' // ← luôn dùng CANCELLED
+            return {
               id: it.orderId || it.id,
               title:
                 it.description ||
-                `Đơn hàng #${(it.orderId || it.id).slice(0, 8)}`,
+                `Đơn hàng #${String(it.orderId || it.id).slice(0, 8)}`,
               income: it.amount,
               createdAt: it.createdAt,
-              status:
-                mapStatusTx(it.status) === 'COMPLETED'
-                  ? 'COMPLETED'
-                  : mapStatusTx(it.status) === 'PENDING'
-                  ? 'PENDING'
-                  : 'CANCELLED',
+              status: orderStatus,
               source: 'Từ đơn hàng',
-            }))
-          )
+            }
+          })
+          setOrders(mapped)
         } else {
           const toTxRow = (it: WalletTransactionDTO): TxRow => ({
             id: it.id,
@@ -189,7 +216,7 @@ function Page() {
             bankAccountNumber: it.bankNumber ?? '',
             bankAccountName: it.bankAccount ?? '',
             amount: it.amount,
-            status: mapStatusTx(it.status) as TxStatus,
+            status: mapStatusTx(it.status),
             createdAt: it.createdAt,
             processedAt: it.lastModifiedAt ?? null,
             transactionId: it.transactionId ?? null,
@@ -208,19 +235,34 @@ function Page() {
         setDeposits([])
         setSystems([])
       } finally {
-        setLoading(false)
+        if (curSeq === requestSeq.current) setLoading(false)
       }
     }
-    run()
-  }, [user?.shopId, activeTab, fromDate, toDate, statusFilter, reloadKey])
 
-  // Load danh sách ngân hàng khi mở modal
+    run()
+  }, [
+    user?.shopId,
+    activeTab,
+    debouncedFilters.from,
+    debouncedFilters.to,
+    debouncedFilters.status,
+  ])
+
+  React.useEffect(() => {
+    refetch()
+  }, [refetch])
+
   React.useEffect(() => {
     const loadBanks = async () => {
       if (!bankOpen) return
+      if (bankCacheRef.current) {
+        setBankList(bankCacheRef.current)
+        return
+      }
       try {
         const banks = await getListBank()
         const sorted = [...banks].sort((a, b) => a.name.localeCompare(b.name))
+        bankCacheRef.current = sorted
         setBankList(sorted)
       } catch {
         toast.error('Không tải được danh sách ngân hàng')
@@ -374,7 +416,7 @@ function Page() {
                 >
                   <option value="ALL">Tất cả trạng thái</option>
                   <option value={0}>Hoàn thành</option>
-                  <option value={2}>Chờ xử lý</option>
+                  <option value={2}>Đang xử lý</option>
                   <option value={1}>Thất bại</option>
                   <option value={3}>Đã hủy</option>
                 </select>
@@ -390,12 +432,7 @@ function Page() {
                 >
                   Đặt lại
                 </Button>
-                <Button
-                  onClick={() => {
-                    /* state changes already trigger effect */
-                  }}
-                  disabled={loading}
-                >
+                <Button onClick={() => refetch()} disabled={loading}>
                   Áp dụng
                 </Button>
               </div>
@@ -403,7 +440,7 @@ function Page() {
 
             <Tabs
               value={activeTab}
-              onValueChange={(v) => setActiveTab(v as typeof activeTab)}
+              onValueChange={(v) => setActiveTab(v as TabKey)}
             >
               <TabsList className="rounded-none bg-gray-200 border">
                 <TabsTrigger
@@ -437,6 +474,7 @@ function Page() {
               <TabsContent value="orders">
                 <TableOrder rows={orders} />
               </TabsContent>
+
               <TabsContent value="withdrawals">
                 <TableTransaction
                   rows={withdrawals}
@@ -445,6 +483,7 @@ function Page() {
                   amountPositive={false}
                 />
               </TabsContent>
+
               <TabsContent value="deposits">
                 <TableTransaction
                   rows={deposits}
@@ -453,6 +492,7 @@ function Page() {
                   amountPositive={true}
                 />
               </TabsContent>
+
               <TabsContent value="systems">
                 <TableTransaction
                   rows={systems}
@@ -495,7 +535,7 @@ function Page() {
                       toast.error('Số tiền phải lớn hơn 0')
                       return
                     }
-                    if (value < 51000) {
+                    if (value < 51_000) {
                       toast.error('Số tiền rút tối thiểu là 51.000đ')
                       return
                     }
@@ -510,17 +550,9 @@ function Page() {
                         amount: value,
                       })
                       toast.success('Tạo yêu cầu rút tiền thành công')
-                      const res = await getWalletShopId(user.shopId)
-                      const data: WalletDTO | null =
-                        res && (res as WalletDTO).id
-                          ? (res as WalletDTO)
-                          : res && (res as { data?: WalletDTO }).data
-                          ? (res as { data?: WalletDTO }).data ?? null
-                          : null
-                      setWallet(data)
+                      refetch()
                       setWithdrawOpen(false)
                       setTxAmount('')
-                      setReloadKey((k) => k + 1)
                     } catch {
                       toast.error('Tạo yêu cầu rút tiền thất bại')
                     } finally {
@@ -557,39 +589,22 @@ function Page() {
                 <AlertDialogAction
                   className="bg-green-600 hover:bg-green-700 text-white"
                   disabled={submitting}
-                  onClick={async () => {
+                  onClick={() => {
                     const value = Number(txAmount)
                     if (!Number.isFinite(value) || value <= 0) {
                       toast.error('Số tiền phải lớn hơn 0')
                       return
                     }
-                    if (!user?.shopId) {
-                      toast.error('Thiếu ShopId')
+                    if (value < 10_000 || value > 50_000_000) {
+                      toast.error('Số tiền nạp phải từ 10.000đ đến 50.000.000đ')
                       return
                     }
-                    try {
-                      setSubmitting(true)
-                      await createWalletTransaction({
-                        type: WalletTransactionType.Deposit,
-                        amount: value,
-                      })
-                      toast.success('Nạp tiền thành công')
-                      const res = await getWalletShopId(user.shopId)
-                      const data: WalletDTO | null =
-                        res && (res as WalletDTO).id
-                          ? (res as WalletDTO)
-                          : res && (res as { data?: WalletDTO }).data
-                          ? (res as { data?: WalletDTO }).data ?? null
-                          : null
-                      setWallet(data)
-                      setDepositOpen(false)
-                      setTxAmount('')
-                      setReloadKey((k) => k + 1)
-                    } catch {
-                      toast.error('Nạp tiền thất bại')
-                    } finally {
-                      setSubmitting(false)
-                    }
+
+                    router.push(
+                      `/shop/manager-wallet/deposit?amount=${encodeURIComponent(
+                        String(value)
+                      )}`
+                    )
                   }}
                 >
                   Xác nhận
@@ -674,10 +689,7 @@ function Page() {
                       setBankSubmitting(true)
                       const updated = await updateShopWalletBankingInfo(
                         user.shopId,
-                        {
-                          bankName,
-                          bankAccountNumber,
-                        }
+                        { bankName, bankAccountNumber }
                       )
                       setWallet(updated)
                       toast.success('Cập nhật ngân hàng thành công')
@@ -699,5 +711,3 @@ function Page() {
     </div>
   )
 }
-
-export default Page
