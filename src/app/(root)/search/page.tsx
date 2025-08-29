@@ -174,6 +174,19 @@ function SearchPage() {
 
   const applyFilters = () => { router.replace(`/search?${buildQuery()}`); };
   const clearFilters = () => { setFilters(initialFilters); router.replace(`/search?q=${encodeURIComponent(q)}`); };
+  // Shimmer skeleton card for smooth loading
+  const ShimmerCard: React.FC = () => (
+    <div className="border border-gray-200 bg-white rounded-none overflow-hidden">
+      <div className="w-full aspect-square">
+        <div className="sc-shimmer w-full h-full" />
+      </div>
+      <div className="p-3 space-y-2">
+        <div className="sc-shimmer h-4 w-3/4 rounded" />
+        <div className="sc-shimmer h-4 w-1/2 rounded" />
+      </div>
+      <div className="sc-shimmer h-8" />
+    </div>
+  );
   const ProductCard: React.FC<{ product: SearchCardProduct; compact?: boolean }> = ({ product, compact }) => {
     const showDiscount = (product.discountPercentage && product.discountPercentage > 0) || (product.discountPrice > 0 && product.discountPrice < product.basePrice);
     const percent = product.discountPercentage || (product.basePrice && product.finalPrice && product.basePrice > product.finalPrice
@@ -237,12 +250,7 @@ function SearchPage() {
 
   return (
     <div className="px-16 2xl:px-32 py-4 space-y-4">
-    {/* Top Search Bar */}
-  {/* Embedded search bar removed (header provides search). */}
-
-      {/* Layout Grid */}
       <div className="grid grid-cols-12 gap-6">
-        {/* Sidebar Filters */}
         <aside className={`col-span-12 md:col-span-3 xl:col-span-2 text-xs`}> 
           <div className="flex items-center gap-2 mb-5 font-semibold text-slate-800 dark:text-slate-200 text-sm">
             <Filter size={16} className="text-[#B0F847]"/> <span className="uppercase tracking-wide">Bộ lọc tìm kiếm</span>
@@ -290,9 +298,7 @@ function SearchPage() {
           </div>
         </aside>
 
-        {/* Result Section */}
         <section className="col-span-12 md:col-span-9 xl:col-span-10 space-y-4 min-h-[400px]">
-          {/* Related Shop Section */}
           {shops.length > 0 && (
             <div className="bg-[#fdfdfd] p-5 flex flex-col sm:flex-row gap-5 items-center">
               <div className="flex items-center gap-4 w-full sm:w-auto">
@@ -324,8 +330,6 @@ function SearchPage() {
               </div>
             </div>
           )}
-          {/* Related shop products will be shown below the main search results */}
-          {/* Sort Bar (top horizontal) */}
           {
             <div className="flex flex-wrap items-center gap-2 bg-[#ffffff] px-4 py-3 text-[11px] md:text-xs">
               <span className="text-slate-400 mr-1">Sắp xếp theo:</span>
@@ -341,18 +345,13 @@ function SearchPage() {
               ))}
             </div>
           }
-          {/* Status / counts */}
           {!initialLoading && !error && q && meta && (meta.totalCount>0 || shopProducts.length===0) && (
             <div className="text-xs md:text-sm text-slate-400">Tìm thấy <span className="text-[#B0F847] font-medium">{meta.totalCount}</span> sản phẩm cho &quot;{q}&quot;</div>
           )}
           {initialLoading && (
-            <div className="grid gap-4 grid-cols-2 md:grid-cols-3 xl:grid-cols-5">
+            <div className="grid gap-6 grid-cols-2 md:grid-cols-3 xl:grid-cols-5">
               {Array.from({length:10}).map((_,i)=> (
-                <div key={i} className="border border-[#2c3035] rounded-md bg-[#1f2226] p-2 animate-pulse space-y-2">
-                  <div className="w-full aspect-[4/5] bg-[#2c3035] rounded" />
-                  <div className="h-3 bg-[#2c3035] rounded w-3/4" />
-                  <div className="h-3 bg-[#2c3035] rounded w-1/2" />
-                </div>
+                <ShimmerCard key={i} />
               ))}
             </div>
           )}
@@ -386,13 +385,9 @@ function SearchPage() {
             </div>
           )}
           {loadingMore && (
-            <div className="grid gap-4 grid-cols-2 md:grid-cols-3 xl:grid-cols-5 mt-4">
+            <div className="grid gap-6 grid-cols-2 md:grid-cols-3 xl:grid-cols-5 mt-4">
               {Array.from({length:5}).map((_,i)=> (
-                <div key={i} className="border border-[#2c3035] rounded-md bg-[#1f2226] p-2 animate-pulse space-y-2">
-                  <div className="w-full aspect-[4/5] bg-[#2c3035] rounded" />
-                  <div className="h-3 bg-[#2c3035] rounded w-3/4" />
-                  <div className="h-3 bg-[#2c3035] rounded w-1/2" />
-                </div>
+                <ShimmerCard key={i} />
               ))}
             </div>
           )}
