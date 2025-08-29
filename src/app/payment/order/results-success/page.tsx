@@ -22,27 +22,14 @@ const PaymentSuccess = () => {
         <h1 className="text-2xl font-bold text-gray-900 mb-2">
           Đặt hàng thành công!
         </h1>
-        <p className="text-gray-600 mb-6">
+        <p className="text-gray-600 mb-10 text-base">
           Cảm ơn bạn đã mua hàng. Đơn hàng của bạn đã được đặt thành công.
         </p>
-        <div className="bg-gray-100 rounded-lg p-4 mb-10 text-left w-full">
-          <div className="flex justify-between items-center mb-2.5">
-            <span className=" text-gray-600">Mã đơn hàng:</span>
-            <span className="font-medium">#SC-2024-001</span>
-          </div>
-          {/* <div className="flex justify-between items-center mb-2.5">
-            <span className=" text-gray-600">Tổng tiền:</span>
-            <span className=" font-medium">1.299.000 VNĐ</span>
-          </div> */}
-          {/* <div className="flex justify-between items-center">
-            <span className=" text-gray-600">Thanh toán:</span>
-            <span className=" font-medium">Chờ thanh toán</span>
-          </div> */}
-        </div>
+
         {/* Action Buttons */}
         <div className="grid grid-cols-2 gap-5 w-full mb-5">
           <Button className="w-full bg-[#B0F847] hover:bg-[#B0F847]/80 text-black hover:text-black/80 cursor-pointer rounded-none py-5">
-            <Link href="/ " className="flex">
+            <Link href="/home " className="flex">
               <ShoppingCart className="w-4 h-4 mr-2" />
               Tiếp tục mua sắm
             </Link>
