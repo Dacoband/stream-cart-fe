@@ -16,6 +16,8 @@ type Row = {
   shopId: string
   shopName?: string
   ownerName?: string
+  ownerPhone?: string
+  ownerEmail?: string
   ownerId?: string
   type: number | string
   amount: number
@@ -36,16 +38,19 @@ type Props = {
   loading: boolean
   tx?: Row
   onOpenChange: (open: boolean) => void
-
-  // bổ sung
-  sellerPhone?: string
-  walletBankName?: string
-  walletBankNumber?: string
-
   // helpers
   renderStatus: (s: string) => React.ReactNode
   formatCurrency: (n: number) => string
   formatDateTime: (d: string | Date) => string
+  Icons: {
+    Store: any
+    User2: any
+    Mail: any
+    Phone: any
+    Landmark: any
+    Wallet: any
+    IdCard: any
+  }
 }
 
 export default function DetailsModal({
@@ -53,118 +58,164 @@ export default function DetailsModal({
   loading,
   tx,
   onOpenChange,
-  sellerPhone,
-  walletBankName,
-  walletBankNumber,
   renderStatus,
   formatCurrency,
   formatDateTime,
+  Icons,
 }: Props) {
+  const { Store, User2, Mail, Phone, Landmark, Wallet, IdCard } = Icons
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
-      <AlertDialogContent className="max-w-xl">
+      <AlertDialogContent className="max-w-2xl">
         <AlertDialogHeader>
           <AlertDialogTitle>Chi tiết giao dịch</AlertDialogTitle>
           <AlertDialogDescription>
             {loading ? (
               <span>Đang tải thông tin...</span>
-            ) : tx ? (
-              <div className="space-y-2 text-sm">
-                {/* Thông tin giao dịch */}
-                <div>
-                  <span className="font-medium">Mã GD: </span>
-                  {tx.transactionId ?? '—'}
-                </div>
-                <div>
-                  <span className="font-medium">Giao dịch ID: </span>
-                  {tx.id}
-                </div>
-                <div>
-                  <span className="font-medium">Loại: </span>
-                  {String(tx.type)}
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="font-medium">Trạng thái: </span>
-                  {renderStatus(tx.status)}
-                </div>
-                <div>
-                  <span className="font-medium">Số tiền: </span>
-                  {formatCurrency(tx.amount)}
-                </div>
-                <div>
-                  <span className="font-medium">Mô tả: </span>
-                  {tx.description ?? '—'}
-                </div>
-                <div>
-                  <span className="font-medium">Thời gian tạo: </span>
-                  {formatDateTime(tx.createdAt)}
-                </div>
-                {tx.processedAt && (
-                  <div>
-                    <span className="font-medium">Thời gian xử lý: </span>
-                    {formatDateTime(tx.processedAt)}
-                  </div>
-                )}
-
-                {/* Tạo/Cập nhật bởi ai, lúc nào */}
-                {(tx.createdBy || tx.updatedBy || tx.updatedAt) && (
-                  <div className="pt-2 border-t" />
-                )}
-                {tx.createdBy && (
-                  <div>
-                    <span className="font-medium">Tạo bởi: </span>
-                    {tx.createdBy}
-                  </div>
-                )}
-                {tx.updatedBy && (
-                  <div>
-                    <span className="font-medium">Cập nhật bởi: </span>
-                    {tx.updatedBy}
-                  </div>
-                )}
-                {tx.updatedAt && (
-                  <div>
-                    <span className="font-medium">Cập nhật lúc: </span>
-                    {formatDateTime(tx.updatedAt)}
-                  </div>
-                )}
-
-                {/* Seller */}
-                <div className="pt-2 border-t" />
-                <div>
-                  <span className="font-medium">Shop ID: </span>
-                  {tx.shopId}
-                </div>
-                <div>
-                  <span className="font-medium">Tên shop: </span>
-                  {tx.shopName ?? '—'}
-                </div>
-                <div>
-                  <span className="font-medium">Chủ shop (seller): </span>
-                  {tx.ownerName ?? '—'}
-                </div>
-                <div>
-                  <span className="font-medium">ID seller: </span>
-                  {tx.ownerId ?? '—'}
-                </div>
-                <div>
-                  <span className="font-medium">SĐT seller: </span>
-                  {sellerPhone ?? '—'}
-                </div>
-
-                {/* Ví */}
-                <div className="pt-2 border-t" />
-                <div>
-                  <span className="font-medium">Ngân hàng (từ ví): </span>
-                  {walletBankName ?? tx.bankName ?? '—'}
-                </div>
-                <div>
-                  <span className="font-medium">Số tài khoản (từ ví): </span>
-                  {walletBankNumber ?? tx.bankNumber ?? '—'}
-                </div>
-              </div>
-            ) : (
+            ) : !tx ? (
               <span>Không có dữ liệu.</span>
+            ) : (
+              <div className="space-y-4">
+                {/* THÔNG TIN SHOP */}
+                <section className="rounded-xl border p-4 bg-gradient-to-br from-slate-50 to-white">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Store className="text-slate-700" size={18} />
+                    <h3 className="font-semibold">Thông tin shop</h3>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3 text-sm">
+                    <div className="flex items-center gap-2">
+                      <Store size={16} className="text-slate-600" />
+                      <span className="text-muted-foreground">Tên shop:</span>
+                      <span className="font-medium">{tx.shopName ?? '—'}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <User2 size={16} className="text-slate-600" />
+                      <span className="text-muted-foreground">Chủ shop:</span>
+                      <span className="font-medium">{tx.ownerName ?? '—'}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Mail size={16} className="text-slate-600" />
+                      <span className="text-muted-foreground">Email:</span>
+                      <span className="font-medium">
+                        {tx.ownerEmail ?? '—'}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Phone size={16} className="text-slate-600" />
+                      <span className="text-muted-foreground">SĐT:</span>
+                      <span className="font-medium">
+                        {tx.ownerPhone ?? '—'}
+                      </span>
+                    </div>
+                  </div>
+                </section>
+
+                {/* THÔNG TIN GIAO DỊCH */}
+                <section className="rounded-xl border p-4 bg-gradient-to-br from-green-50/40 to-white">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Wallet className="text-green-700" size={18} />
+                    <h3 className="font-semibold">Thông tin giao dịch</h3>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3 text-sm">
+                    <div className="flex items-center gap-2">
+                      <IdCard size={16} className="text-green-700" />
+                      <span className="text-muted-foreground">Mã GD:</span>
+                      <span className="font-medium">
+                        {tx.transactionId ?? '—'}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <IdCard size={16} className="text-green-700" />
+                      <span className="text-muted-foreground">
+                        ID giao dịch:
+                      </span>
+                      <span className="font-medium">{tx.id}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Wallet size={16} className="text-green-700" />
+                      <span className="text-muted-foreground">Số tiền:</span>
+                      <span className="font-medium">
+                        {formatCurrency(tx.amount)}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Wallet size={16} className="text-green-700" />
+                      <span className="text-muted-foreground">Trạng thái:</span>
+                      {renderStatus(tx.status)}
+                    </div>
+                    <div className="flex items-center gap-2 col-span-2">
+                      <span className="text-muted-foreground">Mô tả:</span>
+                      <span className="font-medium">
+                        {tx.description ?? '—'}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-muted-foreground">Tạo lúc:</span>
+                      <span className="font-medium">
+                        {formatDateTime(tx.createdAt)}
+                      </span>
+                    </div>
+                    {tx.processedAt && (
+                      <div className="flex items-center gap-2">
+                        <span className="text-muted-foreground">
+                          Xử lý lúc:
+                        </span>
+                        <span className="font-medium">
+                          {formatDateTime(tx.processedAt)}
+                        </span>
+                      </div>
+                    )}
+                    {tx.createdBy && (
+                      <div className="flex items-center gap-2">
+                        <span className="text-muted-foreground">Tạo bởi:</span>
+                        <span className="font-medium">{tx.createdBy}</span>
+                      </div>
+                    )}
+                    {tx.updatedBy && (
+                      <div className="flex items-center gap-2">
+                        <span className="text-muted-foreground">
+                          Cập nhật bởi:
+                        </span>
+                        <span className="font-medium">{tx.updatedBy}</span>
+                      </div>
+                    )}
+                    {tx.updatedAt && (
+                      <div className="flex items-center gap-2">
+                        <span className="text-muted-foreground">
+                          Cập nhật lúc:
+                        </span>
+                        <span className="font-medium">
+                          {formatDateTime(tx.updatedAt)}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </section>
+
+                {/* THÔNG TIN VÍ */}
+                <section className="rounded-xl border p-4 bg-gradient-to-br from-blue-50/50 to-white">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Landmark className="text-blue-700" size={18} />
+                    <h3 className="font-semibold">Thông tin ví</h3>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3 text-sm">
+                    <div className="flex items-center gap-2">
+                      <Landmark size={16} className="text-blue-700" />
+                      <span className="text-muted-foreground">Ngân hàng:</span>
+                      <span className="font-medium">{tx.bankName ?? '—'}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <IdCard size={16} className="text-blue-700" />
+                      <span className="text-muted-foreground">
+                        Số tài khoản:
+                      </span>
+                      <span className="font-medium">
+                        {tx.bankNumber ?? '—'}
+                      </span>
+                    </div>
+                  </div>
+                </section>
+              </div>
             )}
           </AlertDialogDescription>
         </AlertDialogHeader>

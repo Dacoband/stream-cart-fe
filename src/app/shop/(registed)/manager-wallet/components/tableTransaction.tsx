@@ -31,7 +31,7 @@ export type Row = {
 }
 
 export interface Props {
-  rows: Row[] // <- bắt buộc
+  rows: Row[] // bắt buộc, không còn undefined
   typeLabel?: string
   accountHeaderLabel?: string
   amountPositive?: boolean
@@ -85,8 +85,6 @@ export default function TableTransaction({
   showDetails = false,
   hideTransactionId = false,
 }: Props) {
-  const data = rows
-
   return (
     <Table>
       <TableHeader className="bg-[#B0F847]/50">
@@ -105,7 +103,7 @@ export default function TableTransaction({
         </TableRow>
       </TableHeader>
       <TableBody>
-        {data.map((it) => (
+        {rows.map((it) => (
           <TableRow key={it.id} className="align-middle">
             <TableCell className="font-medium">
               <div className="flex items-center gap-3 py-2">

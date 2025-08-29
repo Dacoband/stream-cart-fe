@@ -2,6 +2,7 @@
 
 import React from 'react'
 import { Button } from '@/components/ui/button'
+import { Eye } from 'lucide-react'
 import {
   Table,
   TableHeader,
@@ -11,14 +12,14 @@ import {
   TableCell,
 } from '@/components/ui/table'
 
-// Hình dạng tối thiểu của 1 dòng
 type BaseRow = {
   id: string
   shopId: string
   shopName?: string
+  ownerName?: string
   type: number | string
   amount: number
-  status: unknown // để parent quyết định kiểu thật
+  status: unknown
   createdAt: string
   processedAt?: string | null
   transactionId?: string | null
@@ -32,14 +33,13 @@ type Props<T extends BaseRow> = {
   showConfirm: boolean
   onConfirm: (id: string) => void
   onDetails: (tx: T) => void | Promise<void>
-
-  // helpers do parent truyền xuống
+  renderType: (t: T['type']) => React.ReactNode
   renderStatus: (s: T['status']) => React.ReactNode
   renderDate: (
     createdAt: string,
     processedAt?: string | null
   ) => React.ReactNode
-  formatCurrency: (n: number) => string
+  renderAmount: (t: T['type'], n: number) => React.ReactNode
 }
 
 export default function AdminTxTable<T extends BaseRow>({
@@ -48,66 +48,112 @@ export default function AdminTxTable<T extends BaseRow>({
   showConfirm,
   onConfirm,
   onDetails,
+  renderType,
   renderStatus,
   renderDate,
-  formatCurrency,
+  renderAmount,
 }: Props<T>) {
   return (
-    <div className="bg-white border rounded-lg">
+    <div className="bg-white rounded-xl overflow-hidden shadow-sm">
       <Table>
-        <TableHeader className="bg-gray-50">
+        {/* Cột theo thứ tự: Shop, Loại, Số tiền, Trạng thái, Ngân hàng, Mã GD, Thời gian, Hành động */}
+        <TableHeader className="bg-[#B0F847]/50">
           <TableRow>
-            <TableHead>Thời gian</TableHead>
-            <TableHead>Shop</TableHead>
-            <TableHead>Loại</TableHead>
-            <TableHead className="text-right">Số tiền</TableHead>
-            <TableHead>Trạng thái</TableHead>
-            <TableHead>Ngân hàng</TableHead>
-            <TableHead>Mã GD</TableHead>
-            <TableHead className="text-right">Hành động</TableHead>
+            <TableHead className="min-w-[260px] font-medium px-4 py-3">
+              Shop
+            </TableHead>
+            <TableHead className="w-[140px] font-medium px-4 py-3">
+              Loại
+            </TableHead>
+            <TableHead className="text-right w-[140px] font-medium px-4 py-3">
+              Số tiền
+            </TableHead>
+            <TableHead className="w-[140px] font-medium px-4 py-3">
+              Trạng thái
+            </TableHead>
+            <TableHead className="min-w-[220px] font-medium px-4 py-3">
+              Ngân hàng
+            </TableHead>
+            <TableHead className="w-[200px] font-medium px-4 py-3">
+              Mã GD
+            </TableHead>
+            <TableHead className="w-[180px] font-medium px-4 py-3">
+              Thời gian
+            </TableHead>
+            <TableHead className="text-right w-[120px] font-medium pr-6 py-3">
+              Hành động
+            </TableHead>
           </TableRow>
         </TableHeader>
+
         <TableBody>
           {loading ? (
             <TableRow>
-              <TableCell colSpan={8}>Đang tải...</TableCell>
+              <TableCell colSpan={8} className="py-6 text-center">
+                Đang tải...
+              </TableCell>
             </TableRow>
           ) : rows.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={8}>Không có giao dịch</TableCell>
+              <TableCell colSpan={8} className="py-6 text-center">
+                Không có giao dịch
+              </TableCell>
             </TableRow>
           ) : (
             rows.map((r) => {
-              const st = String(r.status).toUpperCase() // để check PENDING/RETRY
+              const st = String(r.status).toUpperCase()
               return (
-                <TableRow key={r.id}>
-                  <TableCell>
-                    {renderDate(r.createdAt, r.processedAt ?? null)}
-                  </TableCell>
-                  <TableCell>
+                <TableRow key={r.id} className="align-middle">
+                  {/* Shop */}
+                  <TableCell className="px-4 py-3">
                     <div className="flex flex-col">
-                      <span className="font-medium">{r.shopName ?? '—'}</span>
-                      <span className="text-xs text-muted-foreground">
-                        {r.shopId}
+                      <span className="font-medium truncate">
+                        {r.shopName ?? '—'}
+                      </span>
+                      <span className="text-xs text-muted-foreground truncate">
+                        {r.ownerName ?? ''}
                       </span>
                     </div>
                   </TableCell>
-                  <TableCell>{String(r.type)}</TableCell>
-                  <TableCell className="text-right">
-                    {formatCurrency(r.amount)}
+
+                  {/* Loại */}
+                  <TableCell className="px-4 py-3">
+                    {renderType(r.type)}
                   </TableCell>
-                  <TableCell>{renderStatus(r.status)}</TableCell>
-                  <TableCell>
+
+                  {/* Số tiền */}
+                  <TableCell className="text-right px-4 py-3">
+                    {renderAmount(r.type, r.amount)}
+                  </TableCell>
+
+                  {/* Trạng thái */}
+                  <TableCell className="px-4 py-3">
+                    {renderStatus(r.status)}
+                  </TableCell>
+
+                  {/* Ngân hàng */}
+                  <TableCell className="px-4 py-3">
                     <div className="flex flex-col">
-                      <span>{r.bankName ?? '—'}</span>
-                      <span className="text-xs text-muted-foreground">
+                      <span className="truncate">{r.bankName ?? '—'}</span>
+                      <span className="text-xs text-muted-foreground truncate">
                         {r.bankNumber ?? '—'}
                       </span>
                     </div>
                   </TableCell>
-                  <TableCell>{r.transactionId ?? '—'}</TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex gap-2 justify-end">
+
+                  {/* Mã GD */}
+                  <TableCell className="px-4 py-3 truncate">
+                    {r.transactionId ?? '—'}
+                  </TableCell>
+
+                  {/* Thời gian */}
+                  <TableCell className="px-4 py-3">
+                    {renderDate(r.createdAt, r.processedAt ?? null)}
+                  </TableCell>
+
+                  {/* Hành động: icon mắt, không cân chữ */}
+                  <TableCell className="text-right pr-6 py-3">
+                    <div className="flex items-center justify-end gap-2">
                       {showConfirm && (st === 'PENDING' || st === 'RETRY') && (
                         <Button size="sm" onClick={() => onConfirm(r.id)}>
                           Xác nhận
@@ -116,9 +162,11 @@ export default function AdminTxTable<T extends BaseRow>({
                       <Button
                         size="sm"
                         variant="outline"
+                        aria-label="Xem chi tiết"
                         onClick={() => onDetails(r)}
+                        className="p-2"
                       >
-                        Xem chi tiết
+                        <Eye size={16} />
                       </Button>
                     </div>
                   </TableCell>

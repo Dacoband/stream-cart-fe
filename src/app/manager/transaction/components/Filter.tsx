@@ -26,9 +26,6 @@ type Props = {
   setShopId: (v: string) => void
   shopOptions: ShopOption[]
 
-  pageSize: number
-  setPageSize: (n: number) => void
-
   onReset: () => void
   onApply: () => void
   disabledStatus?: boolean
@@ -47,31 +44,31 @@ export default function Filters({
   shopId,
   setShopId,
   shopOptions,
-  pageSize,
-  setPageSize,
   onReset,
   onApply,
   disabledStatus,
   loading,
 }: Props) {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-6 gap-3 bg-white p-4 border rounded-lg">
-      <div className="md:col-span-2 flex gap-2">
+    <div className="flex flex-wrap gap-3">
+      <div className="flex gap-2">
         <Input
           type="date"
           value={fromDate}
           onChange={(e) => setFromDate(e.target.value)}
+          className="w-[160px]"
         />
         <Input
           type="date"
           value={toDate}
           onChange={(e) => setToDate(e.target.value)}
+          className="w-[160px]"
         />
       </div>
 
       <div>
         <select
-          className="w-full h-10 border rounded px-3"
+          className="h-10 border rounded px-3 min-w-[180px]"
           value={typeFilter}
           onChange={(e) =>
             setTypeFilter(
@@ -89,7 +86,7 @@ export default function Filters({
 
       <div>
         <select
-          className="w-full h-10 border rounded px-3"
+          className="h-10 border rounded px-3 min-w-[180px]"
           value={statusFilter}
           onChange={(e) =>
             setStatusFilter(
@@ -106,9 +103,9 @@ export default function Filters({
         </select>
       </div>
 
-      <div>
+      <div className="min-w-[220px]">
         <select
-          className="w-full h-10 border rounded px-3"
+          className="h-10 border rounded px-3 w-full"
           value={shopId}
           onChange={(e) => setShopId(e.target.value)}
         >
@@ -120,18 +117,8 @@ export default function Filters({
         </select>
       </div>
 
-      <div className="flex gap-2 items-center">
-        <select
-          className="h-10 border rounded px-3"
-          value={pageSize}
-          onChange={(e) => setPageSize(Number(e.target.value))}
-        >
-          {[10, 20, 50, 100].map((n) => (
-            <option key={n} value={n}>
-              {n}/trang
-            </option>
-          ))}
-        </select>
+      {/* actions luôn dạt phải khi đủ rộng, xuống dòng đẹp khi hẹp */}
+      <div className="ml-auto flex gap-2">
         <Button variant="outline" onClick={onReset}>
           Đặt lại
         </Button>

@@ -4,6 +4,19 @@ import React from 'react'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
+import { Badge } from '@/components/ui/badge'
+import {
+  Wallet,
+  ArrowDownLeft,
+  ArrowUpRight,
+  Landmark,
+  Cog,
+  User2,
+  Store,
+  Phone,
+  Mail,
+  IdCard,
+} from 'lucide-react'
 
 import {
   filterWalletTransactions,
@@ -15,14 +28,15 @@ import {
   WalletTransactionType,
 } from '@/types/wallet/walletTransactionDTO'
 import { getAllShops, getshopById } from '@/services/api/shop/shop'
+
 import { getWalletShopId } from '@/services/api/wallet/wallet'
-import { getUserByShopId } from '@/services/api/auth/account'
+import { getUserById, getUserByShopId } from '@/services/api/auth/account'
 import Filters from './components/Filter'
 import AdminTxTable from './components/AdminTxTable'
 import DetailsModal from './components/DetailTransaction'
 
 /* =====================
-   TYPES (gộp trong page)
+   TYPES + UTILS (gộp)
 ===================== */
 type TxStatus = 'PENDING' | 'COMPLETED' | 'FAILED' | 'CANCELED' | 'RETRY'
 
@@ -32,6 +46,7 @@ type Row = {
   shopName?: string
   ownerName?: string
   ownerPhone?: string
+  ownerEmail?: string
   ownerId?: string
 
   type: number | string
@@ -52,15 +67,12 @@ type Row = {
 
 type ShopOption = { id: string; shopName: string }
 
-/* =====================
-   UTILS (gộp trong page)
-===================== */
 const formatVND = (n: number) =>
   new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(
     n
   )
 
-const formatFullDateTimeVN = (d: string | Date) => {
+const formatDT = (d: string | Date) => {
   const date = typeof d === 'string' ? new Date(d) : d
   return date.toLocaleString('vi-VN', {
     year: '2-digit',
@@ -77,7 +89,6 @@ const toStartIso = (d?: string) =>
 const toEndIso = (d?: string) =>
   d ? new Date(d + 'T23:59:59.999').toISOString() : undefined
 
-// Map status BE → UI literal, tách riêng Retry
 const mapStatusToLiteral = (s: number | string): TxStatus => {
   if (typeof s === 'number') {
     if (s === 0) return 'COMPLETED'
@@ -93,31 +104,51 @@ const mapStatusToLiteral = (s: number | string): TxStatus => {
   return 'FAILED'
 }
 
+// Type tiếng Việt + icon + màu
+const txTypeVN = (t: number | string) => {
+  const n = typeof t === 'string' ? t.toLowerCase() : t
+  if (n === WalletTransactionType.Withdraw || n === 'withdraw')
+    return {
+      label: 'Rút tiền',
+      icon: ArrowDownLeft,
+      tone: 'text-red-600 bg-red-50',
+    }
+  if (n === WalletTransactionType.Deposit || n === 'deposit')
+    return {
+      label: 'Nạp tiền',
+      icon: ArrowUpRight,
+      tone: 'text-green-600 bg-green-50',
+    }
+  if (n === WalletTransactionType.Commission || n === 'commission')
+    return { label: 'Hoa hồng', icon: Wallet, tone: 'text-teal-600 bg-teal-50' }
+  return { label: 'Hệ thống', icon: Cog, tone: 'text-slate-700 bg-slate-50' }
+}
+
 const StatusBadge = ({ status }: { status: TxStatus }) => {
-  const { cls, label } =
-    status === 'COMPLETED'
-      ? {
-          cls: 'bg-green-100 text-green-700 border-green-200',
-          label: 'Hoàn thành',
-        }
-      : status === 'PENDING'
-      ? {
-          cls: 'bg-yellow-100 text-yellow-700 border-yellow-200',
-          label: 'Đang xử lý',
-        }
-      : status === 'RETRY'
-      ? {
-          cls: 'bg-orange-100 text-orange-700 border-orange-200',
-          label: 'Xử lý lại',
-        }
-      : status === 'CANCELED'
-      ? { cls: 'bg-gray-100 text-gray-700 border-gray-200', label: 'Đã hủy' }
-      : { cls: 'bg-red-100 text-red-700 border-red-200', label: 'Thất bại' }
-  return (
-    <span className={`inline-flex px-2 py-1 rounded border text-xs ${cls}`}>
-      {label}
-    </span>
-  )
+  const map = {
+    COMPLETED: {
+      label: 'Hoàn thành',
+      cls: 'bg-green-100 text-green-700 border-green-200',
+    },
+    PENDING: {
+      label: 'Đang xử lý',
+      cls: 'bg-yellow-100 text-yellow-700 border-yellow-200',
+    },
+    RETRY: {
+      label: 'Xử lý lại',
+      cls: 'bg-orange-100 text-orange-700 border-orange-200',
+    },
+    CANCELED: {
+      label: 'Đã hủy',
+      cls: 'bg-gray-100 text-gray-700 border-gray-200',
+    },
+    FAILED: {
+      label: 'Thất bại',
+      cls: 'bg-red-100 text-red-700 border-red-200',
+    },
+  } as const
+  const s = map[status]
+  return <Badge className={`px-2 ${s.cls}`}>{s.label}</Badge>
 }
 
 const DateCell = ({
@@ -128,10 +159,10 @@ const DateCell = ({
   processedAt?: string | Date | null
 }) => (
   <div className="flex flex-col">
-    <span>{formatFullDateTimeVN(createdAt)}</span>
+    <span>{formatDT(createdAt)}</span>
     {processedAt && (
       <span className="text-xs text-muted-foreground">
-        Xử lý: {formatFullDateTimeVN(processedAt)}
+        Xử lý: {formatDT(processedAt)}
       </span>
     )}
   </div>
@@ -141,10 +172,8 @@ const DateCell = ({
    PAGE
 ===================== */
 export default function AdminTransactionsPage() {
-  // Tabs
   const [tab, setTab] = React.useState<'all' | 'needs'>('all')
 
-  // Filters
   const [fromDate, setFromDate] = React.useState('')
   const [toDate, setToDate] = React.useState('')
   const [typeFilter, setTypeFilter] = React.useState<number | 'ALL'>('ALL')
@@ -154,58 +183,43 @@ export default function AdminTransactionsPage() {
     { id: 'ALL', shopName: '— Tất cả shop —' },
   ])
 
-  // Pagination
   const [pageIndex, setPageIndex] = React.useState(1)
   const [pageSize, setPageSize] = React.useState(20)
   const [totalPage, setTotalPage] = React.useState(1)
 
-  // Data
   const [rows, setRows] = React.useState<Row[]>([])
   const [loading, setLoading] = React.useState(false)
 
-  // Details
+  // details modal
   const [detailsOpen, setDetailsOpen] = React.useState(false)
   const [detailsLoading, setDetailsLoading] = React.useState(false)
   const [detailsTx, setDetailsTx] = React.useState<Row | undefined>(undefined)
 
-  // seller + ví (cho modal)
-  const [sellerPhone, setSellerPhone] = React.useState<string | undefined>()
-  const [walletBankName, setWalletBankName] = React.useState<
-    string | undefined
-  >()
-  const [walletBankNumber, setWalletBankNumber] = React.useState<
-    string | undefined
-  >()
-
-  // Load shops
   React.useEffect(() => {
     ;(async () => {
       try {
         const res = await getAllShops({
           pageNumber: 1,
-          pageSize: 50,
+          pageSize: 100,
           status: '',
           approvalStatus: '',
           searchTerm: '',
           sortBy: 'createdAt',
           ascending: false,
         })
+        console.log('shops', res)
         const list = (res?.data?.items ?? res?.items ?? []) as {
           id: string
           shopName: string
         }[]
         setShopOptions([{ id: 'ALL', shopName: '— Tất cả shop —' }, ...list])
-      } catch {
-        // giữ default
-      }
+      } catch {}
     })()
   }, [])
 
-  // Fetch
   const fetchData = React.useCallback(async () => {
     try {
       setLoading(true)
-
       const types =
         typeFilter === 'ALL'
           ? [
@@ -215,13 +229,11 @@ export default function AdminTransactionsPage() {
               WalletTransactionType.System,
             ]
           : [typeFilter]
-
-      // Tab "Cần xử lý" → không gửi Status để lấy đầy đủ, lọc client để gom 'RETRY'
       const statuses =
         tab === 'needs' || statusFilter === 'ALL' ? undefined : [statusFilter]
 
       const res = await filterWalletTransactions({
-        ShopId: shopId === 'ALL' ? '' : shopId, // nếu BE bắt buộc ShopId, nên có endpoint admin riêng
+        ShopId: shopId === 'ALL' ? '' : shopId, // nếu BE bắt buộc, cân nhắc endpoint admin riêng
         Types: types,
         Status: statuses,
         FromTime: toStartIso(fromDate),
@@ -235,7 +247,7 @@ export default function AdminTransactionsPage() {
 
       const mapped: Row[] = items.map((it: any) => ({
         id: it.id,
-        shopId: it.shopId ?? it.walletId, // chỉnh nếu BE trả shopId riêng
+        shopId: it.shopId ?? it.walletId,
         type: it.type,
         amount: it.amount,
         status: mapStatusToLiteral(it.status),
@@ -273,7 +285,6 @@ export default function AdminTransactionsPage() {
     fetchData()
   }, [fetchData])
 
-  // Actions
   const handleConfirm = async (id: string) => {
     try {
       await updateWalletTransactionStatus(id, WalletTransactionStatus.Success)
@@ -284,36 +295,60 @@ export default function AdminTransactionsPage() {
     }
   }
 
+  const displayNameFromId = async (idLike?: string) => {
+    if (!idLike) return undefined
+    const looksLikeId = /^[0-9a-f-]{20,}$/i.test(idLike)
+    if (!looksLikeId) return idLike // đã là tên/email
+    try {
+      const u = await getUserById(idLike)
+      console.log('user', u)
+      return u?.fullname || u?.username || idLike
+    } catch {
+      return idLike
+    }
+  }
+
   const handleDetails = async (tx: Row) => {
     setDetailsTx(tx)
     setDetailsOpen(true)
     setDetailsLoading(true)
-    setSellerPhone(undefined)
-    setWalletBankName(undefined)
-    setWalletBankNumber(undefined)
-
     try {
-      // Shop + Seller
-      const shop = await getshopById(tx.shopId)
-      const owner = await getUserByShopId(tx.shopId)
-      setDetailsTx((prev) => ({
-        ...(prev as Row),
-        shopName: shop?.data?.shopName ?? shop?.shopName ?? prev?.shopName,
-        ownerName: owner?.fullname ?? owner?.username ?? prev?.ownerName,
-        ownerId: owner?.id ?? prev?.ownerId,
-      }))
-      setSellerPhone(owner?.phoneNumber)
+      const [shop, owner, wallet] = await Promise.all([
+        getshopById(tx.shopId),
+        getUserByShopId(tx.shopId),
+        getWalletShopId(tx.shopId),
+      ])
+      const shopName = shop?.data?.shopName ?? shop?.shopName
+      const ownerName = owner?.fullname ?? owner?.username
+      const ownerPhone = owner?.phoneNumber
+      const ownerEmail = owner?.email
+      console.log('owner', owner)
+      console.log('shop', shop)
+      console.log('wallet', wallet)
+      // resolve createdBy/updatedBy nếu là id
+      const [createdByName, updatedByName] = await Promise.all([
+        displayNameFromId(tx.createdBy),
+        displayNameFromId(tx.updatedBy),
+      ])
 
-      // Ví (tên NH & STK)
-      const wallet = await getWalletShopId(tx.shopId)
       const w = (wallet?.data ?? wallet) as {
         bankName?: string
         bankAccountNumber?: string
       }
-      setWalletBankName(w?.bankName)
-      setWalletBankNumber(w?.bankAccountNumber)
+
+      setDetailsTx((prev) => ({
+        ...(prev as Row),
+        shopName,
+        ownerName,
+        ownerPhone,
+        ownerEmail,
+        ownerId: owner?.id,
+        createdBy: createdByName,
+        updatedBy: updatedByName,
+        bankName: w?.bankName ?? prev?.bankName,
+        bankNumber: w?.bankAccountNumber ?? prev?.bankNumber,
+      }))
     } catch {
-      // ignore
     } finally {
       setDetailsLoading(false)
     }
@@ -328,34 +363,33 @@ export default function AdminTransactionsPage() {
   }
 
   return (
-    <div className="p-6 flex flex-col gap-4">
-      <h1 className="text-xl font-bold">Quản lý giao dịch (Admin)</h1>
-
-      <Filters
-        fromDate={fromDate}
-        toDate={toDate}
-        setFromDate={setFromDate}
-        setToDate={setToDate}
-        typeFilter={typeFilter}
-        setTypeFilter={setTypeFilter}
-        statusFilter={statusFilter}
-        setStatusFilter={setStatusFilter}
-        shopId={shopId}
-        setShopId={(v) => {
-          setShopId(v)
-          setPageIndex(1)
-        }}
-        shopOptions={shopOptions}
-        pageSize={pageSize}
-        setPageSize={(n) => {
-          setPageSize(n)
-          setPageIndex(1)
-        }}
-        onReset={onResetFilters}
-        onApply={fetchData}
-        disabledStatus={tab === 'needs'}
-        loading={loading}
-      />
+    <div className="p-6 space-y-4">
+      <div className="bg-white sticky top-0  z-10 h-fit w-full py-4 px-8 shadow flex flex-col gap-6">
+        <div className="">
+          <h2 className="text-xl font-bold  mb-1">Quản lý giao dịch</h2>
+          <p className="text-black/70">Quản lý toàn bộ giao dịch của sàn</p>
+        </div>
+        <Filters
+          fromDate={fromDate}
+          toDate={toDate}
+          setFromDate={setFromDate}
+          setToDate={setToDate}
+          typeFilter={typeFilter}
+          setTypeFilter={setTypeFilter}
+          statusFilter={statusFilter}
+          setStatusFilter={setStatusFilter}
+          shopId={shopId}
+          setShopId={(v) => {
+            setShopId(v)
+            setPageIndex(1)
+          }}
+          shopOptions={shopOptions}
+          onReset={onResetFilters}
+          onApply={fetchData}
+          disabledStatus={tab === 'needs'}
+          loading={loading}
+        />
+      </div>
 
       <Tabs
         value={tab}
@@ -364,9 +398,20 @@ export default function AdminTransactionsPage() {
           setPageIndex(1)
         }}
       >
-        <TabsList className="bg-gray-100">
-          <TabsTrigger value="all">Tất cả</TabsTrigger>
-          <TabsTrigger value="needs">Cần xử lý</TabsTrigger>
+        {/* màu tab giống file kia */}
+        <TabsList className="rounded-none bg-gray-200 border">
+          <TabsTrigger
+            value="all"
+            className="rounded-none p-3 data-[state=active]:bg-[#B0F847]/50 data-[state=active]:text-black"
+          >
+            Tất cả
+          </TabsTrigger>
+          <TabsTrigger
+            value="needs"
+            className="rounded-none p-3 data-[state=active]:bg-[#B0F847]/50 data-[state=active]:text-black"
+          >
+            Cần xử lý
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="all">
@@ -375,10 +420,35 @@ export default function AdminTransactionsPage() {
             loading={loading}
             onConfirm={handleConfirm}
             onDetails={handleDetails}
-            showConfirm={false} // hoặc true ở tab "needs"
+            showConfirm={false}
+            // custom render: type (VN + icon), status, date, amount
+            renderType={(t) => {
+              const { label, icon: Icon, tone } = txTypeVN(t)
+              return (
+                <div
+                  className={`inline-flex items-center gap-2 px-2 py-1 rounded ${tone}`}
+                >
+                  <Icon size={16} /> <span className="text-sm">{label}</span>
+                </div>
+              )
+            }}
             renderStatus={(s) => <StatusBadge status={s as TxStatus} />}
             renderDate={(c, p) => <DateCell createdAt={c} processedAt={p} />}
-            formatCurrency={formatVND}
+            renderAmount={(t, n) => {
+              const isIn =
+                txTypeVN(t).label === 'Nạp tiền' ||
+                txTypeVN(t).label === 'Hoa hồng'
+              return (
+                <span
+                  className={`${
+                    isIn ? 'text-green-600' : 'text-red-600'
+                  } font-medium`}
+                >
+                  {isIn ? '+' : '-'}
+                  {formatVND(Math.abs(n))}
+                </span>
+              )
+            }}
           />
         </TabsContent>
 
@@ -388,10 +458,34 @@ export default function AdminTransactionsPage() {
             loading={loading}
             onConfirm={handleConfirm}
             onDetails={handleDetails}
-            showConfirm={false} // hoặc true ở tab "needs"
+            showConfirm={true}
+            renderType={(t) => {
+              const { label, icon: Icon, tone } = txTypeVN(t)
+              return (
+                <div
+                  className={`inline-flex items-center gap-2 px-2 py-1 rounded ${tone}`}
+                >
+                  <Icon size={16} /> <span className="text-sm">{label}</span>
+                </div>
+              )
+            }}
             renderStatus={(s) => <StatusBadge status={s as TxStatus} />}
             renderDate={(c, p) => <DateCell createdAt={c} processedAt={p} />}
-            formatCurrency={formatVND}
+            renderAmount={(t, n) => {
+              const isIn =
+                txTypeVN(t).label === 'Nạp tiền' ||
+                txTypeVN(t).label === 'Hoa hồng'
+              return (
+                <span
+                  className={`${
+                    isIn ? 'text-green-600' : 'text-red-600'
+                  } font-medium`}
+                >
+                  {isIn ? '+' : '-'}
+                  {formatVND(Math.abs(n))}
+                </span>
+              )
+            }}
           />
         </TabsContent>
       </Tabs>
@@ -421,12 +515,11 @@ export default function AdminTransactionsPage() {
         onOpenChange={setDetailsOpen}
         loading={detailsLoading}
         tx={detailsTx}
-        sellerPhone={sellerPhone}
-        walletBankName={walletBankName}
-        walletBankNumber={walletBankNumber}
         renderStatus={(s) => <StatusBadge status={s as TxStatus} />}
         formatCurrency={formatVND}
-        formatDateTime={formatFullDateTimeVN}
+        formatDateTime={formatDT}
+        // sections icons
+        Icons={{ Store, User2, Mail, Phone, Landmark, Wallet, IdCard }}
       />
     </div>
   )
