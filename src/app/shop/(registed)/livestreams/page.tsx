@@ -87,9 +87,9 @@ function LiveStreamPage() {
         fetchLivestreams();
       } else {
         await getJoinLivestream(id);
-        // Not the host: only join support live, do not start
         window.open(`/shop/livestream/SupportLive/${id}`, "_blank");
       }
+      fetchLivestreams();
     } catch (err) {
       console.error("Error starting livestream:", err);
     }
@@ -272,35 +272,62 @@ function LiveStreamPage() {
                       </TableCell>
 
                       <TableCell>
-                        {livestream.status ? (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="text-lime-600 border-lime-600 cursor-pointer hover:text-lime-400 hover:border-lime-400 hover:bg-white bg-white"
-                            onClick={() =>
-                              handleContinueLivestream(livestream.id)
-                            }
-                          >
-                            {getActionLabel(livestream)}
-                          </Button>
-                        ) : (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className={
-                              livestream.actualEndTime
-                                ? "text-gray-700 border-gray-500 cursor-not-allowed bg-white"
-                                : "text-blue-600 border-blue-600 cursor-pointer hover:text-blue-400 hover:border-blue-400 hover:bg-white"
-                            }
-                            onClick={() =>
-                              !livestream.actualEndTime &&
-                              handleStartLivestream(livestream.id)
-                            }
-                            disabled={!!livestream.actualEndTime}
-                          >
-                            {getActionLabel(livestream)}
-                          </Button>
-                        )}
+                        {(() => {
+                          const now = new Date();
+                          const scheduled = new Date(
+                            livestream.scheduledStartTime
+                          );
+                          const isScheduledUpcoming =
+                            scheduled > now && !livestream.actualStartTime;
+
+                          if (isScheduledUpcoming) {
+                            return (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                disabled
+                                className="text-orange-700 border-orange-500 bg-white cursor-not-allowed"
+                              >
+                                Sắp diễn ra
+                              </Button>
+                            );
+                          }
+
+                          if (livestream.status) {
+                            // Trạng thái đang Live
+                            return (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="text-lime-600 border-lime-600 cursor-pointer hover:text-lime-400 hover:border-lime-400 hover:bg-white bg-white"
+                                onClick={() =>
+                                  handleContinueLivestream(livestream.id)
+                                }
+                              >
+                                {getActionLabel(livestream)}
+                              </Button>
+                            );
+                          }
+
+                          return (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className={
+                                livestream.actualEndTime
+                                  ? "text-gray-700 border-gray-500 cursor-not-allowed bg-white"
+                                  : "text-blue-600 border-blue-600 cursor-pointer hover:text-blue-400 hover:border-blue-400 hover:bg-white"
+                              }
+                              onClick={() =>
+                                !livestream.actualEndTime &&
+                                handleStartLivestream(livestream.id)
+                              }
+                              disabled={!!livestream.actualEndTime}
+                            >
+                              {getActionLabel(livestream)}
+                            </Button>
+                          );
+                        })()}
                       </TableCell>
 
                       <TableCell className="text-right pr-5">

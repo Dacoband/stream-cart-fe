@@ -1,125 +1,88 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
-import { Product, Variant } from "@/types/product/product";
-import { getProductDetailById } from "@/services/api/product/product";
 import { Input } from "@/components/ui/input";
 import { Trash2 } from "lucide-react";
-import DialogProduct from "../../livestreams/components/DialogProduct";
-import { CreateLivestreamProduct } from "@/types/livestream/livestream";
-
+import DialogProductFS from "./DialogProductFS";
+import PriceTag from "@/components/common/PriceTag";
 interface Props {
-  value?: CreateLivestreamProduct[];
-  onChange?: (val: CreateLivestreamProduct[]) => void;
+  value?: {
+    productId: string;
+    variantId: string | null;
+    price: number;
+    stock: number;
+  }[];
+  onChange?: (
+    val: {
+      productId: string;
+      variantId: string | null;
+      price: number;
+      stock: number;
+    }[]
+  ) => void;
+  date?: Date | undefined;
+  slot?: number | null;
 }
 
 type ProductRow = {
   productId: string;
   variantId: string | null;
-  price: number;
-  stock: number;
-  isPin: boolean;
+  price: number | null;
+  stock: number | null;
   productName: string;
   productImage: string;
   basePrice: number;
   variantName?: string;
+  warehouseStock: number;
 };
 
-function ProductsLivestream({ onChange }: Props) {
+function ProductFlashSale({ onChange, date, slot }: Props) {
   const [open, setOpen] = useState(false);
-  const [selectedProducts, setSelectedProducts] = useState<Product[]>([]);
   const [productRows, setProductRows] = useState<ProductRow[]>([]);
-  const [variantsMap, setVariantsMap] = useState<Record<string, Variant[]>>({});
 
-  // Sync to parent
   useEffect(() => {
-    const payload: CreateLivestreamProduct[] = productRows.map((row) => ({
-      productId: row.productId,
-      variantId: row.variantId ?? null,
-      price: row.price,
-      stock: row.stock,
-      isPin: false,
-    }));
+    const payload = productRows
+      .filter((row) => {
+        if (row.price === null || row.stock === null) return false;
+        // flashSale price must be less than base price
+        if (row.price >= row.basePrice) return false;
+        // stock within warehouse bounds
+        if (row.stock <= 0 || row.stock > row.warehouseStock) return false;
+        return true;
+      })
+      .map((row) => ({
+        productId: row.productId,
+        variantId: row.variantId ?? null,
+        price: row.price as number,
+        stock: row.stock as number,
+      }));
 
     onChange?.(payload);
   }, [productRows, onChange]);
-
-  const handleConfirm = async (products: Product[]) => {
-    // Merge newly selected base products with existing selectedProducts list
-    setSelectedProducts((prev) => {
-      const byId = new Map(prev.map((p) => [p.id, p]));
-      for (const p of products) byId.set(p.id, p);
-      return Array.from(byId.values());
+  //Create key for products in
+  const selectedKeys = useMemo(
+    () =>
+      new Set(
+        productRows.map((r) => `${r.productId}::${r.variantId ?? "null"}`)
+      ),
+    [productRows]
+  );
+  // update list product in dialog
+  const upsertRows = (rows: ProductRow[]) => {
+    setProductRows((prev) => {
+      const key = (r: ProductRow) => `${r.productId}::${r.variantId ?? "null"}`;
+      const existing = new Map(prev.map((r) => [key(r), r]));
+      for (const r of rows) {
+        const k = key(r);
+        if (!existing.has(k)) existing.set(k, r);
+      }
+      return Array.from(existing.values());
     });
-
-    // Prepare new variant rows for only those not already present
-    const newVariantsMap: Record<string, Variant[]> = { ...variantsMap };
-    const additions: ProductRow[] = [];
-
-    await Promise.all(
-      products.map(async (product) => {
-        let variants: Variant[] = [];
-
-        if (product.hasVariant) {
-          const detail = await getProductDetailById(product.id);
-          variants = detail.variants || [];
-          newVariantsMap[product.id] = variants;
-        } else {
-          variants = [
-            {
-              variantId: null,
-              attributeValues: {},
-              price: product.finalPrice,
-              stock: product.stockQuantity ?? 0,
-              weight: 0,
-              length: 0,
-              width: 0,
-              height: 0,
-              flashSalePrice: 0,
-              variantImage: { imageId: "", url: "", altText: "" },
-            },
-          ];
-        }
-
-        variants.forEach((variant) => {
-          const exists = productRows.some(
-            (r) =>
-              r.productId === product.id &&
-              r.variantId === (variant.variantId ?? null)
-          );
-          if (!exists) {
-            additions.push({
-              productId: product.id,
-              variantId: variant.variantId ?? null,
-              price: variant.price,
-              stock: 1,
-              isPin: false,
-              productName: product.productName,
-              productImage: product.primaryImageUrl,
-              basePrice: variant.price,
-              variantName: variant.variantId
-                ? Object.values(variant.attributeValues).join(" / ")
-                : "",
-            });
-          }
-        });
-      })
-    );
-
-    // Append only new rows to preserve user edits in existing rows
-    setVariantsMap(newVariantsMap);
-    setProductRows((prev) => [...prev, ...additions]);
   };
 
-  const handleRowChange = (
-    idx: number,
-    field: keyof CreateLivestreamProduct,
-    val: string | number | boolean
-  ) => {
-    const newRows = [...productRows];
-    newRows[idx] = { ...newRows[idx], [field]: val };
-    setProductRows(newRows);
+  const handleConfirm = (rows: ProductRow[]) => {
+    upsertRows(rows);
   };
 
   const handleRemoveRow = (idx: number) => {
@@ -127,21 +90,42 @@ function ProductsLivestream({ onChange }: Props) {
     setProductRows(newRows);
   };
 
+  const handleRowChange = (
+    idx: number,
+    field: "price" | "stock",
+    value: number | null
+  ) => {
+    setProductRows((prev) =>
+      prev.map((r, i) => {
+        if (i !== idx) return r;
+        if (value === null || isNaN(value)) {
+          return { ...r, [field]: null }; // 👈 cho phép để trống
+        }
+        if (field === "price") {
+          return { ...r, price: Math.max(0, value) };
+        }
+        // stock
+        const clamped = Math.max(
+          1,
+          Math.min(r.warehouseStock, Math.floor(value))
+        );
+        return { ...r, stock: clamped };
+      })
+    );
+  };
   return (
     <div>
-      <div className="text-base font-medium flex items-center gap-1">
-        <span className="text-red-500 text-lg">*</span>
-        Sản phẩm Flash Sale
-      </div>
-
       <Button type="button" onClick={() => setOpen(true)} className="my-2">
         Chọn sản phẩm Flash Sale
       </Button>
 
-      <DialogProduct
+      <DialogProductFS
         open={open}
         onClose={() => setOpen(false)}
         onConfirm={handleConfirm}
+        date={date}
+        slot={slot}
+        preselectedKeys={[...selectedKeys]}
       />
 
       <div className="overflow-x-auto mt-2">
@@ -166,16 +150,15 @@ function ProductsLivestream({ onChange }: Props) {
               </tr>
             ) : (
               productRows.map((row, idx) => {
-                const stockInWarehouse =
-                  row.variantId && variantsMap[row.productId]
-                    ? variantsMap[row.productId].find(
-                        (v) => v.variantId === row.variantId
-                      )?.stock ?? 0
-                    : selectedProducts.find((p) => p.id === row.productId)
-                        ?.stockQuantity ?? 0;
-
+                const stockInWarehouse = row.warehouseStock;
+                const invalidPrice =
+                  row.price === null ||
+                  row.price >= row.basePrice ||
+                  row.price < 0;
                 const invalidStock =
-                  row.stock <= 0 || row.stock > stockInWarehouse;
+                  row.stock === null ||
+                  row.stock <= 0 ||
+                  row.stock > stockInWarehouse;
 
                 return (
                   <tr key={`${row.productId}-${row.variantId ?? "no-variant"}`}>
@@ -195,7 +178,7 @@ function ProductsLivestream({ onChange }: Props) {
                       )}
                     </td>
                     <td className="border px-3 py-2 text-center text-gray-500">
-                      {row.basePrice.toLocaleString()}₫
+                      <PriceTag value={row.basePrice} />
                     </td>
                     <td className="border px-3 py-2 text-center">
                       {stockInWarehouse}
@@ -203,25 +186,51 @@ function ProductsLivestream({ onChange }: Props) {
                     <td className="border px-3 py-2">
                       <Input
                         type="number"
-                        className="w-24"
-                        value={row.price}
+                        className={`w-full ${
+                          invalidPrice ? "border-red-500" : ""
+                        }`}
+                        value={row.price ?? ""}
+                        placeholder="VND"
                         min={0}
+                        max={
+                          row.basePrice > 0
+                            ? Math.max(0, row.basePrice - 1)
+                            : undefined
+                        }
                         onChange={(e) =>
-                          handleRowChange(idx, "price", Number(e.target.value))
+                          handleRowChange(
+                            idx,
+                            "price",
+                            e.target.value === ""
+                              ? null
+                              : Number(e.target.value)
+                          )
                         }
                       />
+                      {invalidPrice && (
+                        <div className="text-xs text-red-500 mt-1">
+                          Giá Flash Sale phải nhỏ hơn giá gốc
+                        </div>
+                      )}
                     </td>
                     <td className="border px-3 py-2">
                       <Input
                         type="number"
-                        className={`w-16 ${
+                        className={`w-full ${
                           invalidStock ? "border-red-500" : ""
                         }`}
-                        value={row.stock}
+                        value={row.stock ?? ""} // 👈 trống nếu null
+                        placeholder="Số lượng"
                         min={1}
                         max={stockInWarehouse}
                         onChange={(e) =>
-                          handleRowChange(idx, "stock", Number(e.target.value))
+                          handleRowChange(
+                            idx,
+                            "stock",
+                            e.target.value === ""
+                              ? null
+                              : Number(e.target.value)
+                          )
                         }
                       />
                       {invalidStock && (
@@ -251,4 +260,4 @@ function ProductsLivestream({ onChange }: Props) {
   );
 }
 
-export default ProductsLivestream;
+export default ProductFlashSale;

@@ -5,6 +5,7 @@ export interface FlashSaleProductHome{
     flashSalePrice:number;
     quantityAvailable:number;
     quantitySold:number;
+    isActive:boolean;
     startTime:string;
     endTime:string;
     slot:number;
@@ -23,7 +24,48 @@ export interface FlashSaleProduct {
 export interface CreateFlashSale {
   products: FlashSaleProduct[];
   slot: number;
-  startTime: string; 
-  endTime: string;   
+  date: string; 
 }
 
+export interface filterFlashSale {
+  // pageIndex?: number
+  // pageSize?: number
+ StartDate?:string
+  // isActive?: boolean
+
+}
+
+export interface SlotTime {
+  start: string;
+  end: string;
+}
+
+
+export const SLOT_TIMES: Record<number, SlotTime> = {
+  1: { start: "00:00:00", end: "02:00:00" },
+  2: { start: "02:00:00", end: "06:00:00" },
+  3: { start: "06:00:00", end: "09:00:00" },
+  4: { start: "09:00:00", end: "14:00:00" },
+  5: { start: "14:00:00", end: "17:00:00" },
+  6: { start: "17:00:00", end: "19:00:00" },
+  7: { start: "19:00:00", end: "21:00:00" },
+  8: { start: "21:00:00", end: "23:59:59" },
+};
+export interface ProductVariant {
+  id: string;
+  sku: string;
+  price: number;
+  stock: number;
+  variantName: string;
+}
+
+export interface ProductWithoutFlashSale {
+  id: string;
+  productName: string;
+  description: string;
+  sku: string;
+  basePrice: number;
+  stockQuantity: number;
+  productImageUrl: string;
+  variants: ProductVariant[] | null; 
+}

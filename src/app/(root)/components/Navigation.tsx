@@ -13,7 +13,6 @@ import {
   Bell,
   CircleArrowOutDownRight,
   CircleUser,
-  MessageCircleMore,
   ScrollText,
   ShoppingCart,
   UserRound,

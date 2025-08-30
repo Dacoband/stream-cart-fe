@@ -341,7 +341,7 @@ function Page() {
                     if (products.length === 0) {
                       return (
                         <TableRow>
-                          <TableCell colSpan={5}>
+                          <TableCell colSpan={7}>
                             <div>
                               <Image
                                 src="/assets/emptydata.png"
