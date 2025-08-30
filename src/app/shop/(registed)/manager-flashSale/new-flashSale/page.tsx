@@ -42,7 +42,10 @@ function Newpage() {
       day: "2-digit",
     });
   }, [date]);
-
+  const formatDate = (date: Date) => {
+    return date.toLocaleDateString("sv-SE");
+    // sv-SE cho ra yyyy-MM-dd
+  };
   const canCreate = useMemo(() => {
     if (!date || slot == null) return false;
     if (!rows.length) return false;
@@ -53,7 +56,6 @@ function Newpage() {
     if (!canCreate) return;
     setLoadingbt(true);
     try {
-      // Group rows by productId and accumulate variantIds, min price, and total quantity
       const byProduct = new Map<
         string,
         {
@@ -71,7 +73,7 @@ function Newpage() {
           hasNullVariant: false,
         };
         if (r.variantId) g.variantIds.add(r.variantId);
-        else g.hasNullVariant = true; // non-variant product
+        else g.hasNullVariant = true;
         g.minPrice = Math.min(g.minPrice, r.price);
         g.totalQty += r.stock;
         byProduct.set(r.productId, g);
@@ -79,10 +81,9 @@ function Newpage() {
 
       const products = Array.from(byProduct.entries()).map(([productId, g]) => {
         const ids = Array.from(g.variantIds);
-        // If no variant ids captured but product appears => treat as non-variant product
         return {
           productId,
-          variantIds: ids, // empty array for non-variant products
+          variantIds: ids,
           flashSalePrice:
             g.minPrice === Number.POSITIVE_INFINITY ? 0 : g.minPrice,
           quantityAvailable: g.totalQty,
@@ -92,7 +93,7 @@ function Newpage() {
       const payload: CreateFlashSale = {
         products,
         slot: slot!,
-        date: date!.toISOString().split("T")[0],
+        date: formatDate(date!),
       };
 
       await createFlashSale(payload);
@@ -220,7 +221,7 @@ function Newpage() {
               : "text-gray-400 bg-muted/40"
           }
         `}
-                              onClick={() => isAvailable && setSlot(slotNum)} // 👈 chọn bằng cả hàng
+                              onClick={() => isAvailable && setSlot(slotNum)}
                             >
                               <td className="px-4 py-2">
                                 <input

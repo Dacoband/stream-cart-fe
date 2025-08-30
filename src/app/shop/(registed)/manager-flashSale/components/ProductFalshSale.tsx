@@ -191,6 +191,7 @@ function ProductFlashSale({ onChange, date, slot }: Props) {
                         }`}
                         value={row.price ?? ""}
                         placeholder="VND"
+                        step={500}
                         min={0}
                         max={
                           row.basePrice > 0
@@ -219,7 +220,7 @@ function ProductFlashSale({ onChange, date, slot }: Props) {
                         className={`w-full ${
                           invalidStock ? "border-red-500" : ""
                         }`}
-                        value={row.stock ?? ""} // 👈 trống nếu null
+                        value={row.stock ?? ""}
                         placeholder="Số lượng"
                         min={1}
                         max={stockInWarehouse}

@@ -1,3 +1,10 @@
+
+export interface FlashSaleOverView{
+  date:Date;
+  slot:number;
+  status:string;
+  totalProduct:number;
+}
 export interface FlashSaleProductHome{
     id:string;
     productId:string;
@@ -30,7 +37,8 @@ export interface CreateFlashSale {
 export interface filterFlashSale {
   // pageIndex?: number
   // pageSize?: number
- StartDate?:string
+  StartDate?: Date
+  Slot?: number
   // isActive?: boolean
 
 }
@@ -68,4 +76,9 @@ export interface ProductWithoutFlashSale {
   stockQuantity: number;
   productImageUrl: string;
   variants: ProductVariant[] | null; 
+}
+export interface DeleteFlashSale{
+date:Date;
+slot:number;
+
 }

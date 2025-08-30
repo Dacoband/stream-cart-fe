@@ -41,7 +41,7 @@ export interface ProductEventBase {
 
 export interface ProductAddedEvent {
   livestreamId: string;
-  product: unknown; // backend returns a rich object; keep flexible here
+  product: unknown; 
   addedBy?: string;
   timestamp?: string;
   message?: string;
