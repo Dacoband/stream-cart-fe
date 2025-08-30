@@ -22,6 +22,26 @@ export const getChatBot = async () => {
     throw error;
   }
 };
+export const getChatRoom = async () => {
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      throw new Error("Not found token.");
+    }
+
+    const response = await rootApi.get(`/chatbot/chat/history`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    // API shape: { success, message, data: { user_id, history: [...] }, errors }
+    return response.data?.data;
+  } catch (error) {
+    console.error("Error fetching chat history:", error);
+    throw error;
+  }
+};
 export const createChatBot = async (message: string) => {
   try {
     const token = localStorage.getItem("token");

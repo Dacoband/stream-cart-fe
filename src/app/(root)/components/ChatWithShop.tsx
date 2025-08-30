@@ -1,123 +1,123 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import { MessageCircleMore } from "lucide-react";
+import { MessageCircleMore, Search, ArrowLeft } from "lucide-react";
+import { ChatProvider, useChat } from "../../../lib/ChatContext";
+import { getShopDetail } from "@/services/api/shop/shop";
+import * as chatApi from "@/services/api/chat/chat";
+import Image from "next/image";
 
-interface ChatMess {
-  timestamp: string;
-  user_message?: string;
-  ai_response?: string;
-}
-
-interface Shop {
-  id: string;
-  name: string;
-}
-
-interface ChatWithShopProps {
+export type ChatWithShopProps = {
   open: boolean;
   setOpen: (open: boolean) => void;
-}
-
-const mockShops: Shop[] = [
-  { id: "shop1", name: "Hoàng Nhân Thiện", avatar: "https://i.pravatar.cc/40?img=12" },
-  { id: "shop2", name: "Trần Ánh Tuyết", avatar: "https://i.pravatar.cc/40?img=13" },
-];
-
-const userAvatar = "https://i.pravatar.cc/40?img=5";
-
-const mockHistory: Record<string, ChatMess[]> = {
-  shop1: [
-    { timestamp: "2025-08-22T04:01:00", user_message: "alo", ai_response: "haha" },
-    { timestamp: "2025-08-22T04:12:00", user_message: "alo" },
-    { timestamp: "2025-08-22T04:13:00", user_message: "haja" },
-    { timestamp: "2025-08-22T04:13:00", user_message: "jhxdu" },
-    { timestamp: "2025-08-22T04:13:00", user_message: "you can not" },
-    { timestamp: "2025-08-22T04:13:00", user_message: "al" },
-    { timestamp: "2025-08-22T18:26:00", user_message: "123" },
-    { timestamp: "2025-08-22T00:14:00", ai_response: "haha" },
-  ],
-  shop2: [
-    { timestamp: "2025-08-18T08:00:00", user_message: "Hello Shop B", ai_response: "Hi bạn!" },
-  ],
+  shopId: string;
 };
 
-export default function ChatWithShop({ open, setOpen }: ChatWithShopProps) {
-  const [selectedShopId, setSelectedShopId] = useState<string | null>(null);
-  const [history, setHistory] = useState<ChatMess[]>([]);
-  const [input, setInput] = useState("");
+function ChatWithShopInner({ open, setOpen, shopId }: ChatWithShopProps) {
+  const { messages, sendMessage, setTyping } = useChat();
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [myAvatarUrl, setMyAvatarUrl] = useState<string | undefined>(undefined);
+  const [shopLogoUrl, setShopLogoUrl] = useState<string | undefined>(undefined);
+  const [text, setText] = useState("");
   const listRef = useRef<HTMLDivElement | null>(null);
 
+  // Sidebar state
+  type ChatRoom = {
+    id: string;
+    shopId: string;
+    shopName: string;
+    lastMessage?: { content?: string };
+  };
+  const [rooms, setRooms] = useState<ChatRoom[]>([]);
+  const [selectedShopId, setSelectedShopId] = useState<string>(shopId);
+  const [searchText, setSearchText] = useState("");
+  const [loadingRooms, setLoadingRooms] = useState(false);
+  const [showSearch, setShowSearch] = useState(false);
+
+  // Load chat rooms (shops user has chatted with)
   useEffect(() => {
-    if (selectedShopId) {
-      setHistory(mockHistory[selectedShopId] || []);
+    if (!open) return;
+    setLoadingRooms(true);
+    // Sử dụng hàm đúng lấy phòng chat customer (thường là getChatRooms hoặc tương tự)
+    // Nếu không đúng, hãy sửa lại tên hàm cho đúng với API thực tế
+    chatApi
+      .getChatRooms?.(1, 50, null)
+      .then((data: any) => {
+        const items = (data?.items ?? []).map((it: any) => {
+          const rec = it as Record<string, unknown>;
+          const id = (rec["id"] as string) ?? (rec["_id"] as string) ?? "";
+          return { ...(rec as object), id };
+        });
+        setRooms(items);
+      })
+      .finally(() => setLoadingRooms(false));
+  }, [open]);
+
+  // Khi shopId prop thay đổi, chọn shopId đó
+  useEffect(() => {
+    if (shopId) setSelectedShopId(shopId);
+  }, [shopId]);
+
+  useEffect(() => {
+    listRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  useEffect(() => {
+    try {
+      const raw =
+        typeof window !== "undefined" ? localStorage.getItem("userData") : null;
+      if (raw) {
+        const parsed = JSON.parse(raw) as Record<string, unknown>;
+        setCurrentUserId((parsed.id as string) ?? null);
+        const avatar =
+          (parsed["avatarUrl"] as string) ||
+          (parsed["avatarURL"] as string) ||
+          (parsed["imageUrl"] as string) ||
+          (parsed["profileImageUrl"] as string) ||
+          (parsed["avatar"] as string) ||
+          "";
+        if (avatar) setMyAvatarUrl(avatar);
+      }
+    } catch {
+      setCurrentUserId(null);
     }
+  }, []);
+
+  useEffect(() => {
+    if (!selectedShopId) return;
+    let mounted = true;
+    (async () => {
+      try {
+        const shop = await getShopDetail(selectedShopId);
+        const logo =
+          (shop?.logoURL as string) || (shop?.logoUrl as string) || "";
+        if (mounted && logo) setShopLogoUrl(logo);
+      } catch (e) {
+        if (
+          typeof window !== "undefined" &&
+          process.env.NEXT_PUBLIC_DEBUG_API === "true"
+        )
+          console.debug("[ChatWithShop] getShopDetail failed", e);
+      }
+    })();
+    return () => {
+      mounted = false;
+    };
   }, [selectedShopId]);
 
-  useEffect(() => {
-    const el = listRef.current;
-    if (el) el.scrollTop = el.scrollHeight;
-  }, [history.length]);
-
-  const handleSend = () => {
-    if (!input.trim() || !selectedShopId) return;
-    const userMsg: ChatMess = {
-      timestamp: new Date().toISOString(),
-      user_message: input,
-    };
-    setHistory((prev) => [...prev, userMsg]);
-    setInput("");
-    const aiMsg: ChatMess = {
-      timestamp: new Date().toISOString(),
-      ai_response: "Đây là trả lời giả từ shop",
-    };
-    setHistory((prev) => [...prev, aiMsg]);
+  const onSend = async () => {
+    if (!text.trim()) return;
+    await sendMessage(text.trim());
+    setText("");
+    await setTyping(false);
   };
 
-  const renderMessages = () => {
-    let lastDate = "";
-    return history.map((m, idx) => {
-      const msgDate = new Date(m.timestamp).toDateString();
-      const showDate = lastDate !== msgDate;
-      lastDate = msgDate;
-      return (
-        <React.Fragment key={idx}>
-          {showDate && (
-            <div className="text-center text-gray-400 text-xs my-2">{msgDate}</div>
-          )}
-          {m.user_message && (
-            <div className="flex justify-end mb-2 items-end space-x-2">
-              <div className="flex flex-col items-end">
-                <div className="bg-blue-500 text-white p-2 rounded-lg max-w-[100%]">
-                  {m.user_message}
-                  <div className="text-[10px] text-blue-100 mt-1 text-right">
-                    {new Date(m.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                  </div>
-                </div>
-              </div>
-              <img src={userAvatar} alt="User" className="w-8 h-8 rounded-full" />
-            </div>
-          )}
-
-          {m.ai_response && (
-            <div className="flex justify-start mb-2 items-end space-x-2">
-              <img
-                src={mockShops.find((s) => s.id === selectedShopId)?.avatar}
-                alt="Shop"
-                className="w-8 h-8 rounded-full"
-              />
-              <div className="bg-gray-200 p-2 rounded-lg max-w-[100%]">
-                {m.ai_response}
-                <div className="text-[10px] text-gray-500 mt-1">
-                  {new Date(m.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                </div>
-              </div>
-            </div>
-          )}
-        </React.Fragment>
-      );
-    });
-  };
+  // Lọc phòng theo search
+  const filteredRooms = searchText
+    ? rooms.filter((room) =>
+        (room.shopName || "").toLowerCase().includes(searchText.toLowerCase())
+      )
+    : rooms;
 
   return (
     <>
@@ -128,79 +128,208 @@ export default function ChatWithShop({ open, setOpen }: ChatWithShopProps) {
         className={`fixed bottom-5 right-5 z-50 w-14 h-14 flex items-center justify-center
                   rounded-full shadow-lg transition-all duration-300
                   hover:scale-110 hover:rotate-6
-                  ${open ? "bg-gradient-to-r from-[#FFD700] to-[#FFA500]" : "bg-gradient-to-r from-[#B0F847] to-[#8AD62F]"}`}
+                  ${
+                    open
+                      ? "bg-gradient-to-r from-[#FFD700] to-[#FFA500]"
+                      : "bg-gradient-to-r from-[#B0F847] to-[#8AD62F]"
+                  }`}
       >
         <MessageCircleMore className="w-7 h-7 text-black" />
       </button>
 
       {open && (
-        <div className="fixed bottom-0 right-22 w-[40rem] h-[55%] bg-white shadow-xl z-50 flex flex-col overflow-hidden rounded-t-xl rounded-l-xl">
+        <div className="fixed bottom-5 right-22 w-[40rem] h-[55%] bg-white shadow-xl z-50 flex flex-col overflow-hidden rounded-t-xl rounded-l-xl">
           {/* Header */}
           <div className="bg-gradient-to-r from-[#B0F847] to-[#8AD62F] p-3 text-black font-bold flex justify-between items-center">
             <span>Tin nhắn</span>
-            <button onClick={() => setOpen(false)} className="text-black font-bold">
+            <button
+              onClick={() => setOpen(false)}
+              className="text-black font-bold"
+            >
               ✖
             </button>
           </div>
 
           <div className="flex-1 flex overflow-hidden">
-            {/* Sidebar danh sách shop */}
-            <div className="w-48 border-r border-gray-200 flex flex-col overflow-hidden">
-              <div className="px-3 py-2 text-[12px] font-semibold text-gray-600 bg-gray-50">
-                Lịch sử Shop
-              </div>
-              <div className="flex-1 overflow-y-auto">
-                {mockShops.map((shop) => (
+            {/* Sidebar danh sách shop đã chat - UI giống page shop chat */}
+            <div className="w-64 border-r border-gray-200 flex flex-col overflow-hidden bg-gray-50">
+              <div className="flex-shrink-0 p-4 border-b border-gray-100">
+                <div className="flex items-center justify-between mb-4">
                   <button
-                    key={shop.id}
-                    className={`w-full text-left p-3 border-b border-gray-100 hover:bg-gray-100 ${
-                      selectedShopId === shop.id ? "bg-gray-100" : ""
-                    }`}
-                    onClick={() => setSelectedShopId(shop.id)}
+                    type="button"
+                    title="ArrowLeft"
+                    onClick={() => setOpen(false)}
+                    className="p-2 hover:bg-gray-100 rounded-full transition-colors"
                   >
-                    <div className="font-medium">{shop.name}</div>
-                    <div className="text-[10px] text-gray-400">
-                      {mockHistory[shop.id]?.length
-                        ? new Date(mockHistory[shop.id][mockHistory[shop.id].length - 1].timestamp).toLocaleDateString()
-                        : "-"}
-                    </div>
+                    <ArrowLeft className="w-5 h-5 text-gray-600" />
                   </button>
-                ))}
+                  <h1 className="text-lg font-semibold text-gray-900">
+                    Tin nhắn
+                  </h1>
+                  <button
+                    type="button"
+                    title="Search"
+                    onClick={() => setShowSearch(!showSearch)}
+                    className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                  >
+                    <Search className="w-5 h-5 text-gray-600" />
+                  </button>
+                </div>
+                {/* Search Bar */}
+                {showSearch && (
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <input
+                      type="text"
+                      placeholder="Tìm kiếm cuộc trò chuyện..."
+                      value={searchText}
+                      onChange={(e) => setSearchText(e.target.value)}
+                      className="w-full pl-10 pr-4 py-2 bg-gray-100 border-0 rounded-lg text-sm focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all"
+                    />
+                  </div>
+                )}
+              </div>
+              <div className="flex-1 overflow-y-auto min-h-0">
+                {loadingRooms ? (
+                  <div className="text-center text-gray-400 text-xs my-4">
+                    Đang tải...
+                  </div>
+                ) : filteredRooms.length === 0 ? (
+                  <div className="text-center text-gray-400 text-xs my-4">
+                    Không có shop nào
+                  </div>
+                ) : (
+                  filteredRooms.map((room) => (
+                    <button
+                      key={room.id}
+                      className={`w-full text-left p-3 border-b border-gray-100 hover:bg-gray-100 ${
+                        selectedShopId === room.shopId ? "bg-gray-100" : ""
+                      }`}
+                      onClick={() => setSelectedShopId(room.shopId)}
+                    >
+                      <div className="font-medium truncate">
+                        {room.shopName}
+                      </div>
+                      <div className="text-[10px] text-gray-400 truncate">
+                        {room.lastMessage?.content
+                          ? room.lastMessage.content.slice(0, 30)
+                          : ""}
+                      </div>
+                    </button>
+                  ))
+                )}
               </div>
             </div>
 
             {/* Chat chính */}
             <div className="flex-1 flex flex-col">
-              <div ref={listRef} className="flex-1 p-3 overflow-y-auto">
-                {!selectedShopId && (
-                  <div className="text-gray-400 self-center mt-10">
-                    Chọn shop để bắt đầu chat
-                  </div>
-                )}
-                {selectedShopId && renderMessages()}
-              </div>
-
-              {selectedShopId && (
-                <div className="p-2 border-t flex">
-                  <input
-                    type="text"
-                    placeholder="Nhập tin nhắn..."
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" && !e.shiftKey) handleSend();
-                    }}
-                    className="flex-1 px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#B0F847]"
-                  />
-                  <button
-                    onClick={handleSend}
-                    disabled={!input.trim()}
-                    className="ml-2 px-3 py-2 bg-gradient-to-r from-[#B0F847] to-[#8AD62F] rounded-lg text-black font-semibold disabled:opacity-60"
-                  >
-                    Gửi
-                  </button>
+              <div
+                className="flex-1 items-center justify-center p-3 w-full overflow-y-auto"
+                style={{ minHeight: 0 }}
+              >
+                <div className="min-h-full flex flex-col justify-end">
+                  {messages.map((m, idx) => {
+                    const prev = messages[idx - 1];
+                    const showDate =
+                      !prev ||
+                      new Date(prev.sentAt).toDateString() !==
+                        new Date(m.sentAt).toDateString();
+                    const mine = !!(
+                      currentUserId &&
+                      m.senderUserId &&
+                      String(m.senderUserId) === String(currentUserId)
+                    );
+                    const avatar = mine ? myAvatarUrl : shopLogoUrl;
+                    return (
+                      <React.Fragment key={m.id}>
+                        {showDate && (
+                          <div className="text-center text-[11px] text-gray-400 my-2">
+                            {new Date(m.sentAt).toLocaleDateString()}
+                          </div>
+                        )}
+                        <div
+                          className={`flex items-end mb-2 ${
+                            mine ? "justify-end" : "justify-start"
+                          }`}
+                        >
+                          {!mine && (
+                            <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center mr-2 overflow-hidden">
+                              {avatar ? (
+                                <Image
+                                  alt="avatar"
+                                  src={avatar}
+                                  width={32}
+                                  height={32}
+                                  className="w-8 h-8 rounded-full object-cover"
+                                />
+                              ) : (
+                                <span className="text-xs font-semibold">S</span>
+                              )}
+                            </div>
+                          )}
+                          <div
+                            className={`max-w-[70%] px-3 py-2 rounded-2xl ${
+                              mine
+                                ? "bg-blue-500 text-white"
+                                : "bg-gray-100 text-gray-900"
+                            }`}
+                          >
+                            <div className="whitespace-pre-wrap break-words">
+                              {m.content}
+                            </div>
+                            <div
+                              className={`text-[10px] mt-1 ${
+                                mine ? "text-blue-100" : "text-gray-400"
+                              }`}
+                            >
+                              {new Date(m.sentAt).toLocaleTimeString([], {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              })}
+                            </div>
+                          </div>
+                          {mine && (
+                            <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center ml-2 overflow-hidden">
+                              {avatar ? (
+                                <Image
+                                  alt="avatar"
+                                  src={avatar}
+                                  width={32}
+                                  height={32}
+                                  className="w-8 h-8 rounded-full object-cover"
+                                />
+                              ) : (
+                                <span className="text-xs font-semibold">U</span>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </React.Fragment>
+                    );
+                  })}
+                  <div ref={listRef} />
                 </div>
-              )}
+              </div>
+              <div className="p-3 border-t flex gap-2">
+                <input
+                  className="flex-1 border rounded-full px-4 py-2"
+                  placeholder="Nhập tin nhắn..."
+                  value={text}
+                  onChange={(e) => {
+                    setText(e.target.value);
+                    setTyping(!!e.target.value);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") onSend();
+                  }}
+                />
+                <button
+                  className="px-4 py-2 bg-blue-600 text-white rounded-full"
+                  onClick={onSend}
+                >
+                  Gửi
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -208,3 +337,14 @@ export default function ChatWithShop({ open, setOpen }: ChatWithShopProps) {
     </>
   );
 }
+
+const ChatWithShop: React.FC<ChatWithShopProps> = (props) => {
+  // Wrap with ChatProvider for context
+  return (
+    <ChatProvider shopId={props.shopId}>
+      <ChatWithShopInner {...props} />
+    </ChatProvider>
+  );
+};
+
+export default ChatWithShop;

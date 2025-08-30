@@ -10,6 +10,8 @@ import { getProductDetailById } from "@/services/api/product/product";
 import { ProductDetail } from "@/types/product/product";
 import NotFound from "@/components/common/NotFound";
 import LoadingScreen from "@/components/common/LoadingScreen";
+import ChatBot from "../../components/ChatBot";
+import ChatWithShop from "../../components/ChatWithShop";
 // import ChatBot from "../../components/ChatBot";
 
 export default function ProductPage() {
@@ -17,7 +19,14 @@ export default function ProductPage() {
 
   const [product, setProduct] = useState<ProductDetail | null>(null);
   const [loading, setLoading] = useState(true);
+  const [openBot, setOpenBot] = useState(false);
+  const [openShop, setOpenShop] = useState(false);
 
+  // Khi mở cái này thì đóng cái kia
+  const handleOpenBot = () => {
+    setOpenBot((prev) => !prev);
+    if (!openBot) setOpenShop(false);
+  };
   const BreadcrumbProduct = dynamic(
     () => import("./components/BreadcrumbProduct"),
     {
@@ -87,7 +96,12 @@ export default function ProductPage() {
           <DescriptionProduct product={product} />
         </div>
       </div>
-      {/* <ChatBot /> */}
+      <ChatBot open={openBot} setOpen={handleOpenBot} />
+      <ChatWithShop
+        open={openShop}
+        setOpen={setOpenShop}
+        shopId={product?.shopId}
+      />
     </div>
   );
 }
