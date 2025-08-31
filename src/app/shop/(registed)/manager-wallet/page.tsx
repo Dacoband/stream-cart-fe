@@ -85,10 +85,10 @@ const mapStatusTx = (s: number | string): TxStatus => {
 const toStartOfDayIso = (d: string) => new Date(`${d}T00:00:00`).toISOString()
 const toEndOfDayIso = (d: string) => new Date(`${d}T23:59:59.999`).toISOString()
 
-const parseWalletFromResponse = (res: any): WalletDTO | null => {
+const parseWalletFromResponse = (res: WalletDTO): WalletDTO | null => {
   if (!res) return null
   if ((res as WalletDTO).id) return res as WalletDTO
-  if ((res as { data?: WalletDTO }).data) return (res as any).data as WalletDTO
+  // if ((res as { data?: WalletDTO }).data) return res.data as WalletDTO
   return null
 }
 
@@ -175,7 +175,7 @@ export default function Page() {
               : undefined,
             PageIndex: 1,
             PageSize: 50,
-          } as any),
+          }),
         ])
 
         if (curSeq !== requestSeq.current) return
@@ -184,7 +184,7 @@ export default function Page() {
         setWallet(walletData)
 
         const items: WalletTransactionDTO[] =
-          (resList as any)?.items ??
+          (resList as { data?: WalletTransactionDTO[] }).data ??
           (Array.isArray(resList) ? resList : []) ??
           []
 

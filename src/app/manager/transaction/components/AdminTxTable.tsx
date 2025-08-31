@@ -19,7 +19,7 @@ type BaseRow = {
   ownerName?: string
   type: number | string
   amount: number
-  status: unknown
+  status: string
   createdAt: string
   processedAt?: string | null
   transactionId?: string | null
@@ -56,28 +56,28 @@ export default function AdminTxTable<T extends BaseRow>({
   return (
     <div className="bg-white rounded-xl overflow-hidden shadow-sm">
       <Table>
-        {/* Cột theo thứ tự: Shop, Loại, Số tiền, Trạng thái, Ngân hàng, Mã GD, Thời gian, Hành động */}
+        {/* Order: Shop, Loại, Số tiền, Trạng thái, Ngân hàng, Mã GD, Thời gian, Hành động */}
         <TableHeader className="bg-[#B0F847]/50">
           <TableRow>
-            <TableHead className="min-w-[260px] font-medium px-4 py-3">
+            <TableHead className="min-w-[260px] font-medium pl-6 py-3 text-left">
               Shop
             </TableHead>
-            <TableHead className="w-[140px] font-medium px-4 py-3">
+            <TableHead className="w-[140px] font-medium px-4 py-3 text-left">
               Loại
             </TableHead>
             <TableHead className="text-right w-[140px] font-medium px-4 py-3">
               Số tiền
             </TableHead>
-            <TableHead className="w-[140px] font-medium px-4 py-3">
+            <TableHead className="w-[140px] font-medium px-4 py-3 text-left">
               Trạng thái
             </TableHead>
-            <TableHead className="min-w-[220px] font-medium px-4 py-3">
+            <TableHead className="min-w-[220px] font-medium px-4 py-3 text-left">
               Ngân hàng
             </TableHead>
-            <TableHead className="w-[200px] font-medium px-4 py-3">
+            <TableHead className="w-[200px] font-medium px-4 py-3 truncate text-left">
               Mã GD
             </TableHead>
-            <TableHead className="w-[180px] font-medium px-4 py-3">
+            <TableHead className="w-[180px] font-medium px-4 py-3 text-left">
               Thời gian
             </TableHead>
             <TableHead className="text-right w-[120px] font-medium pr-6 py-3">
@@ -104,8 +104,8 @@ export default function AdminTxTable<T extends BaseRow>({
               const st = String(r.status).toUpperCase()
               return (
                 <TableRow key={r.id} className="align-middle">
-                  {/* Shop */}
-                  <TableCell className="px-4 py-3">
+                  {/* Shop (first column) */}
+                  <TableCell className="pl-6 py-3">
                     <div className="flex flex-col">
                       <span className="font-medium truncate">
                         {r.shopName ?? '—'}
@@ -151,7 +151,7 @@ export default function AdminTxTable<T extends BaseRow>({
                     {renderDate(r.createdAt, r.processedAt ?? null)}
                   </TableCell>
 
-                  {/* Hành động: icon mắt, không cân chữ */}
+                  {/* Hành động: icon mắt, compact */}
                   <TableCell className="text-right pr-6 py-3">
                     <div className="flex items-center justify-end gap-2">
                       {showConfirm && (st === 'PENDING' || st === 'RETRY') && (
@@ -161,10 +161,10 @@ export default function AdminTxTable<T extends BaseRow>({
                       )}
                       <Button
                         size="sm"
-                        variant="outline"
+                        variant="ghost"
                         aria-label="Xem chi tiết"
                         onClick={() => onDetails(r)}
-                        className="p-2"
+                        className="p-2 w-9 h-9 flex items-center justify-center"
                       >
                         <Eye size={16} />
                       </Button>

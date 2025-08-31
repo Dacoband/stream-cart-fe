@@ -3,27 +3,38 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import Image from 'next/image'
 import { useSearchParams, useRouter } from 'next/navigation'
-import { createDeposit } from '@/services/api/payment/payment'
-import { DepositResponse } from '@/types/payment/payment'
-import { filterWalletTransactions } from '@/services/api/wallet/walletTransaction'
-import { useAuth } from '@/lib/AuthContext'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { CheckCircle, XCircle, Loader2 } from 'lucide-react'
-import { WalletTransactionDTO } from '@/types/wallet/walletTransactionDTO'
+import { useAuth } from '@/lib/AuthContext'
 
+import {
+  createWalletTransaction,
+  filterWalletTransactions,
+} from '@/services/api/wallet/walletTransaction'
+import {
+  WalletTransactionType,
+  WalletTransactionDTO,
+  WalletTransactionStatus,
+} from '@/types/wallet/walletTransactionDTO'
+import { createWithdrawalApproval } from '@/services/api/payment/payment'
+import { WithdrawalApprovalResponse } from '@/types/payment/payment'
 type TxStatus = 'PENDING' | 'SUCCESS' | 'FAILED'
 
-export default function DepositPage() {
+export default function WithdrawPage() {
   const { user } = useAuth()
   const searchParams = useSearchParams()
   const router = useRouter()
 
-  const [qrData, setQrData] = useState<DepositResponse | null>(null)
   const [status, setStatus] = useState<TxStatus>('PENDING')
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState<boolean>(false)
   const pollTimerRef = useRef<NodeJS.Timeout | null>(null)
+
+  const [approval, setApproval] = useState<WithdrawalApprovalResponse | null>(
+    null
+  )
+  const [walletTxId, setWalletTxId] = useState<string | null>(null)
 
   const amountParam = searchParams.get('amount')
   const amount = useMemo(() => {
@@ -31,76 +42,98 @@ export default function DepositPage() {
     return Number.isFinite(v) ? v : NaN
   }, [amountParam])
 
-  // 1. Gọi API tạo QR
+  // 1) Tạo transaction rút + approve để lấy QR
   useEffect(() => {
     if (!amountParam) {
-      setError('Thiếu số tiền nạp.')
+      setError('Thiếu số tiền rút.')
       return
     }
     if (!Number.isFinite(amount) || amount <= 0) {
-      setError('Số tiền nạp không hợp lệ.')
+      setError('Số tiền rút không hợp lệ.')
+      return
+    }
+    if (!user?.shopId) {
+      setError('Thiếu ShopId.')
       return
     }
 
-    setLoading(true)
-    createDeposit({
-      amount,
-      shopId: user?.shopId ?? null,
-    })
-      .then((res) => {
-        setQrData(res)
+    const run = async () => {
+      try {
+        setLoading(true)
         setError(null)
         setStatus('PENDING')
-      })
-      .catch((e) => {
-        setError(
-          (e as Error).message || 'Không thể tạo mã nạp tiền. Vui lòng thử lại.'
-        )
-      })
-      .finally(() => setLoading(false))
+
+        // a) tạo wallet transaction Withdraw
+        const tx: WalletTransactionDTO = await createWalletTransaction({
+          type: WalletTransactionType.Withdraw,
+          amount,
+        })
+        setWalletTxId(tx.id)
+
+        // b) approve để lấy QR/paymentId
+        const appr = await createWithdrawalApproval({
+          walletTransactionId: tx.id,
+        })
+        setApproval(appr)
+      } catch (e) {
+        setError('Không thể tạo yêu cầu rút tiền.')
+        setStatus('FAILED')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    run()
   }, [amount, amountParam, user?.shopId])
 
-  // 2. Poll trạng thái
+  // 2) Poll trạng thái theo paymentId (giống deposit: filterWalletTransactions)
   useEffect(() => {
-    if (!qrData || !user?.shopId) return
-    console.log('Start polling status for', qrData)
-    const paymentId = qrData.paymentId
-    const createdAt = new Date(qrData.createdAt)
-    // trừ 1 tiếng làm fromTime, và đặt ToTime là 1 tiếng sau createdAt
-    const fromTime = new Date(
-      createdAt.getTime() - 60 * 60 * 1000
-    ).toISOString()
-    const toTime = new Date(createdAt.getTime() + 60 * 60 * 1000).toISOString()
+    if (!approval || !user?.shopId) return
+
+    const paymentId = approval.paymentId
+    const createdAt = new Date(approval.createdAt)
+    const fromTime = new Date(createdAt.getTime() - 60 * 1000).toISOString()
 
     const poll = async () => {
       try {
         const list = await filterWalletTransactions({
           ShopId: user.shopId,
-          Types: [1],
+          Types: [WalletTransactionType.Withdraw], // 0 = Withdraw
           FromTime: fromTime,
-          ToTime: toTime,
+          ToTime: new Date().toISOString(),
           PageIndex: 1,
           PageSize: 50,
         })
 
-        const items: WalletTransactionDTO[] = Array.isArray(list?.items)
-          ? (list.items as WalletTransactionDTO[])
-          : []
-
-        const match = items.find((it) => it.transactionId === paymentId)
+        const match = (list.items ?? []).find(
+          (it) => it.transactionId === paymentId
+        )
 
         if (match) {
-          if (match.status === 'Success') {
+          // match.status có thể là number hoặc string -> normalize
+          const raw = match.status
+          const done =
+            raw === WalletTransactionStatus.Success ||
+            String(raw).toLowerCase() === 'success'
+          const failed =
+            raw === WalletTransactionStatus.Failed ||
+            String(raw).toLowerCase() === 'failed'
+          const canceled =
+            raw === WalletTransactionStatus.Canceled ||
+            String(raw).toLowerCase() === 'canceled' ||
+            String(raw).toLowerCase() === 'cancelled'
+
+          if (done) {
             setStatus('SUCCESS')
             return
           }
-          if (match.status === 'Failed' || match.status === 'Canceled') {
+          if (failed || canceled) {
             setStatus('FAILED')
             return
           }
         }
       } catch (e) {
-        console.warn('Polling deposit status failed', e)
+        console.warn('Polling withdraw status failed', e)
       }
     }
 
@@ -109,11 +142,11 @@ export default function DepositPage() {
       if (pollTimerRef.current) clearInterval(pollTimerRef.current)
       pollTimerRef.current = null
     }
-  }, [qrData, user?.shopId])
+  }, [approval, user?.shopId])
 
   return (
     <div className="max-w-xl mx-auto px-4 py-10">
-      <h1 className="text-2xl font-bold mb-6 text-center">Nạp tiền vào ví</h1>
+      <h1 className="text-2xl font-bold mb-6 text-center">Rút tiền</h1>
 
       {loading && (
         <div className="flex justify-center items-center gap-2 text-gray-600">
@@ -123,41 +156,46 @@ export default function DepositPage() {
 
       {error && <p className="text-center text-red-500">{error}</p>}
 
-      {qrData && (
+      {approval && (
         <>
           {status === 'PENDING' && (
             <Card className="p-6">
               <CardHeader className="text-center">
                 <CardTitle className="text-blue-600">
-                  Quét QR để nạp tiền
+                  Quét QR để xác nhận rút tiền
                 </CardTitle>
               </CardHeader>
               <CardContent className="flex flex-col items-center gap-4">
                 <Image
                   width={288}
                   height={288}
-                  src={qrData.qrCode.split('|')[0]}
-                  alt="QR Nạp Tiền"
+                  // BE trả base64 hoặc URL; nếu là base64 thì giữ nguyên, nếu là "xxx|meta" như deposit thì tách:
+                  src={
+                    approval.qrCode.includes('|')
+                      ? approval.qrCode.split('|')[0]
+                      : approval.qrCode
+                  }
+                  alt="QR Rút Tiền"
                   className="w-72 h-72 object-contain border p-2 rounded-lg"
                 />
                 <div className="text-center space-y-1">
                   <p>
                     <span className="font-medium">Mã thanh toán:</span>{' '}
-                    {qrData.paymentId}
+                    {approval.paymentId}
                   </p>
-                  {qrData.description && (
+                  {approval.description && (
                     <p>
                       <span className="font-medium">Nội dung:</span>{' '}
-                      {qrData.description}
+                      {approval.description}
                     </p>
                   )}
-                  <p className="text-green-600 font-semibold">
-                    Số tiền: {qrData.amount.toLocaleString('vi-VN')}đ
+                  <p className="text-blue-700 font-semibold">
+                    Số tiền: {approval.amount.toLocaleString('vi-VN')}đ
                   </p>
                 </div>
                 <p className="text-sm text-gray-500 text-center">
-                  Sau khi chuyển khoản thành công, hệ thống sẽ tự động xác nhận
-                  trong vài chục giây.
+                  Sau khi quét và xác nhận, hệ thống sẽ tự động cập nhật trạng
+                  thái trong ít phút.
                 </p>
               </CardContent>
             </Card>
@@ -168,7 +206,7 @@ export default function DepositPage() {
               <CardContent className="flex flex-col items-center gap-3">
                 <CheckCircle className="w-12 h-12 text-green-600" />
                 <p className="text-green-700 font-bold text-lg">
-                  Nạp tiền thành công!
+                  Rút tiền thành công!
                 </p>
                 <Button
                   className="mt-2 bg-green-600 hover:bg-green-700"
@@ -185,7 +223,7 @@ export default function DepositPage() {
               <CardContent className="flex flex-col items-center gap-3">
                 <XCircle className="w-12 h-12 text-red-600" />
                 <p className="text-red-700 font-bold text-lg">
-                  Nạp tiền thất bại hoặc đã hủy.
+                  Rút tiền thất bại hoặc đã hủy.
                 </p>
                 <Button
                   className="mt-2 bg-red-600 hover:bg-red-700"

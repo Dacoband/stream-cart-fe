@@ -29,6 +29,8 @@ export interface WalletTransactionDTO {
   createdAt: string
   updatedAt?: string
   lastModifiedAt?: string | null
+  createdby?: string | null
+  modifiedby?: string | null
 }
 
 export interface CreateWalletTransactionDTO {

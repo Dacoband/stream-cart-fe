@@ -29,3 +29,24 @@ export const updateShopWalletBankingInfo = async (
   )
   return (response.data?.data ?? response.data) as WalletDTO
 }
+
+export const getWalletById = async (walletId: string): Promise<WalletDTO> => {
+  try {
+    const token = localStorage.getItem('token')
+    if (!token) {
+      throw new Error('Không tìm thấy token.')
+    }
+
+    const response = await rootApi.get(`/wallets/${walletId}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
+
+    // backend trả data hoặc { data }
+    return (response.data?.data ?? response.data) as WalletDTO
+  } catch (error) {
+    console.error('Error fetching wallet by ID:', error)
+    throw new Error('Không thể tải thông tin ví.')
+  }
+}
