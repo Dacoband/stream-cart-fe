@@ -308,9 +308,15 @@ export const ChatProvider: React.FC<{ shopId?: string } & React.PropsWithChildre
     };
     startPolling();
     return () => {
-      // leave room
-      if (currentRoomRef.current) signalRChatClient.leaveChatRoom(currentRoomRef.current);
-      signalRChatClient.disconnect();
+      // leave room but do not disconnect the SignalR client here; keep the connection open
+      // so switching rooms won't cause stop/start races. Only stop polling for this effect.
+      if (currentRoomRef.current) {
+        try {
+          signalRChatClient.leaveChatRoom(currentRoomRef.current);
+        } catch {
+          // ignore
+        }
+      }
       if (pollId) window.clearInterval(pollId);
     };
   }, [shopId]);
