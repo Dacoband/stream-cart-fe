@@ -31,7 +31,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MoreVertical, Edit, Trash2 } from "lucide-react";
+import { MoreVertical, Trash2, List } from "lucide-react";
 import { getFlashSalesOverView } from "@/services/api/product/flashSale";
 import { FlashSaleOverView, SLOT_TIMES } from "@/types/product/flashSale";
 import Image from "next/image";
@@ -115,6 +115,11 @@ export default function TableFlashSale() {
 
   const handleConfirmDelete = async () => {
     if (!confirmDelete) return;
+    if (confirmDelete.status && confirmDelete.status !== "Upcoming") {
+      toast.error("Không thể xóa Flash Sale khi đang diễn ra hoặc đã kết thúc");
+      setConfirmDelete(null);
+      return;
+    }
     try {
       setLoadingDelete(true);
       await deleteFlashSale({
@@ -135,7 +140,7 @@ export default function TableFlashSale() {
       setConfirmDelete(null);
     }
   };
-  // Lọc dữ liệu theo filter
+
   const filteredFlashSale = flashSale.filter((item) => {
     const matchDate = filterDate
       ? formatDateQuery(item.date) === filterDate
@@ -149,7 +154,6 @@ export default function TableFlashSale() {
     return matchDate && matchSlot;
   });
 
-  // UI
   return (
     <Card className="bg-white py-5 px-8 min-h-[70vh]">
       {/* Bộ lọc */}
@@ -274,19 +278,21 @@ export default function TableFlashSale() {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent>
                         <DropdownMenuItem onClick={() => handleEdit(flashSale)}>
-                          <Edit className="mr-2 h-4 w-4" />
+                          <List className="mr-2 h-4 w-4" />
                           Chi tiết
                         </DropdownMenuItem>
-                        <DropdownMenuItem
-                          className="text-red-500"
-                          onClick={() => setConfirmDelete(flashSale)}
-                        >
-                          <Trash2
-                            size={18}
-                            className="text-red-500 mr-2 hover:text-red"
-                          />
-                          Xóa Flash Sale
-                        </DropdownMenuItem>
+                        {flashSale.status === "Upcoming" && (
+                          <DropdownMenuItem
+                            className="text-red-500 hover:text-red-400 cursor-pointer"
+                            onClick={() => setConfirmDelete(flashSale)}
+                          >
+                            <Trash2
+                              size={18}
+                              className="text-red-500 mr-2 hover:text-red-400"
+                            />
+                            Xóa Flash Sale
+                          </DropdownMenuItem>
+                        )}
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>

@@ -45,9 +45,7 @@ function ProductFlashSale({ onChange, date, slot }: Props) {
     const payload = productRows
       .filter((row) => {
         if (row.price === null || row.stock === null) return false;
-        // flashSale price must be less than base price
         if (row.price >= row.basePrice) return false;
-        // stock within warehouse bounds
         if (row.stock <= 0 || row.stock > row.warehouseStock) return false;
         return true;
       })
@@ -198,6 +196,15 @@ function ProductFlashSale({ onChange, date, slot }: Props) {
                             ? Math.max(0, row.basePrice - 1)
                             : undefined
                         }
+                        onBlur={(e) => {
+                          const val =
+                            e.target.value === ""
+                              ? null
+                              : Number(e.target.value);
+                          const fixed =
+                            val !== null ? Math.round(val / 500) * 500 : null;
+                          handleRowChange(idx, "price", fixed);
+                        }}
                         onChange={(e) =>
                           handleRowChange(
                             idx,
