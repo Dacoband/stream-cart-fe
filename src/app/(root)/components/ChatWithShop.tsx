@@ -4,16 +4,18 @@ import React, { useEffect, useRef, useState } from "react";
 import { MessageCircleMore, Search, ArrowLeft } from "lucide-react";
 import { ChatProvider, useChat } from "../../../lib/ChatContext";
 import { getShopDetail } from "@/services/api/shop/shop";
-import * as chatApi from "@/services/api/chat/chat";
+import chatApi from '@/services/api/chat/chatApiService';
 import Image from "next/image";
 
 export type ChatWithShopProps = {
   open: boolean;
   setOpen: (open: boolean) => void;
   shopId: string;
+  selectedShopId?: string;
+  setSelectedShopId?: (id: string) => void;
 };
 
-function ChatWithShopInner({ open, setOpen, shopId }: ChatWithShopProps) {
+function ChatWithShopInner({ open, setOpen, shopId, setSelectedShopId: setActiveShopFromProps }: ChatWithShopProps) {
   const { messages, sendMessage, setTyping } = useChat();
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [myAvatarUrl, setMyAvatarUrl] = useState<string | undefined>(undefined);
@@ -26,7 +28,21 @@ function ChatWithShopInner({ open, setOpen, shopId }: ChatWithShopProps) {
     id: string;
     shopId: string;
     shopName: string;
-    lastMessage?: { content?: string };
+    lastMessage?: {
+      id: string;
+      chatRoomId: string;
+      senderUserId: string;
+      content: string;
+      sentAt: string;
+      isRead: boolean;
+      isEdited: boolean;
+      messageType: string;
+      attachmentUrl: string | null;
+      editedAt: string | null;
+      senderName: string | null;
+      senderAvatarUrl: string | null;
+      isMine: boolean;
+    } | null;
   };
   const [rooms, setRooms] = useState<ChatRoom[]>([]);
   const [selectedShopId, setSelectedShopId] = useState<string>(shopId);
@@ -37,20 +53,59 @@ function ChatWithShopInner({ open, setOpen, shopId }: ChatWithShopProps) {
   // Load chat rooms (shops user has chatted with)
   useEffect(() => {
     if (!open) return;
+    let mounted = true;
     setLoadingRooms(true);
-    // Sử dụng hàm đúng lấy phòng chat customer (thường là getChatRooms hoặc tương tự)
-    // Nếu không đúng, hãy sửa lại tên hàm cho đúng với API thực tế
-    chatApi
-      .getChatRooms?.(1, 50, null)
-      .then((data: any) => {
-        const items = (data?.items ?? []).map((it: any) => {
+    (async () => {
+      try {
+        const res = await chatApi.getChatRooms(1, 50, null);
+        if (!mounted) return;
+        const payload = res as { items?: unknown[] } | undefined;
+        const rawItems = payload?.items ?? [];
+        const items = (rawItems as unknown[]).map((it) => {
           const rec = it as Record<string, unknown>;
-          const id = (rec["id"] as string) ?? (rec["_id"] as string) ?? "";
-          return { ...(rec as object), id };
+          const id = String(rec['id'] ?? rec['_id'] ?? '');
+          const shopIdVal = rec['shopId'] ?? rec['ShopId'] ?? '';
+          const shopNameVal = rec['shopName'] ?? rec['ShopName'] ?? '';
+
+          // normalize lastMessage if present
+          const lm = rec['lastMessage'] as Record<string, unknown> | null | undefined;
+          let lastMessage: ChatRoom['lastMessage'] | null = null;
+          if (lm && typeof lm === 'object') {
+            const lmRec = lm as Record<string, unknown>;
+            lastMessage = {
+              id: String(lmRec['id'] ?? lmRec['_id'] ?? ''),
+              chatRoomId: String(lmRec['chatRoomId'] ?? lmRec['roomId'] ?? ''),
+              senderUserId: String(lmRec['senderUserId'] ?? lmRec['senderId'] ?? ''),
+              content: String(lmRec['content'] ?? lmRec['message'] ?? ''),
+              sentAt: String(lmRec['sentAt'] ?? lmRec['timestamp'] ?? ''),
+              isRead: Boolean(lmRec['isRead'] ?? false),
+              isEdited: Boolean(lmRec['isEdited'] ?? false),
+              messageType: String(lmRec['messageType'] ?? 'Text'),
+              attachmentUrl: lmRec['attachmentUrl'] ? String(lmRec['attachmentUrl']) : null,
+              editedAt: lmRec['editedAt'] ? String(lmRec['editedAt']) : null,
+              senderName: lmRec['senderName'] ? String(lmRec['senderName']) : null,
+              senderAvatarUrl: lmRec['senderAvatarUrl'] ? String(lmRec['senderAvatarUrl']) : null,
+              isMine: Boolean(lmRec['isMine'] ?? false),
+            };
+          }
+
+          return {
+            id,
+            shopId: String(shopIdVal ?? ''),
+            shopName: String(shopNameVal ?? ''),
+            lastMessage,
+          } as ChatRoom;
         });
         setRooms(items);
-      })
-      .finally(() => setLoadingRooms(false));
+        // debug
+        console.log('[ChatWithShop] loaded rooms count', items.length);
+      } catch (err) {
+        console.error('[ChatWithShop] getChatRooms failed', err);
+      } finally {
+        if (mounted) setLoadingRooms(false);
+      }
+    })();
+    return () => { mounted = false; };
   }, [open]);
 
   // Khi shopId prop thay đổi, chọn shopId đó
@@ -205,7 +260,13 @@ function ChatWithShopInner({ open, setOpen, shopId }: ChatWithShopProps) {
                       className={`w-full text-left p-3 border-b border-gray-100 hover:bg-gray-100 ${
                         selectedShopId === room.shopId ? "bg-gray-100" : ""
                       }`}
-                      onClick={() => setSelectedShopId(room.shopId)}
+                      onClick={() => {
+                        // if wrapper provided setter, use it to update active shop for ChatProvider
+                        if (typeof setActiveShopFromProps === 'function') {
+                          setActiveShopFromProps(room.shopId);
+                        }
+                        setSelectedShopId(room.shopId);
+                      }}
                     >
                       <div className="font-medium truncate">
                         {room.shopName}
@@ -339,10 +400,12 @@ function ChatWithShopInner({ open, setOpen, shopId }: ChatWithShopProps) {
 }
 
 const ChatWithShop: React.FC<ChatWithShopProps> = (props) => {
-  // Wrap with ChatProvider for context
+  // Lift selected shopId into wrapper so ChatProvider can re-init when user selects a room
+  const [activeShopId, setActiveShopId] = useState<string>(props.shopId ?? '');
+
   return (
-    <ChatProvider shopId={props.shopId}>
-      <ChatWithShopInner {...props} />
+    <ChatProvider shopId={activeShopId || undefined}>
+      <ChatWithShopInner {...props} setSelectedShopId={setActiveShopId} selectedShopId={activeShopId} />
     </ChatProvider>
   );
 };
