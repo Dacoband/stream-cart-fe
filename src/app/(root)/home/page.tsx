@@ -32,7 +32,7 @@ export default function Home() {
       <RecommendedProducts />
 
       <ChatBot open={openBot} setOpen={handleOpenBot} />
-      <ChatWithShop open={openShop} setOpen={handleOpenShop} />
+      <ChatWithShop open={openShop} setOpen={handleOpenShop} shopId="" />
     </div>
   );
 }

@@ -8,13 +8,24 @@ import { getshopById } from "@/services/api/shop/shop";
 import ProfileStore from "./components/ProfileStore";
 import ProductsGrid from "./components/ProductsGrid";
 import LoadingScreen from "@/components/common/LoadingScreen";
+import ChatWithShop from "../../components/ChatWithShop";
+import ChatBot from "../../components/ChatBot";
 
 export default function StorePage() {
   const { shopId } = useParams<{ shopId: string }>();
 
   const [shop, setShop] = useState<Shop | null>(null);
   const [loading, setLoading] = useState(true);
-
+  const [openBot, setOpenBot] = useState(false);
+  const [openShop, setOpenShop] = useState(false);
+  const handleOpenBot = () => {
+    setOpenBot((prev) => !prev);
+    if (!openBot) setOpenShop(false);
+  };
+  const handleOpenShop = () => {
+    setOpenShop((prev) => !prev);
+    if (!openShop) setOpenBot(false);
+  };
   useEffect(() => {
     const fetchProduct = async () => {
       try {
@@ -39,7 +50,7 @@ export default function StorePage() {
     );
   if (!shop)
     return (
-      <div>
+      <div className="w-full justify-center mt-10">
         <NotFound />
       </div>
     );
@@ -49,7 +60,7 @@ export default function StorePage() {
       <div className="max-w-7xl mx-auto">
         {/* Shop Profile */}
         <div className="mb-6">
-          <ProfileStore shop={shop} />
+          <ProfileStore shop={shop} onOpenShop={() => handleOpenShop()} />
         </div>
 
         {/* Products Grid */}
@@ -57,6 +68,8 @@ export default function StorePage() {
           <ProductsGrid shopId={shopId} />
         </div>
       </div>
+      <ChatBot open={openBot} setOpen={handleOpenBot} />
+      <ChatWithShop open={openShop} setOpen={setOpenShop} shopId={shopId} />
     </div>
   );
 }

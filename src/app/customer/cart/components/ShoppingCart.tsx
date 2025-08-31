@@ -23,6 +23,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
 interface ShoppingCartProps {
   cart: Cart;
 }
@@ -295,33 +296,35 @@ function ShoppingCart({ cart }: ShoppingCartProps) {
                   onCheckedChange={() => handleCheckProduct(product.cartItemId)}
                 />
               </div>
-              <div className="text-left gap-2 flex">
-                <Image
-                  src={product.primaryImage || "/placeholder.svg"}
-                  alt={product.productName}
-                  width={80}
-                  height={85}
-                  className="rounded-none h-[85px] w-20 object-cover border"
-                />
-                <div className="flex-1 mr-5 mb-2  line-clamp-2 min-h-[48px]">
-                  {product.productName}
-                </div>
-                <div className="w-40 text-black/60">
-                  {product.attributes &&
-                    Object.keys(product.attributes).length > 0 && (
-                      <div className="text-sm text-gray-600">
-                        <div className="text-gray-800 mb-2 font-medium">
-                          Phân loại:
+              <Link href={`/product/${product.productId}`}>
+                <div className="text-left gap-2 flex">
+                  <Image
+                    src={product.primaryImage || "/placeholder.svg"}
+                    alt={product.productName}
+                    width={80}
+                    height={85}
+                    className="rounded-none h-[85px] w-20 object-cover border"
+                  />
+                  <div className="flex-1 mr-5 mb-2  line-clamp-2 min-h-[48px]">
+                    {product.productName}
+                  </div>
+                  <div className="w-40 text-black/60">
+                    {product.attributes &&
+                      Object.keys(product.attributes).length > 0 && (
+                        <div className="text-sm text-gray-600">
+                          <div className="text-gray-800 mb-2 font-medium">
+                            Phân loại:
+                          </div>
+                          <span>
+                            {Object.entries(product.attributes)
+                              .map(([key, value]) => `${key}: ${value}`)
+                              .join(", ")}
+                          </span>
                         </div>
-                        <span>
-                          {Object.entries(product.attributes)
-                            .map(([key, value]) => `${key}: ${value}`)
-                            .join(", ")}
-                        </span>
-                      </div>
-                    )}
+                      )}
+                  </div>
                 </div>
-              </div>
+              </Link>
               <div className="text-center ">
                 <div className="flex gap-4 justify-center items-center">
                   {product.priceData.discount > 0 && (

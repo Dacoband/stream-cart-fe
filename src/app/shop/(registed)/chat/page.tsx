@@ -495,9 +495,11 @@ export default function ShopChatPage() {
                   <div className="relative">
                     <div className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center text-sm font-semibold overflow-hidden">
                       {r.userAvatarUrl ? (
-                        <img
+                        <Image
                           alt="avatar"
                           src={r.userAvatarUrl}
+                          width={48}
+                          height={48}
                           className="w-full h-full object-cover"
                         />
                       ) : (

@@ -1,10 +1,10 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import { MessageCircleMore, Search, ArrowLeft } from "lucide-react";
+import { MessageCircleMore, Search } from "lucide-react";
 import { ChatProvider, useChat } from "../../../lib/ChatContext";
 import { getShopDetail } from "@/services/api/shop/shop";
-import chatApi from '@/services/api/chat/chatApiService';
+import chatApi from "@/services/api/chat/chatApiService";
 import Image from "next/image";
 
 export type ChatWithShopProps = {
@@ -15,7 +15,12 @@ export type ChatWithShopProps = {
   setSelectedShopId?: (id: string) => void;
 };
 
-function ChatWithShopInner({ open, setOpen, shopId, setSelectedShopId: setActiveShopFromProps }: ChatWithShopProps) {
+function ChatWithShopInner({
+  open,
+  setOpen,
+  shopId,
+  setSelectedShopId: setActiveShopFromProps,
+}: ChatWithShopProps) {
   const { messages, sendMessage, setTyping } = useChat();
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [myAvatarUrl, setMyAvatarUrl] = useState<string | undefined>(undefined);
@@ -48,7 +53,6 @@ function ChatWithShopInner({ open, setOpen, shopId, setSelectedShopId: setActive
   const [selectedShopId, setSelectedShopId] = useState<string>(shopId);
   const [searchText, setSearchText] = useState("");
   const [loadingRooms, setLoadingRooms] = useState(false);
-  const [showSearch, setShowSearch] = useState(false);
 
   // Load chat rooms (shops user has chatted with)
   useEffect(() => {
@@ -63,49 +67,62 @@ function ChatWithShopInner({ open, setOpen, shopId, setSelectedShopId: setActive
         const rawItems = payload?.items ?? [];
         const items = (rawItems as unknown[]).map((it) => {
           const rec = it as Record<string, unknown>;
-          const id = String(rec['id'] ?? rec['_id'] ?? '');
-          const shopIdVal = rec['shopId'] ?? rec['ShopId'] ?? '';
-          const shopNameVal = rec['shopName'] ?? rec['ShopName'] ?? '';
+          const id = String(rec["id"] ?? rec["_id"] ?? "");
+          const shopIdVal = rec["shopId"] ?? rec["ShopId"] ?? "";
+          const shopNameVal = rec["shopName"] ?? rec["ShopName"] ?? "";
 
           // normalize lastMessage if present
-          const lm = rec['lastMessage'] as Record<string, unknown> | null | undefined;
-          let lastMessage: ChatRoom['lastMessage'] | null = null;
-          if (lm && typeof lm === 'object') {
+          const lm = rec["lastMessage"] as
+            | Record<string, unknown>
+            | null
+            | undefined;
+          let lastMessage: ChatRoom["lastMessage"] | null = null;
+          if (lm && typeof lm === "object") {
             const lmRec = lm as Record<string, unknown>;
             lastMessage = {
-              id: String(lmRec['id'] ?? lmRec['_id'] ?? ''),
-              chatRoomId: String(lmRec['chatRoomId'] ?? lmRec['roomId'] ?? ''),
-              senderUserId: String(lmRec['senderUserId'] ?? lmRec['senderId'] ?? ''),
-              content: String(lmRec['content'] ?? lmRec['message'] ?? ''),
-              sentAt: String(lmRec['sentAt'] ?? lmRec['timestamp'] ?? ''),
-              isRead: Boolean(lmRec['isRead'] ?? false),
-              isEdited: Boolean(lmRec['isEdited'] ?? false),
-              messageType: String(lmRec['messageType'] ?? 'Text'),
-              attachmentUrl: lmRec['attachmentUrl'] ? String(lmRec['attachmentUrl']) : null,
-              editedAt: lmRec['editedAt'] ? String(lmRec['editedAt']) : null,
-              senderName: lmRec['senderName'] ? String(lmRec['senderName']) : null,
-              senderAvatarUrl: lmRec['senderAvatarUrl'] ? String(lmRec['senderAvatarUrl']) : null,
-              isMine: Boolean(lmRec['isMine'] ?? false),
+              id: String(lmRec["id"] ?? lmRec["_id"] ?? ""),
+              chatRoomId: String(lmRec["chatRoomId"] ?? lmRec["roomId"] ?? ""),
+              senderUserId: String(
+                lmRec["senderUserId"] ?? lmRec["senderId"] ?? ""
+              ),
+              content: String(lmRec["content"] ?? lmRec["message"] ?? ""),
+              sentAt: String(lmRec["sentAt"] ?? lmRec["timestamp"] ?? ""),
+              isRead: Boolean(lmRec["isRead"] ?? false),
+              isEdited: Boolean(lmRec["isEdited"] ?? false),
+              messageType: String(lmRec["messageType"] ?? "Text"),
+              attachmentUrl: lmRec["attachmentUrl"]
+                ? String(lmRec["attachmentUrl"])
+                : null,
+              editedAt: lmRec["editedAt"] ? String(lmRec["editedAt"]) : null,
+              senderName: lmRec["senderName"]
+                ? String(lmRec["senderName"])
+                : null,
+              senderAvatarUrl: lmRec["senderAvatarUrl"]
+                ? String(lmRec["senderAvatarUrl"])
+                : null,
+              isMine: Boolean(lmRec["isMine"] ?? false),
             };
           }
 
           return {
             id,
-            shopId: String(shopIdVal ?? ''),
-            shopName: String(shopNameVal ?? ''),
+            shopId: String(shopIdVal ?? ""),
+            shopName: String(shopNameVal ?? ""),
             lastMessage,
           } as ChatRoom;
         });
         setRooms(items);
         // debug
-        console.log('[ChatWithShop] loaded rooms count', items.length);
+        console.log("[ChatWithShop] loaded rooms count", items.length);
       } catch (err) {
-        console.error('[ChatWithShop] getChatRooms failed', err);
+        console.error("[ChatWithShop] getChatRooms failed", err);
       } finally {
         if (mounted) setLoadingRooms(false);
       }
     })();
-    return () => { mounted = false; };
+    return () => {
+      mounted = false;
+    };
   }, [open]);
 
   // Khi shopId prop thay đổi, chọn shopId đó
@@ -209,29 +226,7 @@ function ChatWithShopInner({ open, setOpen, shopId, setSelectedShopId: setActive
             {/* Sidebar danh sách shop đã chat - UI giống page shop chat */}
             <div className="w-64 border-r border-gray-200 flex flex-col overflow-hidden bg-gray-50">
               <div className="flex-shrink-0 p-4 border-b border-gray-100">
-                <div className="flex items-center justify-between mb-4">
-                  <button
-                    type="button"
-                    title="ArrowLeft"
-                    onClick={() => setOpen(false)}
-                    className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-                  >
-                    <ArrowLeft className="w-5 h-5 text-gray-600" />
-                  </button>
-                  <h1 className="text-lg font-semibold text-gray-900">
-                    Tin nhắn
-                  </h1>
-                  <button
-                    type="button"
-                    title="Search"
-                    onClick={() => setShowSearch(!showSearch)}
-                    className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-                  >
-                    <Search className="w-5 h-5 text-gray-600" />
-                  </button>
-                </div>
-                {/* Search Bar */}
-                {showSearch && (
+                <div className="flex items-center justify-between">
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
                     <input
@@ -239,10 +234,10 @@ function ChatWithShopInner({ open, setOpen, shopId, setSelectedShopId: setActive
                       placeholder="Tìm kiếm cuộc trò chuyện..."
                       value={searchText}
                       onChange={(e) => setSearchText(e.target.value)}
-                      className="w-full pl-10 pr-4 py-2 bg-gray-100 border-0 rounded-lg text-sm focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all"
+                      className="w-full pl-10 pr-4 py-2 bg-gray-100 border-0 rounded-lg text-sm focus:bg-white focus:ring-2 focus:ring-gray-300 focus:outline-none transition-all"
                     />
                   </div>
-                )}
+                </div>
               </div>
               <div className="flex-1 overflow-y-auto min-h-0">
                 {loadingRooms ? (
@@ -257,24 +252,39 @@ function ChatWithShopInner({ open, setOpen, shopId, setSelectedShopId: setActive
                   filteredRooms.map((room) => (
                     <button
                       key={room.id}
-                      className={`w-full text-left p-3 border-b border-gray-100 hover:bg-gray-100 ${
-                        selectedShopId === room.shopId ? "bg-gray-100" : ""
+                      className={`w-full text-left p-3 border-b cursor-pointer border-gray-100 hover:bg-gray-100 ${
+                        selectedShopId === room.shopId ? "bg-gray-200" : ""
                       }`}
                       onClick={() => {
-                        // if wrapper provided setter, use it to update active shop for ChatProvider
-                        if (typeof setActiveShopFromProps === 'function') {
+                        if (typeof setActiveShopFromProps === "function") {
                           setActiveShopFromProps(room.shopId);
                         }
                         setSelectedShopId(room.shopId);
                       }}
                     >
+                      {/* <div>
+                        <Image
+                          alt="avatar"
+                          src={room.lastMessage?.senderAvatarUrl || ""}
+                          width={32}
+                          height={32}
+                          className="w-8 h-8 rounded-full object-cover"
+                        />
+                      </div> */}
                       <div className="font-medium truncate">
                         {room.shopName}
                       </div>
-                      <div className="text-[10px] text-gray-400 truncate">
-                        {room.lastMessage?.content
-                          ? room.lastMessage.content.slice(0, 30)
-                          : ""}
+                      <div
+                        className={`text-[10px] mt-1 ${
+                          room ? "text-gray-500" : "text-gray-500"
+                        }`}
+                      >
+                        {new Date(
+                          room.lastMessage?.sentAt ?? ""
+                        ).toLocaleTimeString([], {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
                       </div>
                     </button>
                   ))
@@ -401,11 +411,15 @@ function ChatWithShopInner({ open, setOpen, shopId, setSelectedShopId: setActive
 
 const ChatWithShop: React.FC<ChatWithShopProps> = (props) => {
   // Lift selected shopId into wrapper so ChatProvider can re-init when user selects a room
-  const [activeShopId, setActiveShopId] = useState<string>(props.shopId ?? '');
+  const [activeShopId, setActiveShopId] = useState<string>(props.shopId ?? "");
 
   return (
     <ChatProvider shopId={activeShopId || undefined}>
-      <ChatWithShopInner {...props} setSelectedShopId={setActiveShopId} selectedShopId={activeShopId} />
+      <ChatWithShopInner
+        {...props}
+        setSelectedShopId={setActiveShopId}
+        selectedShopId={activeShopId}
+      />
     </ChatProvider>
   );
 };

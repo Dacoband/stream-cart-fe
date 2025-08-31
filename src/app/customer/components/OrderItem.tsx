@@ -43,8 +43,8 @@ export function OrderItem({ order }: OrderItemProps) {
       case OrderStatus.Shipped:
       case OrderStatus.OnDelivere:
         return "default";
-      case OrderStatus.Packed:
-        return "secondary";
+      // case OrderStatus.Packed:
+      //   return "secondary";
       case OrderStatus.Delivered:
       case OrderStatus.Completed:
         return "secondary";
