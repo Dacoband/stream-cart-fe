@@ -218,6 +218,7 @@ class ChatHubService {
 
   async joinLivestream(livestreamId: string) {
     console.log("[DEBUG] chatHub.joinLivestream called with:", livestreamId);
+    console.log(`[DEBUG]  Should join group: livestream_${livestreamId}`);
     const result = await this.invokeWhenConnected('JoinLivestreamChatRoom', livestreamId);
     console.log("[DEBUG] joinLivestream result:", result);
     return result;
@@ -261,28 +262,59 @@ class ChatHubService {
   this.connection?.off('ReceiveLivestreamMessage');
   this.connection?.off('receivelivestreammessage' as unknown as string);
     type RawMsg = {
-      senderId: string;
-      senderName: string;
-      message: string;
-      timestamp: string;
+      // Backend sends PascalCase, but we handle both
+      senderId?: string; SenderId?: string;
+      senderName?: string; SenderName?: string;
+      message?: string; Message?: string;
+      timestamp?: string; Timestamp?: string;
       senderType?: string; SenderType?: string;
       senderRole?: string; SenderRole?: string;
       senderAvatarUrl?: string; SenderAvatarUrl?: string;
       avatarUrl?: string; AvatarUrl?: string;
     };
   const handler = (raw: RawMsg) => {
-      const payload: LivestreamMessagePayload = {
-        senderId: raw.senderId,
-        senderName: raw.senderName,
-        message: raw.message,
-        timestamp: raw.timestamp,
-        senderType: raw.senderType ?? raw.SenderType ?? raw.senderRole ?? raw.SenderRole,
-        senderAvatarUrl: raw.senderAvatarUrl ?? raw.SenderAvatarUrl ?? raw.avatarUrl ?? raw.AvatarUrl,
-      };
-      cb(payload);
+    console.log('[DEBUG] onReceiveLivestreamMessage received:', raw);
+    const payload: LivestreamMessagePayload = {
+      senderId: raw.senderId ?? raw.SenderId ?? '',
+      senderName: raw.senderName ?? raw.SenderName ?? '',
+      message: raw.message ?? raw.Message ?? '',
+      timestamp: raw.timestamp ?? raw.Timestamp ?? new Date().toISOString(),
+      senderType: raw.senderType ?? raw.SenderType ?? (raw.senderName === '🤖 Hệ thống' ? 'System' : undefined),
+      senderAvatarUrl: raw.senderAvatarUrl ?? raw.SenderAvatarUrl ?? raw.avatarUrl ?? raw.AvatarUrl,
+    };
+    console.log('[DEBUG] onReceiveLivestreamMessage processed payload:', payload);
+    cb(payload);
   };
   this.connection?.on('ReceiveLivestreamMessage', handler as unknown as (...args: never[]) => void);
   this.connection?.on('receivelivestreammessage' as unknown as string, handler as unknown as (...args: never[]) => void);
+  }
+
+  onNewLivestreamMessage(cb: (payload: LivestreamMessagePayload) => void) {
+    this.connection?.off('NewLivestreamMessage');
+    this.connection?.off('newlivestreammessage' as unknown as string);
+    type RawMsg = {
+      messageId?: string; MessageId?: string;
+      livestreamId?: string; LivestreamId?: string;
+      senderName?: string; SenderName?: string;
+      senderType?: string; SenderType?: string;  
+      content?: string; Content?: string;
+      timestamp?: string; Timestamp?: string;
+    };
+    const handler = (raw: RawMsg) => {
+      console.log('[DEBUG] onNewLivestreamMessage received:', raw);
+      const payload: LivestreamMessagePayload = {
+        senderId: '', // System message
+        senderName: raw.senderName ?? raw.SenderName ?? '',
+        message: raw.content ?? raw.Content ?? '',
+        timestamp: raw.timestamp ?? raw.Timestamp ?? new Date().toISOString(),
+        senderType: raw.senderType ?? raw.SenderType ?? (raw.senderName === '🤖 Hệ thống' ? 'System' : 'System'),
+      };
+      console.log('[DEBUG] onNewLivestreamMessage processed payload:', payload);
+      cb(payload);
+    };
+    this.connection?.on('NewLivestreamMessage', handler as unknown as (...args: never[]) => void);
+    this.connection?.on('newlivestreammessage' as unknown as string, handler as unknown as (...args: never[]) => void);
+    console.log('[DEBUG] onNewLivestreamMessage handlers registered');
   }
 
   onUserJoined(cb: (payload: UserPresencePayload) => void) {

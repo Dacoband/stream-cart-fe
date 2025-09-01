@@ -16,6 +16,8 @@ import {
 import { Livestream } from "@/types/livestream/livestream";
 import { useParams, useRouter } from "next/navigation";
 import LoadingScreen from "@/components/common/LoadingScreen";
+import { chatHubService, LivestreamMessagePayload } from "@/services/signalr/chatHub";
+import { toast } from "sonner";
 
 import { ViewerCount } from "../components/ViewCount";
 import { HostOnlyView } from "../components/HostOnlyView";
@@ -52,6 +54,101 @@ export default function SellerLiveStream() {
     };
 
     fetchLivestreamData();
+  }, [livestreamId]);
+
+  // Setup SignalR for livestream time notifications
+  useEffect(() => {
+    let mounted = true;
+    
+    const setupNotifications = async () => {
+      try {
+        await chatHubService.ensureStarted();
+        console.log('[DEBUG] SellerLiveStream: SignalR connected for time notifications');
+        
+        await chatHubService.joinLivestream(livestreamId);
+        console.log('[DEBUG] SellerLiveStream: Joined livestream group');
+
+        // Listen for broadcast messages
+        chatHubService.onReceiveLivestreamMessage((payload: LivestreamMessagePayload) => {
+          if (!mounted) return;
+          
+          console.log('[DEBUG] 🔍 SellerLiveStream received message:', {
+            senderType: payload.senderType,
+            senderName: payload.senderName,
+            message: payload.message?.substring(0, 100) + '...'
+          });
+          
+          if (payload.senderType === 'System' || payload.senderName === '🤖 Hệ thống') {
+            if (payload.message.includes('⚠️') && payload.message.includes('Livestream sẽ kết thúc')) {
+              console.log('[DEBUG] 🚨 SellerLiveStream: Time warning detected');
+              toast.warning("⏰ Cảnh báo thời gian livestream", {
+                description: payload.message.replace('⚠️ ', ''),
+                duration: 60000, // 1 phút = 60 giây
+                action: {
+                  label: "Đã hiểu",
+                  onClick: () => console.log("Seller acknowledged warning"),
+                },
+              });
+            } else if (payload.message.includes('⛔') && payload.message.includes('Livestream đã hết thời gian')) {
+              console.log('[DEBUG] 🛑 SellerLiveStream: Time expired detected');
+              toast.error("⏹️ Livestream kết thúc", {
+                description: payload.message.replace('⛔ ', ''),
+                duration: 60000, // 1 phút = 60 giây
+                action: {
+                  label: "Đã hiểu",
+                  onClick: () => console.log("Seller acknowledged expiry"),
+                },
+              });
+            }
+          }
+        });
+
+        // Listen for private messages (seller specific)
+        chatHubService.onNewLivestreamMessage((payload: LivestreamMessagePayload) => {
+          if (!mounted) return;
+          
+          console.log('[DEBUG] 🔍 SellerLiveStream onNewLivestreamMessage:', {
+            senderType: payload.senderType,
+            senderName: payload.senderName,
+            message: payload.message?.substring(0, 100) + '...'
+          });
+          
+          if (payload.senderType === 'System' || payload.senderName === '🤖 Hệ thống') {
+            if (payload.message.includes('⚠️') && payload.message.includes('Livestream sẽ kết thúc')) {
+              console.log('[DEBUG] 🚨 SellerLiveStream: Private time warning detected');
+              toast.warning("⏰ Cảnh báo thời gian livestream", {
+                description: payload.message.replace('⚠️ ', ''),
+                duration: 60000, // 1 phút = 60 giây
+                action: {
+                  label: "Đã hiểu",
+                  onClick: () => console.log("Seller acknowledged private warning"),
+                },
+              });
+            } else if (payload.message.includes('⛔') && payload.message.includes('Livestream đã hết thời gian')) {
+              console.log('[DEBUG] 🛑 SellerLiveStream: Private time expired detected');
+              toast.error("⏹️ Livestream kết thúc", {
+                description: payload.message.replace('⛔ ', ''),
+                duration: 60000, // 1 phút = 60 giây
+                action: {
+                  label: "Đã hiểu",
+                  onClick: () => console.log("Seller acknowledged private expiry"),
+                },
+              });
+            }
+          }
+        });
+
+      } catch (error) {
+        console.error('[DEBUG] SellerLiveStream: SignalR setup error:', error);
+      }
+    };
+
+    setupNotifications();
+
+    return () => {
+      mounted = false;
+      chatHubService.leaveLivestream(livestreamId);
+    };
   }, [livestreamId]);
 
   // Detect available media devices before connecting to LiveKit to avoid NotFoundError
@@ -141,8 +238,8 @@ export default function SellerLiveStream() {
   }
 
   return (
-    <div className="w-full h-[92vh] flex bg-[#F5F5F5] ">
-      <div className=" w-full h-full rounded-none overflow-hidden relative ">
+    <div className="w-full h-[92vh] flex bg-[#F5F5F5]">
+      <div className="w-full h-full rounded-none overflow-hidden relative">
         {livestream.joinToken ? (
           // Wait until we check devices to decide initial audio/video flags
           devicesChecked && (

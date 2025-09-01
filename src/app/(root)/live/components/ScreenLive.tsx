@@ -29,6 +29,8 @@ import ProductsLive from "./ProductsLive";
 import { ViewerCount } from "@/app/shop/livestream/components/ViewCount";
 import PinProduct from "./PinProduct";
 import { setLogLevel, LogLevel } from "livekit-client";
+import { chatHubService, LivestreamMessagePayload } from "@/services/signalr/chatHub";
+import { toast } from "sonner";
 
 interface ScreenLiveProps {
   liveStreamId: string;
@@ -268,6 +270,68 @@ export default function ScreenLive({ liveStreamId }: ScreenLiveProps) {
     fetchLivestreamData();
   }, [fetchLivestreamData]);
 
+  // Setup SignalR for livestream time notifications (viewer side)
+  useEffect(() => {
+    let mounted = true;
+    
+    const setupNotifications = async () => {
+      try {
+        await chatHubService.ensureStarted();
+        console.log('[DEBUG] ScreenLive: SignalR connected for viewer time notifications');
+        
+        await chatHubService.startViewingLivestream(liveStreamId);
+        await chatHubService.joinLivestream(liveStreamId);
+        console.log('[DEBUG] ScreenLive: Joined viewer group');
+
+        // Listen for broadcast messages
+        chatHubService.onReceiveLivestreamMessage((payload: LivestreamMessagePayload) => {
+          if (!mounted) return;
+          
+          console.log('[DEBUG] 🔍 ScreenLive received message:', {
+            senderType: payload.senderType,
+            senderName: payload.senderName,
+            message: payload.message?.substring(0, 100) + '...'
+          });
+          
+          if (payload.senderType === 'System' || payload.senderName === '🤖 Hệ thống') {
+            if (payload.message.includes('⚠️') && payload.message.includes('Livestream sẽ kết thúc')) {
+              console.log('[DEBUG] 🚨 ScreenLive: Time warning detected for viewer');
+              toast.warning("⏰ Cảnh báo thời gian livestream", {
+                description: payload.message.replace('⚠️ ', ''),
+                duration: 60000, // 1 phút = 60 giây
+                action: {
+                  label: "Đã hiểu",
+                  onClick: () => console.log("Viewer acknowledged warning"),
+                },
+              });
+            } else if (payload.message.includes('⛔') && payload.message.includes('Livestream đã hết thời gian')) {
+              console.log('[DEBUG] 🛑 ScreenLive: Time expired detected for viewer');
+              toast.error("⏹️ Livestream kết thúc", {
+                description: payload.message.replace('⛔ ', ''),
+                duration: 60000, // 1 phút = 60 giây
+                action: {
+                  label: "Đã hiểu",
+                  onClick: () => console.log("Viewer acknowledged expiry"),
+                },
+              });
+            }
+          }
+        });
+
+      } catch (error) {
+        console.error('[DEBUG] ScreenLive: SignalR setup error:', error);
+      }
+    };
+
+    setupNotifications();
+
+    return () => {
+      mounted = false;
+      chatHubService.stopViewingLivestream(liveStreamId);
+      chatHubService.leaveLivestream(liveStreamId);
+    };
+  }, [liveStreamId]);
+
   if (loading) {
     return (
       <div className="">
@@ -409,7 +473,7 @@ export default function ScreenLive({ liveStreamId }: ScreenLiveProps) {
 
   return (
     <div className="w-full h-full">
-      <div className=" w-full h-full rounded-none overflow-hidden relative ">
+      <div className="w-full h-full rounded-none overflow-hidden relative">
         {viewerToken ? (
           <LiveKitRoom
             audio={false}
