@@ -55,6 +55,7 @@ export const startNotificationHub = async (accessToken?: string) => {
     }
   } catch (err) {
     // suppress negotiation/fetch errors completely (no console output)
+    console.error('SignalR connection error:', err)
     try {
       await connection.stop()
     } catch {}
