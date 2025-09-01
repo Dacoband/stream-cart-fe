@@ -1,6 +1,6 @@
-"use client";
+'use client'
 
-import { Button } from "@/components/ui/button";
+import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -8,7 +8,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from '@/components/ui/dropdown-menu'
 import {
   Table,
   TableBody,
@@ -16,28 +16,23 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
-import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import {
-  ChevronDown,
-  Search,
-  MoreHorizontal,
-  ChevronRight,
-} from "lucide-react";
-import { Skeleton } from "@/components/ui/skeleton";
-import Image from "next/image";
+} from '@/components/ui/table'
+import { Card } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { ChevronDown, Search, MoreHorizontal, ChevronRight } from 'lucide-react'
+import { Skeleton } from '@/components/ui/skeleton'
+import Image from 'next/image'
 
-import React, { useEffect, useState } from "react";
-import { Category } from "@/types/category/category";
+import React, { useEffect, useState } from 'react'
+import { Category } from '@/types/category/category'
 import {
   deleteCategory,
   getDetailCategory,
-} from "@/services/api/categories/categorys";
-import { toast } from "sonner";
-import SubcategoryItem from "./SubcategoryItem";
-import CategoryDetailModal from "./CategoryDetailModal";
-import CreateCategoryModal from "./CreateCategoryModal";
+} from '@/services/api/categories/categorys'
+import { toast } from 'sonner'
+import SubcategoryItem from './SubcategoryItem'
+import CategoryDetailModal from './CategoryDetailModal'
+import CreateCategoryModal from './CreateCategoryModal'
 
 import {
   AlertDialog,
@@ -48,19 +43,19 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+} from '@/components/ui/alert-dialog'
 
 type Props = {
-  categories: Category[];
-  loading: boolean;
-  page: number;
-  setPage: (p: number) => void;
-  totalPages: number;
-  onSearch: (val: string) => void;
-  onRefresh: () => void;
-  statusFilter: boolean | null;
-  setStatusFilter: (val: boolean | null) => void;
-};
+  categories: Category[]
+  loading: boolean
+  page: number
+  setPage: (p: number) => void
+  totalPages: number
+  onSearch: (val: string) => void
+  onRefresh: () => void
+  statusFilter: boolean | null
+  setStatusFilter: (val: boolean | null) => void
+}
 
 const TableCatgories: React.FC<Props> = ({
   categories,
@@ -73,74 +68,74 @@ const TableCatgories: React.FC<Props> = ({
   statusFilter,
   setStatusFilter,
 }) => {
-  const [searchValue, setSearchValue] = useState("");
-  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [searchValue, setSearchValue] = useState('')
+  const [showConfirmModal, setShowConfirmModal] = useState(false)
   const [selectedCategory, setSelectedCategory] = useState<{
-    id: string;
-    name: string;
-    isDeleted: boolean;
-  } | null>(null);
-  const [showDetailModal, setShowDetailModal] = useState(false);
-  const [detailCategory, setDetailCategory] = useState<Category | null>(null);
+    id: string
+    name: string
+    isDeleted: boolean
+  } | null>(null)
+  const [showDetailModal, setShowDetailModal] = useState(false)
+  const [detailCategory, setDetailCategory] = useState<Category | null>(null)
   // const [loadingDetail, setLoadingDetail] = useState(false)
-  const [loadingDetail, setLoadingDetail] = useState(false);
+  const [loadingDetail, setLoadingDetail] = useState(false)
 
-  const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
-  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set())
+  const [showCreateModal, setShowCreateModal] = useState(false)
   const [selectedParentCategory, setSelectedParentCategory] =
-    useState<Category | null>(null);
-  const [showUpdateModal, setShowUpdateModal] = useState(false);
+    useState<Category | null>(null)
+  const [showUpdateModal, setShowUpdateModal] = useState(false)
   const [selectedCategoryForUpdate, setSelectedCategoryForUpdate] =
-    useState<Category | null>(null);
+    useState<Category | null>(null)
 
   useEffect(() => {
     const timeout = setTimeout(() => {
-      onSearch(searchValue);
-    }, 500);
-    return () => clearTimeout(timeout);
-  }, [searchValue]);
+      onSearch(searchValue)
+    }, 500)
+    return () => clearTimeout(timeout)
+  }, [searchValue])
 
   const handleViewDetail = async (categoryId: string) => {
-    setLoadingDetail(true);
+    setLoadingDetail(true)
     try {
-      const detail = await getDetailCategory(categoryId);
-      console.log(detail);
-      setDetailCategory(detail.data);
-      setShowDetailModal(true);
+      const detail = await getDetailCategory(categoryId)
+      console.log(detail)
+      setDetailCategory(detail.data)
+      setShowDetailModal(true)
     } catch (error) {
-      console.error("Error loading category detail:", error);
+      console.error('Error loading category detail:', error)
       toast.error(
-        "Không thể tải thông tin chi tiết danh mục. Vui lòng thử lại!"
-      );
+        'Không thể tải thông tin chi tiết danh mục. Vui lòng thử lại!'
+      )
     } finally {
-      setLoadingDetail(false);
+      setLoadingDetail(false)
     }
-  };
+  }
 
   const handleDetailModalClose = () => {
-    setShowDetailModal(false);
-    setDetailCategory(null);
-  };
+    setShowDetailModal(false)
+    setDetailCategory(null)
+  }
 
   const handleAddSubcategory = (parentCategory: Category) => {
-    setSelectedParentCategory(parentCategory);
-    setShowCreateModal(true);
-  };
+    setSelectedParentCategory(parentCategory)
+    setShowCreateModal(true)
+  }
 
   const handleCreateModalClose = () => {
-    setShowCreateModal(false);
-    setSelectedParentCategory(null);
-  };
+    setShowCreateModal(false)
+    setSelectedParentCategory(null)
+  }
 
   const handleUpdateCategory = (category: Category) => {
-    setSelectedCategoryForUpdate(category);
-    setShowUpdateModal(true);
-  };
+    setSelectedCategoryForUpdate(category)
+    setShowUpdateModal(true)
+  }
 
   const handleUpdateModalClose = () => {
-    setShowUpdateModal(false);
-    setSelectedCategoryForUpdate(null);
-  };
+    setShowUpdateModal(false)
+    setSelectedCategoryForUpdate(null)
+  }
 
   const handleDeleteCategory = (
     categoryId: string,
@@ -151,50 +146,55 @@ const TableCatgories: React.FC<Props> = ({
       id: categoryId,
       name: categoryName,
       isDeleted: isDeleted,
-    });
-    setShowConfirmModal(true);
-  };
+    })
+    setShowConfirmModal(true)
+  }
 
   const confirmDelete = async () => {
-    if (!selectedCategory) return;
+    if (!selectedCategory) return
 
-    const action = selectedCategory.isDeleted ? "khôi phục" : "xóa";
-    const actionText = selectedCategory.isDeleted ? "Khôi phục" : "Xóa";
+    const action = selectedCategory.isDeleted ? 'khôi phục' : 'xóa'
+    const actionText = selectedCategory.isDeleted ? 'Khôi phục' : 'Xóa'
 
     try {
-      await deleteCategory(selectedCategory.id);
+      await deleteCategory(selectedCategory.id)
       toast.success(
         `${actionText} danh mục "${selectedCategory.name}" thành công!`
-      );
-      onRefresh(); // Refresh the data after successful action
+      )
+      onRefresh() // Refresh the data after successful action
     } catch (error) {
-      console.error("Error deleting category:", error);
-      toast.error(`Không thể ${action} danh mục. Vui lòng thử lại!`);
+      console.error('Error deleting category:', error)
+      toast.error(`Không thể ${action} danh mục. Vui lòng thử lại!`)
     } finally {
-      setShowConfirmModal(false);
-      setSelectedCategory(null);
+      setShowConfirmModal(false)
+      setSelectedCategory(null)
     }
-  };
+  }
 
   const toggleExpanded = (categoryId: string) => {
-    const newExpanded = new Set(expandedItems);
+    const newExpanded = new Set(expandedItems)
     if (newExpanded.has(categoryId)) {
-      newExpanded.delete(categoryId);
+      newExpanded.delete(categoryId)
     } else {
-      newExpanded.add(categoryId);
+      newExpanded.add(categoryId)
     }
-    setExpandedItems(newExpanded);
-  };
+    setExpandedItems(newExpanded)
+  }
 
   const hasSubcategories = (category: Category) => {
-    return category.subCategories && category.subCategories.length > 0;
-  };
+    return category.subCategories && category.subCategories.length > 0
+  }
 
   const getSubcategories = (categoryId: string) => {
-    const category = categories.find((c) => c.categoryId === categoryId);
-    return category?.subCategories || [];
-  };
-
+    const category = categories.find((c) => c.categoryId === categoryId)
+    return category?.subCategories || []
+  }
+  const getIconSrc = (c: Category) => {
+    const raw = c.iconURL || ''
+    // bỏ qua chuỗi rỗng / khoảng trắng
+    if (typeof raw !== 'string' || raw.trim() === '') return null
+    return raw
+  }
   return (
     <>
       <AlertDialog open={showConfirmModal} onOpenChange={setShowConfirmModal}>
@@ -202,12 +202,12 @@ const TableCatgories: React.FC<Props> = ({
           <AlertDialogHeader>
             <AlertDialogTitle>
               {selectedCategory?.isDeleted
-                ? "Khôi phục danh mục"
-                : "Xóa danh mục"}
+                ? 'Khôi phục danh mục'
+                : 'Xóa danh mục'}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              Bạn có chắc chắn muốn{" "}
-              {selectedCategory?.isDeleted ? "khôi phục" : "xóa"} danh mục{" "}
+              Bạn có chắc chắn muốn{' '}
+              {selectedCategory?.isDeleted ? 'khôi phục' : 'xóa'} danh mục{' '}
               {selectedCategory?.name} không? Hành động này không thể hoàn tác.
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -217,18 +217,19 @@ const TableCatgories: React.FC<Props> = ({
               onClick={confirmDelete}
               className="bg-red-500 hover:bg-red-600 text-white"
             >
-              {selectedCategory?.isDeleted ? "Khôi phục" : "Xóa"}
+              {selectedCategory?.isDeleted ? 'Khôi phục' : 'Xóa'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 
       {/* Category Detail Modal */}
-      <CategoryDetailModal
-        category={detailCategory}
-        open={showDetailModal}
-        onOpenChange={handleDetailModalClose}
-        onRefresh={onRefresh}
+      <CreateCategoryModal
+        open={showUpdateModal}
+        onOpenChange={handleUpdateModalClose}
+        onSuccess={onRefresh}
+        mode="update"
+        initialData={selectedCategoryForUpdate}
       />
 
       {/* Create Category Modal */}
@@ -236,7 +237,7 @@ const TableCatgories: React.FC<Props> = ({
         open={showCreateModal}
         onOpenChange={handleCreateModalClose}
         onSuccess={onRefresh}
-        parentCategoryID={selectedParentCategory?.categoryId || ""}
+        parentCategoryID={selectedParentCategory?.categoryId || ''}
       />
 
       {/* Update Category Modal */}
@@ -271,10 +272,10 @@ const TableCatgories: React.FC<Props> = ({
                   className="min-w-[160px] justify-between cursor-pointer"
                 >
                   {statusFilter === null
-                    ? "Tất cả danh mục"
+                    ? 'Tất cả danh mục'
                     : statusFilter === false
-                    ? "Đang hoạt động"
-                    : "Đã xóa"}
+                    ? 'Đang hoạt động'
+                    : 'Đã xóa'}
                   <ChevronDown className="ml-2 w-4 h-4" />
                 </Button>
               </DropdownMenuTrigger>
@@ -366,8 +367,8 @@ const TableCatgories: React.FC<Props> = ({
                             variant="ghost"
                             size="sm"
                             onClick={(e) => {
-                              e.stopPropagation();
-                              toggleExpanded(c.categoryId);
+                              e.stopPropagation()
+                              toggleExpanded(c.categoryId)
                             }}
                             className="p-1 h-4 w-4"
                           >
@@ -385,14 +386,26 @@ const TableCatgories: React.FC<Props> = ({
                     </TableCell>
                     <TableCell className="text-center align-middle px-5">
                       <div className="flex items-center justify-center">
-                        <Image
-                          src={c.iconURL}
-                          alt={c.categoryName}
-                          width={40}
-                          height={40}
-                        />
+                        {(() => {
+                          const src = getIconSrc(c)
+                          return src ? (
+                            <Image
+                              src={src}
+                              alt={c.categoryName}
+                              width={40}
+                              height={40}
+                              className="rounded"
+                            />
+                          ) : (
+                            // Placeholder khi không có ảnh
+                            <div className="w-10 h-10 rounded bg-gray-100 flex items-center justify-center text-xs text-gray-500">
+                              N/A
+                            </div>
+                          )
+                        })()}
                       </div>
                     </TableCell>
+
                     <TableCell className="text-center align-middle px-5">
                       {c.isDeleted ? (
                         <span className="px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-600">
@@ -502,7 +515,7 @@ const TableCatgories: React.FC<Props> = ({
         </div>
       </Card>
     </>
-  );
-};
+  )
+}
 
-export default TableCatgories;
+export default TableCatgories
