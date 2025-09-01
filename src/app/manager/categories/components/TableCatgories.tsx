@@ -36,7 +36,7 @@ import {
 } from "@/services/api/categories/categorys";
 import { toast } from "sonner";
 import SubcategoryItem from "./SubcategoryItem";
-import CategoryDetailModal from "./CategoryDetailModal";
+// import CategoryDetailModal from './CategoryDetailModal'
 import CreateCategoryModal from "./CreateCategoryModal";
 
 import {
@@ -80,8 +80,7 @@ const TableCatgories: React.FC<Props> = ({
     name: string;
     isDeleted: boolean;
   } | null>(null);
-  const [showDetailModal, setShowDetailModal] = useState(false);
-  const [detailCategory, setDetailCategory] = useState<Category | null>(null);
+  // const [detailCategory, setDetailCategory] = useState<Category | null>(null);
   // const [loadingDetail, setLoadingDetail] = useState(false)
   const [loadingDetail, setLoadingDetail] = useState(false);
 
@@ -98,15 +97,16 @@ const TableCatgories: React.FC<Props> = ({
       onSearch(searchValue);
     }, 500);
     return () => clearTimeout(timeout);
-  }, [searchValue]);
+  }, [searchValue, onSearch]);
 
   const handleViewDetail = async (categoryId: string) => {
     setLoadingDetail(true);
     try {
       const detail = await getDetailCategory(categoryId);
       console.log(detail);
-      setDetailCategory(detail.data);
-      setShowDetailModal(true);
+      // setDetailCategory(detail.data);
+      // setDetailCategory(detail.data);
+      // setShowDetailModal(true);
     } catch (error) {
       console.error("Error loading category detail:", error);
       toast.error(
@@ -116,11 +116,10 @@ const TableCatgories: React.FC<Props> = ({
       setLoadingDetail(false);
     }
   };
-
-  const handleDetailModalClose = () => {
-    setShowDetailModal(false);
-    setDetailCategory(null);
-  };
+  // const handleDetailModalClose = () => {
+  //   setShowDetailModal(false);
+  //   setDetailCategory(null);
+  // };
 
   const handleAddSubcategory = (parentCategory: Category) => {
     setSelectedParentCategory(parentCategory);
@@ -194,7 +193,12 @@ const TableCatgories: React.FC<Props> = ({
     const category = categories.find((c) => c.categoryId === categoryId);
     return category?.subCategories || [];
   };
-
+  const getIconSrc = (c: Category) => {
+    const raw = c.iconURL || "";
+    // bỏ qua chuỗi rỗng / khoảng trắng
+    if (typeof raw !== "string" || raw.trim() === "") return null;
+    return raw;
+  };
   return (
     <>
       <AlertDialog open={showConfirmModal} onOpenChange={setShowConfirmModal}>
@@ -224,11 +228,12 @@ const TableCatgories: React.FC<Props> = ({
       </AlertDialog>
 
       {/* Category Detail Modal */}
-      <CategoryDetailModal
-        category={detailCategory}
-        open={showDetailModal}
-        onOpenChange={handleDetailModalClose}
-        onRefresh={onRefresh}
+      <CreateCategoryModal
+        open={showUpdateModal}
+        onOpenChange={handleUpdateModalClose}
+        onSuccess={onRefresh}
+        mode="update"
+        initialData={selectedCategoryForUpdate}
       />
 
       {/* Create Category Modal */}
@@ -385,14 +390,26 @@ const TableCatgories: React.FC<Props> = ({
                     </TableCell>
                     <TableCell className="text-center align-middle px-5">
                       <div className="flex items-center justify-center">
-                        <Image
-                          src={c.iconURL}
-                          alt={c.categoryName}
-                          width={40}
-                          height={40}
-                        />
+                        {(() => {
+                          const src = getIconSrc(c);
+                          return src ? (
+                            <Image
+                              src={src}
+                              alt={c.categoryName}
+                              width={40}
+                              height={40}
+                              className="rounded"
+                            />
+                          ) : (
+                            // Placeholder khi không có ảnh
+                            <div className="w-10 h-10 rounded bg-gray-100 flex items-center justify-center text-xs text-gray-500">
+                              N/A
+                            </div>
+                          );
+                        })()}
                       </div>
                     </TableCell>
+
                     <TableCell className="text-center align-middle px-5">
                       {c.isDeleted ? (
                         <span className="px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-600">

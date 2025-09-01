@@ -1,11 +1,12 @@
-import { CartProvider } from "@/lib/CartContext";
-import Footer from "./components/Footer";
-import Navigation from "./components/Navigation";
+import { CartProvider } from '@/lib/CartContext'
+import Footer from './components/Footer'
+import Navigation from './components/Navigation'
+import NotificationsProvider from '@/lib/NotificationContext'
 
 export default async function LayoutCustomer({
   children,
 }: {
-  children: React.ReactNode;
+  children: React.ReactNode
 }) {
   return (
     <CartProvider>
@@ -21,6 +22,7 @@ export default async function LayoutCustomer({
 
         <Footer />
       </div>
+      <NotificationsProvider />
     </CartProvider>
-  );
+  )
 }

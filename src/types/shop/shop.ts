@@ -68,3 +68,18 @@ export interface ShopMember {
   isActive: boolean
   joinedDate: string
 }
+export interface ShopSearchResult {
+  id: string
+  shopName: string
+  description: string
+  logoUrl?: string
+  logoURL?: string
+  coverImageURL?: string
+  ratingAverage: number
+  totalReview?: number
+  totalProduct: number
+  completeRate: number
+  status: boolean
+  approvalStatus?: string
+  accountId: string
+}

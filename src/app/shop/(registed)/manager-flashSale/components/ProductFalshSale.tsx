@@ -45,9 +45,7 @@ function ProductFlashSale({ onChange, date, slot }: Props) {
     const payload = productRows
       .filter((row) => {
         if (row.price === null || row.stock === null) return false;
-        // flashSale price must be less than base price
         if (row.price >= row.basePrice) return false;
-        // stock within warehouse bounds
         if (row.stock <= 0 || row.stock > row.warehouseStock) return false;
         return true;
       })
@@ -60,7 +58,7 @@ function ProductFlashSale({ onChange, date, slot }: Props) {
 
     onChange?.(payload);
   }, [productRows, onChange]);
-  //Create key for products in
+
   const selectedKeys = useMemo(
     () =>
       new Set(
@@ -68,7 +66,6 @@ function ProductFlashSale({ onChange, date, slot }: Props) {
       ),
     [productRows]
   );
-  // update list product in dialog
   const upsertRows = (rows: ProductRow[]) => {
     setProductRows((prev) => {
       const key = (r: ProductRow) => `${r.productId}::${r.variantId ?? "null"}`;
@@ -99,12 +96,12 @@ function ProductFlashSale({ onChange, date, slot }: Props) {
       prev.map((r, i) => {
         if (i !== idx) return r;
         if (value === null || isNaN(value)) {
-          return { ...r, [field]: null }; // 👈 cho phép để trống
+          return { ...r, [field]: null };
         }
         if (field === "price") {
           return { ...r, price: Math.max(0, value) };
         }
-        // stock
+
         const clamped = Math.max(
           1,
           Math.min(r.warehouseStock, Math.floor(value))
@@ -162,15 +159,17 @@ function ProductFlashSale({ onChange, date, slot }: Props) {
 
                 return (
                   <tr key={`${row.productId}-${row.variantId ?? "no-variant"}`}>
-                    <td className="border px-3 py-2 flex items-center gap-2">
-                      <Image
-                        src={row.productImage}
-                        alt={row.productName}
-                        width={40}
-                        height={40}
-                        className="rounded"
-                      />
-                      <span>{row.productName}</span>
+                    <td className="border px-3 py-2 ">
+                      <div className="flex items-center gap-2">
+                        <Image
+                          src={row.productImage}
+                          alt={row.productName}
+                          width={40}
+                          height={40}
+                          className="rounded"
+                        />
+                        <span className="font-medium">{row.productName}</span>
+                      </div>
                     </td>
                     <td className="border px-3 py-2">
                       {row.variantName || (
@@ -191,12 +190,22 @@ function ProductFlashSale({ onChange, date, slot }: Props) {
                         }`}
                         value={row.price ?? ""}
                         placeholder="VND"
+                        step={500}
                         min={0}
                         max={
                           row.basePrice > 0
                             ? Math.max(0, row.basePrice - 1)
                             : undefined
                         }
+                        onBlur={(e) => {
+                          const val =
+                            e.target.value === ""
+                              ? null
+                              : Number(e.target.value);
+                          const fixed =
+                            val !== null ? Math.round(val / 500) * 500 : null;
+                          handleRowChange(idx, "price", fixed);
+                        }}
                         onChange={(e) =>
                           handleRowChange(
                             idx,
@@ -219,7 +228,7 @@ function ProductFlashSale({ onChange, date, slot }: Props) {
                         className={`w-full ${
                           invalidStock ? "border-red-500" : ""
                         }`}
-                        value={row.stock ?? ""} // 👈 trống nếu null
+                        value={row.stock ?? ""}
                         placeholder="Số lượng"
                         min={1}
                         max={stockInWarehouse}

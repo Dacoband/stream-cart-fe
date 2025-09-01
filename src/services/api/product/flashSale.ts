@@ -1,4 +1,4 @@
-import { CreateFlashSale, filterFlashSale } from "@/types/product/flashSale";
+import { CreateFlashSale, DeleteFlashSale, filterFlashSale, UpdateFlashSale } from "@/types/product/flashSale";
 import rootApi from "../../rootApi";
 
 export const getFlashSaleCurrent = async () => {
@@ -10,22 +10,16 @@ export const getFlashSaleCurrent = async () => {
     throw error;
   }
 };
-export const getFlashSalesForShop = async (data: filterFlashSale) => {
+export const getFlashSalesOverView = async () => {
   try {
     const token = localStorage.getItem("token");
     if (!token) {
       throw new Error("Not found token.");
     }
-    const response = await rootApi.get('/flashsales/my-shop', {
-      params: {
-        // pageIndex: data.pageIndex ?? 1,
-        // pageSize: data.pageSize ?? 10,
-        StartDate: data.StartDate ?? null,
-        // isActive: data.isActive ?? null,
- 
-      },headers: {
-      Authorization: `Bearer ${token}`,
-    },
+    const response = await rootApi.get('/flashsales/shop/overview-simple', {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
     })
     console.log(response)
     return response.data
@@ -34,6 +28,34 @@ export const getFlashSalesForShop = async (data: filterFlashSale) => {
     throw error
   }
 }
+export const getFlashSalesForShop = async (data: filterFlashSale) => {
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      throw new Error("Not found token.");
+    }
+
+    const response = await rootApi.get("/flashsales/my-shop", {
+      params: {
+        StartDate: data.StartDate ?? null,
+        Slot: data.Slot ?? null,
+        // pageIndex: data.pageIndex ?? 1,
+        // pageSize: data.pageSize ?? 10,
+        // isActive: data.isActive ?? null,
+      },
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    console.log(response);
+    return response.data.data;
+  } catch (error) {
+    console.error("Error fetching flash sales:", error);
+    throw error;
+  }
+};
+
 export const createFlashSale = async (data: CreateFlashSale) => {
   try {
     const token = localStorage.getItem("token");
@@ -58,6 +80,32 @@ export const createFlashSale = async (data: CreateFlashSale) => {
     throw error;
   }
 };
+export const updateProductFlashSale = async (id:string,data: UpdateFlashSale) => {
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      throw new Error("Not found token.");
+    }
+
+    const response = await rootApi.put(
+      `/flashsales/${id}`,
+      data,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    return response.data;
+  } catch (error) {
+    console.error("Error update product flash sale:", error);
+    throw error;
+  }
+};
+
+
+  
 export const getSlotCreate = async (date: Date) => {
   try {
     const token = localStorage.getItem("token");
@@ -106,4 +154,45 @@ export const getProductForFlashSale = async (date: Date, slot: number) => {
     throw error;
   }
 };
+export const deleteFlashSale = async (data: DeleteFlashSale) => {
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      throw new Error("Not found token.");
+    }
+
+  const response = await rootApi.delete(`flashsales/slot`, {
+    data,
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  })
+
+  return response.data}
+   catch (error) {
+    console.error("Error delete flash Sale:", error);
+    throw error;
+  }
+}
+
+export const deleteProductFlashSale = async (id:string) => {
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      throw new Error("Not found token.");
+    }
+
+  const response = await rootApi.delete(`flashsales/${id}`, {
+   
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  })
+
+  return response.data}
+   catch (error) {
+    console.error("Error delete product:", error);
+    throw error;
+  }
+}
 
