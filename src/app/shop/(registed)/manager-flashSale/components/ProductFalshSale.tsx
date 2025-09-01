@@ -58,7 +58,7 @@ function ProductFlashSale({ onChange, date, slot }: Props) {
 
     onChange?.(payload);
   }, [productRows, onChange]);
-  //Create key for products in
+
   const selectedKeys = useMemo(
     () =>
       new Set(
@@ -66,7 +66,6 @@ function ProductFlashSale({ onChange, date, slot }: Props) {
       ),
     [productRows]
   );
-  // update list product in dialog
   const upsertRows = (rows: ProductRow[]) => {
     setProductRows((prev) => {
       const key = (r: ProductRow) => `${r.productId}::${r.variantId ?? "null"}`;
@@ -97,12 +96,12 @@ function ProductFlashSale({ onChange, date, slot }: Props) {
       prev.map((r, i) => {
         if (i !== idx) return r;
         if (value === null || isNaN(value)) {
-          return { ...r, [field]: null }; // 👈 cho phép để trống
+          return { ...r, [field]: null };
         }
         if (field === "price") {
           return { ...r, price: Math.max(0, value) };
         }
-        // stock
+
         const clamped = Math.max(
           1,
           Math.min(r.warehouseStock, Math.floor(value))
@@ -160,15 +159,17 @@ function ProductFlashSale({ onChange, date, slot }: Props) {
 
                 return (
                   <tr key={`${row.productId}-${row.variantId ?? "no-variant"}`}>
-                    <td className="border px-3 py-2 flex items-center gap-2">
-                      <Image
-                        src={row.productImage}
-                        alt={row.productName}
-                        width={40}
-                        height={40}
-                        className="rounded"
-                      />
-                      <span>{row.productName}</span>
+                    <td className="border px-3 py-2 ">
+                      <div className="flex items-center gap-2">
+                        <Image
+                          src={row.productImage}
+                          alt={row.productName}
+                          width={40}
+                          height={40}
+                          className="rounded"
+                        />
+                        <span className="font-medium">{row.productName}</span>
+                      </div>
                     </td>
                     <td className="border px-3 py-2">
                       {row.variantName || (

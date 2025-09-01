@@ -1,8 +1,11 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import React, { useEffect, useState } from "react";
-import { getFlashSalesForShop } from "@/services/api/product/flashSale";
+import React, { useCallback, useEffect, useState } from "react";
+import {
+  getFlashSalesForShop,
+  deleteProductFlashSale,
+} from "@/services/api/product/flashSale";
 import { FlashSaleProductHome, SLOT_TIMES } from "@/types/product/flashSale";
 import { Card, CardTitle } from "@/components/ui/card";
 import { FormatDate } from "@/components/common/FormatDate";
@@ -14,6 +17,16 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import Link from "next/link";
 import { Calendar, Clock, Edit, Trash } from "lucide-react";
 import {
@@ -27,14 +40,24 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import Image from "next/image";
 import PriceTag from "@/components/common/PriceTag";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import DialogUpdateProduct from "../components/DialogUpdateProduct";
+import AddProductFL from "../components/AddProductFL";
 
 export default function ProductFlashSalePage() {
   const searchParams = useSearchParams();
   const dateStr = searchParams.get("date");
   const slot = searchParams.get("slot");
-  const [loading, setLoading] = React.useState<boolean>(true);
-
+  const status = searchParams.get("status");
+  const [loading, setLoading] = useState<boolean>(true);
+  const [confirmDelete, setConfirmDelete] =
+    useState<FlashSaleProductHome | null>(null);
+  const [loadingDelete, setLoadingDelete] = useState(false);
   const [products, setProducts] = useState<FlashSaleProductHome[]>([]);
+  const [openEdit, setOpenEdit] = useState(false);
+  const [editingProduct, setEditingProduct] =
+    useState<FlashSaleProductHome | null>(null);
   const slotNumber = slot ? Number(slot) : undefined;
   const date = React.useMemo(
     () => (dateStr ? new Date(dateStr) : undefined),
@@ -45,24 +68,64 @@ export default function ProductFlashSalePage() {
       ? `${SLOT_TIMES[slotNumber].start} - ${SLOT_TIMES[slotNumber].end}`
       : "";
 
-  useEffect(() => {
-    const fetchFlashSalesProducts = async () => {
-      setLoading(true);
-      try {
-        const res = await getFlashSalesForShop({
-          StartDate: date,
-          Slot: slotNumber,
-        });
-        setProducts(res || []);
-      } catch (e) {
-        console.error("Fetch flash sale products failed", e);
-        setProducts([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchFlashSalesProducts();
+  const STATUS_MAP: Record<
+    string,
+    { label: string; bg: string; text: string }
+  > = {
+    Upcoming: {
+      label: "Sắp diễn ra",
+      bg: "bg-blue-100",
+      text: "text-blue-700",
+    },
+    Active: {
+      label: "Đang diễn ra",
+      bg: "bg-green-100",
+      text: "text-green-700",
+    },
+    Expired: {
+      label: "Đã kết thúc",
+      bg: "bg-red-100",
+      text: "text-red-700",
+    },
+  };
+
+  const fetchFlashSalesProducts = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await getFlashSalesForShop({
+        StartDate: date,
+        Slot: slotNumber,
+      });
+      setProducts(res || []);
+    } catch (e) {
+      console.error("Fetch flash sale products failed", e);
+      setProducts([]);
+    } finally {
+      setLoading(false);
+    }
   }, [date, slotNumber]);
+
+  useEffect(() => {
+    fetchFlashSalesProducts();
+  }, [fetchFlashSalesProducts]);
+
+  const handleConfirmDelete = async () => {
+    if (!confirmDelete) return;
+
+    try {
+      setLoadingDelete(true);
+      await deleteProductFlashSale(confirmDelete.id);
+      fetchFlashSalesProducts();
+      toast.success("Xóa sản phẩm Flash Sale thành công");
+    } catch (err: unknown) {
+      console.error("Delete Flash Sale error", err);
+      toast.error("Xóa Flash Sale thất bại");
+    } finally {
+      setLoadingDelete(false);
+      setConfirmDelete(null);
+    }
+  };
+
   return (
     <div className="flex flex-col gap-5 min-h-full">
       <div className="bg-white sticky top-0 z-10 h-fit w-full py-4 px-8 shadow flex justify-between items-center">
@@ -85,15 +148,29 @@ export default function ProductFlashSalePage() {
                   <Clock className="h-5 w-5" />
                   {slotTime && <span>{slotTime}</span>}
                 </span>{" "}
+                {status && STATUS_MAP[status] && (
+                  <span
+                    className={`text-sm px-3 py-1 rounded-full ${STATUS_MAP[status].bg} ${STATUS_MAP[status].text}`}
+                  >
+                    {STATUS_MAP[status].label}
+                  </span>
+                )}
               </BreadcrumbPage>
             </BreadcrumbItem>
           </BreadcrumbList>
         </Breadcrumb>
       </div>
-      <div className="w-[90%] mx-auto mt-5 mb-10">
-        <Card className="bg-white p-8 rounded-xl shadow-sm">
-          <CardTitle className="text-xl font-medium">
-            Danh sách sản phẩm
+      <div className="w-[90%] mx-auto  mt-5 mb-10">
+        <Card className="bg-white p-8 rounded-xl min-h-[70vh] shadow-sm">
+          <CardTitle className="text-xl font-medium flex justify-between">
+            <div>Danh sách sản phẩm</div>
+            {status === "Upcoming" && (
+              <AddProductFL
+                date={date}
+                slot={slotNumber ?? null}
+                onCreated={fetchFlashSalesProducts}
+              />
+            )}
           </CardTitle>
           <Table>
             <TableHeader className="bg-[#B0F847]/50">
@@ -101,6 +178,7 @@ export default function ProductFlashSalePage() {
                 <TableHead className="font-semibold pl-6 w-1/2">
                   Sản phẩm
                 </TableHead>
+
                 <TableHead className="font-semibold w-1/4">
                   Số lượng trong Flash Sale
                 </TableHead>
@@ -118,6 +196,7 @@ export default function ProductFlashSalePage() {
                     <TableCell>
                       <Skeleton className="h-4 w-48" />
                     </TableCell>
+
                     <TableCell>
                       <Skeleton className="h-4 w-24" />
                     </TableCell>
@@ -205,15 +284,41 @@ export default function ProductFlashSalePage() {
                         </div>
                       </div>
                     </TableCell>
+
                     <TableCell className="w-[300px]">
-                      <div className="font-medium text-base text-rose-600">
-                        <PriceTag value={p.flashSalePrice} />
+                      <div className="flex gap-5 items-center">
+                        <div className="font-medium text-base text-gray-600 line-through">
+                          <PriceTag value={p.price} />
+                        </div>
+                        <div className="font-medium text-base text-rose-600">
+                          <PriceTag value={p.flashSalePrice} />
+                        </div>
                       </div>
                     </TableCell>
+
                     <TableCell>
-                      <div className="flex gap-5">
-                        <Edit />
-                        <Trash />
+                      <div className="flex gap-2">
+                        {(status === "Upcoming" || status === "Active") && (
+                          <Button
+                            variant="ghost"
+                            className="text-blue-600 hover:text-blue-400 p-2 cursor-pointer"
+                            onClick={() => {
+                              setEditingProduct(p);
+                              setOpenEdit(true);
+                            }}
+                          >
+                            <Edit className="w-10 h-10" />
+                          </Button>
+                        )}
+                        {status === "Upcoming" && (
+                          <Button
+                            variant="ghost"
+                            className="text-red-600 hover:text-red-400 p-2 cursor-pointer"
+                            onClick={() => setConfirmDelete(p)}
+                          >
+                            <Trash className="w-10 h-10" />
+                          </Button>
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>
@@ -222,7 +327,36 @@ export default function ProductFlashSalePage() {
             </TableBody>
           </Table>
         </Card>
+        <AlertDialog
+          open={!!confirmDelete}
+          onOpenChange={(open) => !open && setConfirmDelete(null)}
+        >
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Xác nhận xóa</AlertDialogTitle>
+              <AlertDialogDescription>
+                Bạn có chắc chắn muốn xóa sản phẩm {confirmDelete?.productName}{" "}
+                khỏi khung giờ Flash Sale?
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Hủy</AlertDialogCancel>
+              <AlertDialogAction
+                disabled={loadingDelete}
+                onClick={handleConfirmDelete}
+              >
+                Xác nhận
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
+      <DialogUpdateProduct
+        open={openEdit}
+        onClose={setOpenEdit}
+        product={editingProduct}
+        onUpdated={fetchFlashSalesProducts}
+      />
     </div>
   );
 }

@@ -109,7 +109,7 @@ export default function TableFlashSale() {
     router.push(
       `/shop/manager-flashSale/list-product?date=${encodeURIComponent(
         formattedDate
-      )}&slot=${flashSale.slot}`
+      )}&slot=${flashSale.slot}&status=${flashSale.status}`
     );
   };
 

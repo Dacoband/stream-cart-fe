@@ -19,6 +19,8 @@ export interface FlashSaleProductHome{
     productName:string;
     productImageUrl:string;
     variantName:string;
+    price:number,
+    stock:number;
 
 }
 export interface FlashSaleProduct {
@@ -32,6 +34,12 @@ export interface CreateFlashSale {
   products: FlashSaleProduct[];
   slot: number;
   date: string; 
+}
+export interface UpdateFlashSale {
+  flashSalePrice: number;
+  quantityAvailable:number;
+   startTime:string;
+    endTime:string;
 }
 
 export interface filterFlashSale {
