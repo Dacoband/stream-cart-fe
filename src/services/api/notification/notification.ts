@@ -1,3 +1,4 @@
+import axios from 'axios'
 import rootApi from '@/services/rootApi'
 import {
   FilterNotificationDTO,
@@ -5,7 +6,7 @@ import {
 } from '@/types/notification/notification'
 
 export async function fetchMyNotifications(filter: FilterNotificationDTO) {
-  const qs = toQueryString(filter as Record<string, any>)
+  const qs = toQueryString(filter as Record<string, string | number | boolean>)
   const url = `/notification${qs ? `?${qs}` : ''}`
 
   const token = localStorage.getItem('token')
@@ -19,18 +20,20 @@ export async function fetchMyNotifications(filter: FilterNotificationDTO) {
   try {
     const res = await rootApi.get(url, { headers })
     return res.data
-  } catch (err: any) {
-    if (err?.response) {
-      const data = err.response.data
+  } catch (err) {
+    if (axios.isAxiosError(err)) {
+      const data = err.response?.data
       const message =
-        data?.message || JSON.stringify(data) || err.response.statusText
-      throw new Error(message)
+        (data && (data.message ?? JSON.stringify(data))) ??
+        err.response?.statusText ??
+        err.message
+      throw new Error(message || 'Unknown error')
     }
-    throw new Error(err?.message || 'Unknown error')
+    if (err instanceof Error) throw err
+    throw new Error('Unknown error')
   }
 }
 
-// Thêm hàm gọi PATCH /notification/mark-as-read/{id}
 export async function markNotificationAsRead(id: string) {
   if (!id) throw new Error('Invalid notification id')
 
@@ -43,18 +46,20 @@ export async function markNotificationAsRead(id: string) {
   }
 
   try {
-    // body null because endpoint reads id from route
     const res = await rootApi.patch(`/notification/mark-as-read/${id}`, null, {
       headers,
     })
     return res.data
-  } catch (err: any) {
-    if (err?.response) {
-      const data = err.response.data
+  } catch (err) {
+    if (axios.isAxiosError(err)) {
+      const data = err.response?.data
       const message =
-        data?.message || JSON.stringify(data) || err.response.statusText
-      throw new Error(message)
+        (data && (data.message ?? JSON.stringify(data))) ??
+        err.response?.statusText ??
+        err.message
+      throw new Error(message || 'Unknown error')
     }
-    throw new Error(err?.message || 'Unknown error')
+    if (err instanceof Error) throw err
+    throw new Error('Unknown error')
   }
 }
