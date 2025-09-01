@@ -1,8 +1,8 @@
-'use client'
+"use client";
 
-import Link from 'next/link'
-import Image from 'next/image'
-import { useRouter, usePathname } from 'next/navigation'
+import Link from "next/link";
+import Image from "next/image";
+import { useRouter, usePathname } from "next/navigation";
 import {
   Bell,
   MessageCircleMore,
@@ -11,47 +11,49 @@ import {
   CircleUser,
   ScrollText,
   CircleArrowOutDownRight,
-} from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Skeleton } from '@/components/ui/skeleton'
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
-import { useAuth } from '@/lib/AuthContext'
-import { useCart } from '@/lib/CartContext'
-import { toast } from 'sonner'
-import SearchBar from './SearchBar'
-import NotificationDropDown from './NotificationDropDown'
-import { useNotificationStore } from '@/lib/notificationStore'
+} from "@/components/ui/dropdown-menu";
+import { useAuth } from "@/lib/AuthContext";
+import { useCart } from "@/lib/CartContext";
+import { toast } from "sonner";
+import SearchBar from "./SearchBar";
+import NotificationDropDown from "./NotificationDropDown";
+import { useNotificationStore } from "@/lib/notificationStore";
 
 export default function Navbar() {
-  const unreadNoti = useNotificationStore((s) => s.unreadCount)
-  const pathname = usePathname()
-  const router = useRouter()
-  const { user, loading, logout } = useAuth()
-  const { cartCount, resetCart } = useCart()
+  const unreadNoti = useNotificationStore(
+    (s: { unreadCount: number }) => s.unreadCount
+  );
+  const pathname = usePathname();
+  const router = useRouter();
+  const { user, loading, logout } = useAuth();
+  const { cartCount, resetCart } = useCart();
 
   const handleLogout = () => {
-    logout()
-    resetCart()
-  }
+    logout();
+    resetCart();
+  };
 
   const handleRequireLogin = (redirectUrl: string) => {
-    const token = localStorage.getItem('token')
+    const token = localStorage.getItem("token");
     if (!token) {
-      toast.error('Vui lòng đăng nhập.')
+      toast.error("Vui lòng đăng nhập.");
       router.push(
         `/authentication/login?redirect=${encodeURIComponent(pathname)}`
-      )
-      return false
+      );
+      return false;
     }
-    router.push(redirectUrl)
-    return true
-  }
+    router.push(redirectUrl);
+    return true;
+  };
 
   return (
     <header className="sticky top-0 z-50 w-full bg-[#202328] shadow">
@@ -85,13 +87,13 @@ export default function Navbar() {
 
           {/* Cart */}
           <Button
-            onClick={() => handleRequireLogin('/customer/cart')}
+            onClick={() => handleRequireLogin("/customer/cart")}
             className="relative w-10 h-10 flex items-center justify-center text-[#B0F847] bg-[#34373b] hover:bg-[#B0F847] hover:text-black rounded-full"
           >
             <ShoppingCart className="min-w-[22px] min-h-[22px]" />
             {cartCount > 0 && (
               <span className="absolute -top-1.5 -right-2.5 bg-[#B0F847] text-black text-[12px] min-w-[18px] h-[18px] flex items-center justify-center rounded-full px-[4px] font-bold leading-none shadow-md">
-                {cartCount > 99 ? '99+' : cartCount}
+                {cartCount > 99 ? "99+" : cartCount}
               </span>
             )}
           </Button>
@@ -102,7 +104,7 @@ export default function Navbar() {
               <Bell className="min-w-[22px] min-h-[22px]" />
               {unreadNoti > 0 && (
                 <span className="absolute -top-1.5 -right-2.5 bg-[#B0F847] text-black text-[12px] min-w-[18px] h-[18px] flex items-center justify-center rounded-full px-[4px] font-bold leading-none shadow-md">
-                  {unreadNoti > 99 ? '99+' : unreadNoti}
+                  {unreadNoti > 99 ? "99+" : unreadNoti}
                 </span>
               )}
             </Button>
@@ -110,7 +112,7 @@ export default function Navbar() {
 
           {/* Messages */}
           <Button
-            onClick={() => handleRequireLogin('/messages')}
+            onClick={() => handleRequireLogin("/messages")}
             className="w-10 h-10 flex items-center justify-center text-[#B0F847] bg-[#34373b] hover:bg-[#B0F847] hover:text-black rounded-full"
           >
             <MessageCircleMore className="min-w-[22px] min-h-[22px]" />
@@ -196,5 +198,5 @@ export default function Navbar() {
         </div>
       </div>
     </header>
-  )
+  );
 }

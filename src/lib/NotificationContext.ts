@@ -6,7 +6,6 @@ import {
   startNotificationHub,
   stopNotificationHub,
 } from '@/services/signalr/notificationHub'
-import rootApi from '@/services/rootApi'
 import { useNotificationStore } from './notificationStore'
 import { fetchMyNotifications } from '@/services/api/notification/notification'
 
