@@ -1,79 +1,91 @@
 export interface CreateOrder {
-  paymentMethod: string;
-  addressId: string;
-  livestreamId: string | null;
-  createdFromCommentId: string | null;
-  ordersByShop: ShopOrderCreate[];
+  paymentMethod: string
+  addressId: string
+  livestreamId: string | null
+  createdFromCommentId: string | null
+  ordersByShop: ShopOrderCreate[]
 }
 
 export interface ShopOrderCreate {
-  shopId: string;
-  shippingProviderId: string;
-  shippingFee: number | null;
-  expectedDeliveryDay: string;
-  voucherCode: string;
-  items: OrderItemCreate[];
-  customerNotes: string | null;
+  shopId: string
+  shippingProviderId: string
+  shippingFee: number | null
+  expectedDeliveryDay: string
+  voucherCode: string
+  items: OrderItemCreate[]
+  customerNotes: string | null
 }
 
 export interface OrderItemCreate {
-  productId: string;
-  variantId: string;
-  quantity: number;
+  productId: string
+  variantId: string
+  quantity: number
   // unitPrice: number;
 }
 
 export interface OrderItemResponse {
-  id: string;
-  orderId: string;
-  productId: string;
-  variantId: string | null;
-  quantity: number;
-  unitPrice: number;
-  discountAmount: number;
-  totalPrice: number;
-  notes: string;
-  refundRequestId: string | null;
-  productName: string;
-  productImageUrl: string;
+  id: string
+  orderId: string
+  productId: string
+  variantId: string | null
+  quantity: number
+  unitPrice: number
+  discountAmount: number
+  totalPrice: number
+  notes: string
+  refundRequestId: string | null
+  productName: string
+  productImageUrl: string
 }
 
 export type ShippingAddress = {
-  fullName: string;
-  phone: string;
-  addressLine1: string;
-  ward: string;
-  district: string;
-  city: string;
-  province: string;
-  postalCode: string;
-  country: string;
-  state: string;
-  isDefault: boolean;
-};
+  fullName: string
+  phone: string
+  addressLine1: string
+  ward: string
+  district: string
+  city: string
+  province: string
+  postalCode: string
+  country: string
+  state: string
+  isDefault: boolean
+}
 
 export type Order = {
-  id: string;
-  timeForShop: Date;
-  paymentMethod: string;
-  orderCode: string;
-  orderDate: Date;
-  orderStatus: number;
-  paymentStatus: number;
-  totalPrice: number;
-  shippingFee: number;
-  discountAmount: number;
-  finalAmount: number;
-  customerNotes: string;
-  estimatedDeliveryDate: string;
-  actualDeliveryDate: string | null;
-  trackingCode: string;
-  shippingAddress: ShippingAddress;
-  accountId: string;
-  shopId: string;
-  shippingProviderId: string;
-  voucherCode: string | null;
-  livestreamId: string | null;
-  netAmount: number;
-  items: OrderItemResponse[];
-};
+  id: string
+  timeForShop: Date
+  paymentMethod: string
+  orderCode: string
+  orderDate: Date
+  orderStatus: number
+  paymentStatus: number
+  totalPrice: number
+  shippingFee: number
+  discountAmount: number
+  finalAmount: number
+  customerNotes: string
+  estimatedDeliveryDate: string
+  actualDeliveryDate: string | null
+  trackingCode: string
+  shippingAddress: ShippingAddress
+  accountId: string
+  shopId: string
+  shippingProviderId: string
+  voucherCode: string | null
+  livestreamId: string | null
+  netAmount: number
+  items: OrderItemResponse[]
+}
+
+export type OrderSearchParams = {
+  accountId?: string
+  shopId?: string
+  orderStatus?: number
+  paymentStatus?: number
+  startDate?: string // ISO string yyyy-MM-dd
+  endDate?: string
+  searchTerm?: string
+  pageNumber?: number
+  pageSize?: number
+}

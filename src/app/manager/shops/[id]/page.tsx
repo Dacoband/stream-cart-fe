@@ -1,127 +1,215 @@
-"use client";
-import React, { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
-// import { Button } from "@/components/ui/button";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { getShopDetail, getShopMembers } from "@/services/api/shop/shop";
-import { getAddressByShopId } from "@/services/api/address/address";
-import { getUserById } from "@/services/api/auth/account";
-import { getPagedProducts } from "@/services/api/product/product";
-import { ShopInfo } from "@/app/manager/shops/[id]/components/ShopInfo";
-import { ShopProductList } from "@/app/manager/shops/[id]/components/ShopProduct";
-import { TransactionHistory } from "@/app/manager/shops/[id]/components/TransactionHistory";
-// import Image from 'next/image'
+'use client'
+
+import React, { useEffect, useState } from 'react'
+import { useParams } from 'next/navigation'
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
+import { toast } from 'sonner'
+
+// services
+import { getShopDetail, getShopMembers } from '@/services/api/shop/shop'
+import { getAddressByShopId } from '@/services/api/address/address'
+import { getUserById } from '@/services/api/auth/account'
+import { getPagedProducts } from '@/services/api/product/product'
+import { filterWalletTransactions } from '@/services/api/wallet/walletTransaction'
+import { filterShopMembership } from '@/services/api/membership/shopMembership'
+
+// components
+import ShopHeader from './components/ShopHeader'
+import { ShopInfo } from './components/ShopInfo'
+import { ShopProductList } from './components/ShopProduct'
+import { ShopMembership } from './components/ShopMembership'
+import { ShopOrderList } from './components/ShopOrder'
+
+// icons
 import {
-  // Star,
-  // ArrowLeft,
   Info,
   ShoppingCart,
-  // Activity,
   Boxes,
   CreditCard,
   CalendarClock,
-} from "lucide-react";
-import { toast } from "sonner";
-import type { Shop } from "@/types/shop/shop"; // adjust path if needed
-import type { Product } from "@/types/product/product"; // adjust path if needed
-import type { User } from "@/types/auth/user";
-import type { Address } from "@/types/address/address";
-import ShopHeader from "./components/ShopHeader";
-import { ShopMembership } from "./components/ShopMembership";
-import { ShopOrderList } from "./components/ShopOrder";
+} from 'lucide-react'
 
-type Transaction = {
-  transactionId: string;
-  type: "PAYMENT" | "REFUND" | "WITHDRAW" | "DEPOSIT";
-  amount: number;
-  description: string;
-  status: "PENDING" | "COMPLETED" | "FAILED";
-  createdAt: string;
-  orderId?: string;
-  refundId?: string;
-};
+// types
+import type { Shop } from '@/types/shop/shop'
+import type { Product } from '@/types/product/product'
+import type { User } from '@/types/auth/user'
+import type { Address } from '@/types/address/address'
+import type {
+  WalletTransactionDTO,
+  ListWalletTransactionDTO,
+} from '@/types/wallet/walletTransactionDTO'
+import type {
+  DetailShopMembershipDTO,
+  ListShopMembershipDTO,
+} from '@/types/membership/shopMembership'
+import { TransactionHistory } from './components/TransactionHistory'
 
-type Membership = {
-  membershipId: string;
-  name: string;
-  description?: string;
-  price: number;
-  startDate: string;
-  endDate: string;
-  duration?: string;
-  maxProduct?: number;
-  maxLivestream?: number;
-  commission: number; // <-- ensure this is number, not boolean or optional
-  createdAt?: string;
-  updatedAt?: string;
-};
-type Order = {
-  orderId: string;
-  customerName: string;
-  totalAmount: number;
-  status: string;
-  createdAt: string;
-};
+type TransactionUI = {
+  transactionId: string
+  type: 'PAYMENT' | 'REFUND' | 'WITHDRAW' | 'DEPOSIT'
+  amount: number
+  description: string
+  status: 'PENDING' | 'COMPLETED' | 'FAILED'
+  createdAt: string
+  orderId?: string
+  refundId?: string
+}
+
+// Membership item used by <ShopMembership /> list prop
+// (keeps only fields that the component actually renders)
+export type MembershipItem = {
+  membershipId: string
+  name: string
+  description?: string
+  price: number
+  startDate: string
+  endDate: string
+  duration?: string
+  maxProduct?: number
+  maxLivestream?: number
+  commission?: number
+  createdAt?: string
+  updatedAt?: string
+}
+
+function mapType(t: WalletTransactionDTO['type']): TransactionUI['type'] {
+  const v = String(t).toUpperCase()
+  if (v === '0' || v === 'WITHDRAW') return 'WITHDRAW'
+  if (v === '1' || v === 'DEPOSIT') return 'DEPOSIT'
+  if (v === '2' || v === 'COMMISSION') return 'PAYMENT'
+  if (v === '3' || v === 'SYSTEM') return 'PAYMENT'
+  return 'PAYMENT'
+}
+
+function mapStatus(s: WalletTransactionDTO['status']): TransactionUI['status'] {
+  const v = String(s).toUpperCase()
+  if (v === '0' || v === 'SUCCESS' || v === 'COMPLETED') return 'COMPLETED'
+  if (v === '1' || v === 'FAILED') return 'FAILED'
+  return 'PENDING'
+}
+
 const ShopDetailPage = () => {
-  const params = useParams();
-  // const router = useRouter();
-  const [shop, setShop] = useState<Shop | null>(null);
-  const [products, setProducts] = useState<Product[]>([]);
+  const params = useParams()
 
-  const [loading, setLoading] = useState(true);
-  const [seller, setSeller] = useState<User | null>(null);
-  const [address, setAddress] = useState<Address | null>(null);
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [memberships, setMemberships] = useState<Membership[]>([]);
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [shopOwner, setShopOwner] = useState<User | null>(null);
-  const [moderators, setModerators] = useState<User[]>([]);
+  const [shop, setShop] = useState<Shop | null>(null)
+  const [products, setProducts] = useState<Product[]>([])
+  const [seller, setSeller] = useState<User | null>(null)
+  const [address, setAddress] = useState<Address | null>(null)
+  const [shopOwner, setShopOwner] = useState<User | null>(null)
+  const [moderators, setModerators] = useState<User[]>([])
+  const [transactions, setTransactions] = useState<TransactionUI[]>([])
+  const [memberships, setMemberships] = useState<DetailShopMembershipDTO[]>([])
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    const toDetailShopMembershipDTO = (
+      m: Partial<DetailShopMembershipDTO>
+    ): DetailShopMembershipDTO => {
+      const now = new Date()
+
+      const startRaw = m?.startDate ?? m?.createdAt ?? now
+      const endRaw = m?.endDate ?? m?.modifiedAt ?? startRaw
+
+      const startDate =
+        startRaw instanceof Date ? startRaw : new Date(startRaw as string)
+      const endDate =
+        endRaw instanceof Date ? endRaw : new Date(endRaw as string)
+
+      // Suy luận status nếu backend không trả
+      const inferredStatus =
+        endDate.getTime() < now.getTime()
+          ? 'Expired'
+          : (endDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24) <= 7
+          ? 'ExpiringSoon'
+          : 'Active'
+
+      return {
+        id: m?.id ?? '',
+        shopID: m?.shopID ?? '',
+
+        startDate,
+        endDate,
+
+        remainingLivestream:
+          typeof m?.remainingLivestream === 'number'
+            ? m.remainingLivestream
+            : 0,
+
+        status: m?.status ?? inferredStatus,
+        createdBy: m?.createdBy,
+        createdAt:
+          m?.createdAt instanceof Date
+            ? m.createdAt
+            : new Date(m?.createdAt ?? startDate),
+        modifiedBy: m?.modifiedBy,
+        modifiedAt: m?.modifiedAt
+          ? m?.modifiedAt instanceof Date
+            ? m.modifiedAt
+            : new Date(m.modifiedAt as string)
+          : undefined,
+
+        isDeleted: Boolean(m?.isDeleted),
+
+        // optional
+        maxProduct:
+          typeof m?.maxProduct === 'number' ? m.maxProduct : undefined,
+        commission:
+          typeof m?.commission === 'number' ? m.commission : undefined,
+        name: m?.name ?? null,
+      }
+    }
+
+    let isMounted = true
+
     const fetchAll = async () => {
-      if (typeof params.id !== "string") {
-        toast.error("Không tìm thấy ID shop");
-        setLoading(false);
-        return;
+      if (typeof params.id !== 'string') {
+        toast.error('Không tìm thấy ID shop')
+        setLoading(false)
+        return
       }
 
       try {
-        const id = params.id;
+        const id = params.id
 
-        // Fetch shop detail
-        const shopRes = await getShopDetail(id);
-        setShop(shopRes.data || shopRes);
+        // Shop detail
+        const shopRes = await getShopDetail(id)
+        const shopData = shopRes?.data || shopRes
+        if (!isMounted) return
+        setShop(shopData)
 
-        // Fetch address
+        // Address (best-effort)
         try {
-          const addressRes = await getAddressByShopId(id);
-          setAddress(addressRes);
-        } catch (error) {
-          console.error("Error fetching address:", error);
-          setAddress(null);
+          const addressRes = await getAddressByShopId(id)
+          if (!isMounted) return
+          setAddress(addressRes || null)
+        } catch (err) {
+          console.error('Error fetching address:', err)
+          if (isMounted) setAddress(null)
         }
 
-        // Fetch shop owner and moderators
+        // Owner
         try {
-          const shopData = shopRes.data || shopRes;
           if (shopData?.createdBy) {
-            const owner = await getUserById(shopData.createdBy);
-            setShopOwner(owner);
+            const owner = await getUserById(shopData.createdBy)
+            if (!isMounted) return
+            setShopOwner(owner || null)
           }
-        } catch (error) {
-          console.error("Error fetching shop owner:", error);
+        } catch (err) {
+          console.error('Error fetching shop owner:', err)
+          if (isMounted) setShopOwner(null)
         }
 
+        // Moderators
         try {
-          const members = await getShopMembers(id);
-          console.log("member", members);
-          setModerators(Array.isArray(members) ? members : []);
-        } catch (error) {
-          console.error("Error fetching moderators:", error);
-          setModerators([]);
+          const members = await getShopMembers(id)
+          if (!isMounted) return
+          setModerators(Array.isArray(members) ? members : [])
+        } catch (err) {
+          console.error('Error fetching moderators:', err)
+          if (isMounted) setModerators([])
         }
 
-        // Fetch products for the shop
+        // Products
         try {
           const productsRes = await getPagedProducts({
             shopId: id,
@@ -131,38 +219,96 @@ const ShopDetailPage = () => {
             sortOption: null,
             categoryId: null,
             inStockOnly: false,
-          });
-          setProducts(Array.isArray(productsRes) ? productsRes : []);
-        } catch (error) {
-          console.error("Error fetching products:", error);
-          setProducts([]);
+          })
+          if (!isMounted) return
+          setProducts(Array.isArray(productsRes) ? productsRes : [])
+        } catch (err) {
+          console.error('Error fetching products:', err)
+          if (isMounted) setProducts([])
         }
 
-        // Set empty arrays for other data that doesn't have real APIs yet
-        setTransactions([]);
-        setSeller(null);
-        setMemberships([]);
-        setOrders([]);
-      } catch (error) {
-        console.log(error);
-        toast.error("Không thể tải dữ liệu");
+        // Memberships (fetch 1 lần, map đúng DetailShopMembershipDTO)
+        try {
+          const msRes = await filterShopMembership({
+            shopId: id,
+            pageIndex: 1,
+            pageSize: 50,
+          })
+
+          const rawList: DetailShopMembershipDTO[] =
+            msRes?.detailShopMembership ??
+            msRes?.data?.detailShopMembership ??
+            msRes?.items ??
+            msRes ??
+            []
+
+          const mapped: DetailShopMembershipDTO[] = rawList.map(
+            toDetailShopMembershipDTO
+          )
+          if (!isMounted) return
+          setMemberships(mapped)
+        } catch (err) {
+          console.error('Error fetching memberships:', err)
+          if (isMounted) setMemberships([])
+        }
+
+        // Transactions
+        try {
+          const res: ListWalletTransactionDTO = await filterWalletTransactions({
+            ShopId: id,
+            Types: [0, 1, 2, 3],
+            PageIndex: 1,
+            PageSize: 50,
+          })
+
+          const mapped: TransactionUI[] = (res.items || []).map(
+            (d: WalletTransactionDTO) => ({
+              transactionId: d.transactionId || d.id,
+              type: mapType(d.type),
+              amount: d.amount,
+              description:
+                d.description ||
+                (mapType(d.type) === 'WITHDRAW'
+                  ? `Rút tiền về ${d.bankAccount || 'ngân hàng'}`
+                  : mapType(d.type) === 'DEPOSIT'
+                  ? `Nạp tiền vào ví`
+                  : 'Giao dịch ví'),
+              status: mapStatus(d.status),
+              createdAt: d.createdAt,
+              orderId: d.orderId || undefined,
+              refundId: d.refundId || undefined,
+            })
+          )
+          if (!isMounted) return
+          setTransactions(mapped)
+        } catch (err) {
+          console.error('Error fetching transactions:', err)
+          if (isMounted) setTransactions([])
+        }
+      } catch (err) {
+        console.error(err)
+        toast.error('Không thể tải dữ liệu')
       } finally {
-        setLoading(false);
+        if (isMounted) setLoading(false)
       }
-    };
+    }
 
-    fetchAll();
-  }, [params.id]);
+    fetchAll()
+    return () => {
+      isMounted = false
+    }
+  }, [params.id])
 
-  if (loading) return <div className="p-8 text-center">Đang tải...</div>;
+  if (loading) return <div className="p-8 text-center">Đang tải...</div>
   if (!shop)
     return (
       <div className="p-8 text-center text-red-500">Không tìm thấy shop</div>
-    );
+    )
 
   return (
     <div className="max-w-6xl mx-auto p-6">
       <ShopHeader shop={shop} />
+
       <Tabs defaultValue="info" className="w-full">
         <TabsList className="grid grid-cols-5 w-full bg-gray-100 rounded-lg shadow mb-6 overflow-hidden h-12">
           <TabsTrigger
@@ -203,41 +349,34 @@ const ShopDetailPage = () => {
         </TabsList>
 
         <TabsContent value="info">
-          <div className="">
-            <ShopInfo
-              shop={shop}
-              seller={seller}
-              address={address}
-              shopOwner={shopOwner}
-              moderators={moderators}
-            />
-          </div>
+          <ShopInfo
+            shop={shop}
+            seller={seller}
+            address={address}
+            shopOwner={shopOwner}
+            moderators={moderators}
+          />
         </TabsContent>
 
         <TabsContent value="products">
-          <div className="">
-            <ShopProductList products={products} />
-          </div>
+          <ShopProductList products={products} />
         </TabsContent>
 
         <TabsContent value="transaction">
-          <div className="">
-            <TransactionHistory transactions={transactions} />
-          </div>
+          <TransactionHistory transactions={transactions} />
         </TabsContent>
+
         <TabsContent value="membership">
-          <div className="">
-            <ShopMembership list={memberships} />
-          </div>
+          {/* pass fetched memberships to component */}
+          <ShopMembership list={memberships} />
         </TabsContent>
+
         <TabsContent value="order">
-          <div className="">
-            <ShopOrderList orders={orders} />
-          </div>
+          {shop?.id && <ShopOrderList shopId={shop.id} />}
         </TabsContent>
       </Tabs>
     </div>
-  );
-};
+  )
+}
 
-export default ShopDetailPage;
+export default ShopDetailPage

@@ -48,8 +48,8 @@ const items = [
     icon: Gem,
   },
   {
-    title: 'Đơn hoàn trả',
-    url: '/manager/refunds',
+    title: 'Đơn hàng',
+    url: '/manager/orders',
     icon: Package,
   },
   {
