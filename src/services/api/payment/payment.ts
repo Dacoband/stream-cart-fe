@@ -78,7 +78,13 @@ export const createDeposit = async (
       throw new Error('Số tiền nạp phải từ 10.000đ đến 50.000.000đ')
     }
 
-    const body: any = {
+    interface DepositBody {
+      amount: number
+      shopId?: string
+      description?: string
+    }
+
+    const body: DepositBody = {
       amount: payload.amount,
       ...(payload.shopId ? { shopId: payload.shopId } : {}),
       ...(payload.description ? { description: payload.description } : {}),

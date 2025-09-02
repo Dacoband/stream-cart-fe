@@ -3,6 +3,9 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Bot } from "lucide-react";
 import { getChatBot, createChatBot } from "@/services/api/chat/chat";
 import { ChatMess, ChatHistory } from "@/types/chat/chatbot";
+import { useAuth } from "@/lib/AuthContext";
+import { usePathname, useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 interface ChatBotProps {
   open: boolean;
@@ -10,6 +13,9 @@ interface ChatBotProps {
 }
 
 export default function ChatBot({ open, setOpen }: ChatBotProps) {
+  const { user } = useAuth();
+  const router = useRouter();
+  const pathname = usePathname();
   const [loading, setLoading] = useState(false);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -75,10 +81,21 @@ export default function ChatBot({ open, setOpen }: ChatBotProps) {
     }
   };
 
+  const handleToggleOpen = () => {
+    if (!user) {
+      toast.error("Vui lòng đăng nhập.");
+      router.push(
+        `/authentication/login?redirect=${encodeURIComponent(pathname || "/")}`
+      );
+      return;
+    }
+    setOpen(!open);
+  };
+
   return (
     <>
       <button
-        onClick={() => setOpen(!open)}
+        onClick={handleToggleOpen}
         className={`fixed bottom-24 right-5 z-50 w-14 h-14 flex items-center justify-center
                   rounded-full shadow-lg transition-all duration-300
                   hover:scale-110 hover:rotate-6

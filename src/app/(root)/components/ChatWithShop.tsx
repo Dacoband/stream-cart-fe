@@ -6,6 +6,9 @@ import { ChatProvider, useChat } from "../../../lib/ChatContext";
 import { getShopDetail } from "@/services/api/shop/shop";
 import chatApi from "@/services/api/chat/chatApiService";
 import Image from "next/image";
+import { useAuth } from "@/lib/AuthContext";
+import { usePathname, useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 export type ChatWithShopProps = {
   open: boolean;
@@ -22,6 +25,9 @@ function ChatWithShopInner({
   setSelectedShopId: setActiveShopFromProps,
 }: ChatWithShopProps) {
   const { messages, sendMessage, setTyping } = useChat();
+  const { user } = useAuth();
+  const router = useRouter();
+  const pathname = usePathname();
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [myAvatarUrl, setMyAvatarUrl] = useState<string | undefined>(undefined);
   const [shopLogoUrl, setShopLogoUrl] = useState<string | undefined>(undefined);
@@ -191,12 +197,23 @@ function ChatWithShopInner({
       )
     : rooms;
 
+  const handleChatToggle = () => {
+    if (!user) {
+      toast.error("Vui lòng đăng nhập.");
+      router.push(
+        `/authentication/login?redirect=${encodeURIComponent(pathname || "/")}`
+      );
+      return;
+    }
+    setOpen(!open);
+  };
+
   return (
     <>
       <button
         type="button"
         title="Chat With Shop"
-        onClick={() => setOpen(!open)}
+        onClick={handleChatToggle}
         className={`fixed bottom-5 right-5 z-50 w-14 h-14 flex items-center justify-center
                   rounded-full shadow-lg transition-all duration-300
                   hover:scale-110 hover:rotate-6
