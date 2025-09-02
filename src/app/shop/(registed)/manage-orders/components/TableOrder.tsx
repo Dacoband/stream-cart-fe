@@ -11,6 +11,7 @@ import * as TabsPrimitive from "@radix-ui/react-tabs";
 import { getProductDetailById } from "@/services/api/product/product";
 import PriceTag from "@/components/common/PriceTag";
 import Link from "next/link";
+import { formatFullDateTimeVN } from "@/components/common/formatFullDateTimeVN";
 type TabValue = "all" | "0" | "1,2" | "3" | "4,10" | "5,8,9";
 
 const parseStatusesFromTab = (tab: TabValue): number[] | undefined => {
@@ -77,6 +78,10 @@ function TableOrder() {
           const map = new Map<string, Order>();
           for (const o of merged) map.set(o.id, o);
           result = Array.from(map.values());
+        }
+        // For "all" tab, exclude status 0 as requested
+        if (!statuses) {
+          result = result.filter((o) => o.orderStatus !== 0);
         }
         if (!cancelled) setOrders(result);
 
@@ -158,8 +163,8 @@ function TableOrder() {
           <TabsPrimitive.List className="flex gap-2 mb-4 border-b">
             {[
               { value: "all", label: "Tất Cả" },
-              { value: "0", label: "Chờ xác nhận" },
-              { value: "1,2", label: "Chờ lấy hàng" },
+              { value: "1", label: "Chờ xác nhận" },
+              { value: "2", label: "Chờ lấy hàng" },
               { value: "3", label: "Đang giao" },
               { value: "4,10", label: "Đã giao" },
               { value: "5,8,9", label: "Trả hàng/Hủy" },
@@ -242,6 +247,10 @@ function TableOrder() {
                         <span className="truncate max-w-[140px]">
                           {acc?.username || "—"}
                         </span>
+                        <div className="ml-2 pl-4 border-l-2 border-gray-500">
+                          {" "}
+                          Thời gian đặt: {formatFullDateTimeVN(order.orderDate)}
+                        </div>
                       </span>{" "}
                       <span>Mã đơn: {order.orderCode}</span>
                     </div>
@@ -294,7 +303,7 @@ function TableOrder() {
                       <span
                         className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium
     ${
-      order.orderStatus === 0 || order.orderStatus === 1
+      order.orderStatus === 1
         ? "bg-yellow-100 text-yellow-700"
         : order.orderStatus === 2
         ? "bg-orange-100 text-orange-700"
@@ -311,10 +320,10 @@ function TableOrder() {
         : "bg-gray-100 text-gray-700"
     }`}
                       >
-                        {order.orderStatus === 0 || order.orderStatus === 1
+                        {order.orderStatus === 1
                           ? "Chờ xác nhận"
                           : order.orderStatus === 2
-                          ? "Chờ xử lí"
+                          ? "Chờ đóng gói"
                           : order.orderStatus === 3
                           ? "Chờ lấy hàng"
                           : order.orderStatus === 7
