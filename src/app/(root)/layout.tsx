@@ -3,6 +3,7 @@ import Footer from "./components/Footer";
 import Navigation from "./components/Navigation";
 import NotificationsProvider from "@/lib/NotificationContext";
 import { Suspense } from "react";
+import LoadingScreen from "@/components/common/LoadingScreen";
 
 export default async function LayoutCustomer({
   children,
@@ -20,7 +21,15 @@ export default async function LayoutCustomer({
           </div>
           <div className="flex flex-1 w-full justify-center">
             <div className="w-full mt-[8vh]">
-              <Suspense fallback={null}>{children}</Suspense>
+              <Suspense
+                fallback={
+                  <div>
+                    <LoadingScreen />
+                  </div>
+                }
+              >
+                {children}
+              </Suspense>
             </div>
           </div>
         </div>

@@ -260,7 +260,7 @@ function OrderDetailPage() {
                 <>
                   <CardHeader className="mb-2">
                     <CardTitle className="flex items-center gap-2">
-                      <Truck className="w-5 h-5" />
+                      <Truck className="w-5 h-5 text-lime-600" />
                       Thông tin vận chuyển
                     </CardTitle>
                   </CardHeader>
