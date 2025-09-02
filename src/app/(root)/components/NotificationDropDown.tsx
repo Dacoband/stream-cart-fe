@@ -1,85 +1,83 @@
 // components/NotificationDropdown.tsx
-'use client'
+"use client";
 
-import { useRef, useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { CheckCheck, ExternalLink, Inbox } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { useRef, useState } from "react";
+import { useRouter } from "next/navigation";
+import { CheckCheck, ExternalLink, Inbox } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from '@/components/ui/popover'
-import { ScrollArea } from '@/components/ui/scroll-area'
-import { cn } from '@/lib/utils'
-import { toast } from 'sonner'
-import { fetchMyNotifications } from '@/services/api/notification/notification'
-import { useNotificationStore } from '@/lib/notificationStore' // đảm bảo đúng path
+} from "@/components/ui/popover";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { cn } from "@/lib/utils";
+// import { toast } from "sonner";
+import { fetchMyNotifications } from "@/services/api/notification/notification";
+import { useNotificationStore } from "@/lib/notificationStore"; // đảm bảo đúng path
 
-type Props = { children: React.ReactNode }
+type Props = { children: React.ReactNode };
 
 export default function NotificationDropdown({ children }: Props) {
-  const router = useRouter()
+  const router = useRouter();
 
-  // ✅ dùng selector + fallback
-  const notifications = useNotificationStore((s) => s.notifications) ?? []
-  const markAllRead = useNotificationStore((s) => s.markAllRead)
-  const setList = useNotificationStore((s) => s.setList)
+  const notifications = useNotificationStore((s) => s.notifications) ?? [];
+  const markAllRead = useNotificationStore((s) => s.markAllRead);
+  const setList = useNotificationStore((s) => s.setList);
 
-  const [open, setOpen] = useState(false)
-  const loadedRef = useRef(false)
+  const [open, setOpen] = useState(false);
+  const loadedRef = useRef(false);
 
   const handleOpenChange = async (v: boolean) => {
     const token =
-      typeof window !== 'undefined' ? localStorage.getItem('token') : null
+      typeof window !== "undefined" ? localStorage.getItem("token") : null;
     if (v && !token) {
-      toast.error('Vui lòng đăng nhập.')
+      // toast.error("Vui lòng đăng nhập.");
       router.push(
         `/authentication/login?redirect=${encodeURIComponent(
           window.location.pathname
         )}`
-      )
-      return
+      );
+      return;
     }
-    setOpen(v)
+    setOpen(v);
 
-    // Lần đầu mở: tải lịch sử
     if (v && !loadedRef.current) {
       try {
-        if (!token) return
+        if (!token) return;
         const listRes = await fetchMyNotifications({
           PageIndex: 1,
           PageSize: 20,
-        })
-        console.log(listRes.data.notificationList)
-        setList(listRes.data?.notificationList ?? [])
-        loadedRef.current = true
+        });
+        console.log(listRes.data.notificationList);
+        setList(listRes.data?.notificationList ?? []);
+        loadedRef.current = true;
       } catch (e) {
-        console.error('Load notifications failed:', e)
+        console.error("Load notifications failed:", e);
       }
     }
-  }
+  };
 
   const handleMarkAllRead = async () => {
     try {
-      const token = localStorage.getItem('token')
-      if (!token) return
+      const token = localStorage.getItem("token");
+      if (!token) return;
       // gọi endpoint mark-all-read (dùng rootApi của bạn nếu không có proxy)
-      const { default: rootApi } = await import('@/services/rootApi')
-      await rootApi.post('notifications/mark-all-read', null, {
+      const { default: rootApi } = await import("@/services/rootApi");
+      await rootApi.post("notifications/mark-all-read", null, {
         headers: { Authorization: `Bearer ${token}` },
-      })
-      markAllRead()
+      });
+      markAllRead();
     } catch (e) {
-      console.error(e)
+      console.error(e);
     }
-  }
+  };
 
   const goIfLink = (linkUrl?: string | null) => {
-    if (!linkUrl) return
-    setOpen(false)
-    router.push(linkUrl)
-  }
+    if (!linkUrl) return;
+    setOpen(false);
+    router.push(linkUrl);
+  };
 
   return (
     <Popover open={open} onOpenChange={handleOpenChange}>
@@ -111,18 +109,18 @@ export default function NotificationDropdown({ children }: Props) {
                 <li
                   key={n.notificationId}
                   className={cn(
-                    'px-4 py-3 hover:bg-muted/50 cursor-pointer group',
-                    !n.isRead && 'bg-muted/30'
+                    "px-4 py-3 hover:bg-muted/50 cursor-pointer group",
+                    !n.isRead && "bg-muted/30"
                   )}
                   onClick={() => goIfLink(n.linkUrl)}
                 >
                   <div className="flex items-start gap-3">
                     <div
                       className={cn(
-                        'mt-1 w-2.5 h-2.5 rounded-full',
+                        "mt-1 w-2.5 h-2.5 rounded-full",
                         n.isRead
-                          ? 'bg-transparent border border-muted'
-                          : 'bg-emerald-500'
+                          ? "bg-transparent border border-muted"
+                          : "bg-emerald-500"
                       )}
                     />
                     <div className="min-w-0 flex-1">
@@ -149,5 +147,5 @@ export default function NotificationDropdown({ children }: Props) {
         )}
       </PopoverContent>
     </Popover>
-  )
+  );
 }
