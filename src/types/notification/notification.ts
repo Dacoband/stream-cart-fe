@@ -27,7 +27,9 @@ export interface FilterNotificationDTO {
   PageSize?: number | null
 }
 
-export function toQueryString(obj: Record<string, any>) {
+export function toQueryString(
+  obj: Record<string, string | number | boolean | null>
+) {
   const params = Object.entries(obj)
     .filter(([, v]) => v !== undefined && v !== null && v !== '')
     .map(
