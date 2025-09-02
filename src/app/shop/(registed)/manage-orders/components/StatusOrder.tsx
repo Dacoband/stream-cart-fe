@@ -46,6 +46,16 @@ const statusConfig: Record<
     description: string;
   }
 > = {
+  // 0: {
+  //   label: "Mới tạo",
+  //   icon: AlertCircle,
+  //   color: "bg-gray-400",
+  //   bgColor: "bg-gray-50",
+  //   textColor: "text-gray-700",
+  //   borderColor: "border-gray-200",
+  //   needsAction: true,
+  //   description: "Đơn hàng mới tạo, chờ xác nhận",
+  // },
   1: {
     label: "Chờ xác nhận",
     icon: AlertCircle,
@@ -123,9 +133,22 @@ const statusFlow = [1, 2, 3, 7, 4];
 export default function StatusOrder({ order, onStatusUpdated }: Props) {
   const [updating, setUpdating] = useState(false);
   const [confirmPickupOpen, setConfirmPickupOpen] = useState(false);
+  const [confirmConfirmOpen, setConfirmConfirmOpen] = useState(false); // confirm 1 -> 2
+  const [cancelOpen, setCancelOpen] = useState(false); // cancel to 5
 
-  const currentConfig = statusConfig[order.orderStatus];
-  const currentIndex = statusFlow.indexOf(order.orderStatus);
+  const defaultConfig = {
+    label: "Không xác định",
+    icon: AlertCircle,
+    color: "bg-gray-400",
+    bgColor: "bg-gray-50",
+    textColor: "text-gray-700",
+    borderColor: "border-gray-200",
+    needsAction: false,
+    description: "Trạng thái đơn hàng chưa xác định",
+  } as const;
+
+  const currentConfig = statusConfig[order.orderStatus] || defaultConfig;
+  const currentIndex = Math.max(0, statusFlow.indexOf(order.orderStatus));
 
   const deadlineMessage =
     order.orderStatus === 1
@@ -134,6 +157,14 @@ export default function StatusOrder({ order, onStatusUpdated }: Props) {
       ? `Vui lòng đóng gói trước ${formatFullDateTimeVN(
           order.timeForShop
         )} để giao hàng cho bên vận chuyển`
+      : order.orderStatus === 3
+      ? `Đơn hàng sẳn sàng chờ đơn vị vận chuyển đến lấy`
+      : order.orderStatus === 4
+      ? `Đơn hàng giao thành công`
+      : order.orderStatus === 10
+      ? `Hoàn tất đơn hàng`
+      : order.orderStatus === 5
+      ? `Đơn hàng đã bị hủy`
       : null;
 
   const handleUpdateStatus = async () => {
@@ -147,6 +178,21 @@ export default function StatusOrder({ order, onStatusUpdated }: Props) {
       return;
     }
 
+    try {
+      setUpdating(true);
+      await updateOrderStatus(order.id, newStatus);
+      onStatusUpdated?.(newStatus);
+      toast.success("Cập nhật trạng thái đơn hàng thành công");
+    } catch (error) {
+      console.error("Error updating order status:", error);
+      toast.error("Không thể cập nhật trạng thái đơn hàng");
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  const updateTo = async (newStatus: number) => {
+    if (updating) return;
     try {
       setUpdating(true);
       await updateOrderStatus(order.id, newStatus);
@@ -200,7 +246,7 @@ export default function StatusOrder({ order, onStatusUpdated }: Props) {
   }
 
   return (
-    <Card className="border-0 shadow-lg bg-gradient-to-br from-white to-gray-50">
+    <Card className="border-0 shadow-lg bg-gradient-to-br from-white to-gray-50 rounded-none">
       <CardContent className="">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
@@ -223,6 +269,52 @@ export default function StatusOrder({ order, onStatusUpdated }: Props) {
           </div>
         </div>
 
+        {/* Status Timeline */}
+        <div className="mb-6">
+          {/* <h4 className="text-sm font-medium text-gray-700 mb-4">
+            Tiến trình đơn hàng
+          </h4> */}
+          <div className="flex items-center justify-between relative">
+            {statusFlow.map((status, index) => {
+              const config = statusConfig[status];
+              const isCompleted = index < currentIndex;
+              const isCurrent = index === currentIndex;
+
+              return (
+                <div
+                  key={status}
+                  className="flex flex-col items-center flex-1 relative"
+                >
+                  <div
+                    className={`w-14 h-14 rounded-full flex items-center justify-center mb-2 transition-all duration-300 ${
+                      isCompleted
+                        ? "bg-[#B0F847] text-black"
+                        : isCurrent
+                        ? `${config.color} text-white`
+                        : "bg-gray-200 text-gray-400"
+                    }`}
+                  >
+                    <config.icon className="w-7 h-7" />
+                  </div>
+                  <p
+                    className={`text-xs text-center ${
+                      isCurrent ? "font-medium text-gray-900" : "text-gray-500"
+                    }`}
+                  >
+                    {config.label}
+                  </p>
+                  {index < statusFlow.length - 1 && (
+                    <div
+                      className={`absolute top-4 left-1/2 w-full h-0.5 -z-10 ${
+                        isCompleted ? "bg-[#B0F847]" : "bg-gray-200"
+                      }`}
+                    />
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
         {/* Current Status Display */}
         <div
           className={`p-4 rounded-xl ${currentConfig.bgColor} ${currentConfig.borderColor} border-2 mb-6`}
@@ -238,71 +330,22 @@ export default function StatusOrder({ order, onStatusUpdated }: Props) {
                 >
                   {currentConfig.label}
                 </Badge>
-                <p className="text-sm text-gray-600 mt-1">
-                  {currentConfig.description}
+                <p className="text-sm text-gray-600 mt-1 flex items-center">
+                  {deadlineMessage}
                 </p>
               </div>
             </div>
 
             {deadlineMessage && (
-              <div className="text-right">
-                <p className="text-xs text-gray-500 mb-2">Hạn xử lí</p>
-                <Badge variant="outline" className="text-xs">
-                  <Clock className="w-3 h-3 mr-1" />
-                  {deadlineMessage}
-                </Badge>
+              <div className="flex flex-col items-center">
+                <p className="text-xs text-gray-500 mb-2 ">Hạn xử lí</p>
+                <p className={`font-medium ${currentConfig.textColor} mb-2`}>
+                  {formatFullDateTimeVN(order.timeForShop)}
+                </p>
               </div>
             )}
           </div>
         </div>
-
-        {/* Status Timeline */}
-        <div className="mb-6">
-          <h4 className="text-sm font-medium text-gray-700 mb-4">
-            Tiến trình đơn hàng
-          </h4>
-          <div className="flex items-center justify-between relative">
-            {statusFlow.map((status, index) => {
-              const config = statusConfig[status];
-              const isCompleted = index < currentIndex;
-              const isCurrent = index === currentIndex;
-
-              return (
-                <div
-                  key={status}
-                  className="flex flex-col items-center flex-1 relative"
-                >
-                  <div
-                    className={`w-14 h-14 rounded-full flex items-center justify-center mb-2 transition-all duration-300 ${
-                      isCompleted
-                        ? "bg-green-500 text-white"
-                        : isCurrent
-                        ? `${config.color} text-white`
-                        : "bg-gray-200 text-gray-400"
-                    }`}
-                  >
-                    <config.icon className="w-4 h-4" />
-                  </div>
-                  <p
-                    className={`text-xs text-center ${
-                      isCurrent ? "font-medium text-gray-900" : "text-gray-500"
-                    }`}
-                  >
-                    {config.label}
-                  </p>
-                  {index < statusFlow.length - 1 && (
-                    <div
-                      className={`absolute top-4 left-1/2 w-full h-0.5 -z-10 ${
-                        isCompleted ? "bg-green-500" : "bg-gray-200"
-                      }`}
-                    />
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
         {/* Action Button */}
         {currentConfig.needsAction && (
           <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
@@ -311,28 +354,42 @@ export default function StatusOrder({ order, onStatusUpdated }: Props) {
               <span className="text-sm text-gray-700">
                 {order.orderStatus === 1
                   ? "Xác nhận đơn hàng"
-                  : "Đã đóng gói xong"}
+                  : "Hãy chắc chắn rằng bạn đã đóng gói xong"}
               </span>
             </div>
-            <Button
-              onClick={() => {
-                if (order.orderStatus === 2) {
-                  setConfirmPickupOpen(true);
-                } else {
-                  handleUpdateStatus();
-                }
-              }}
-              disabled={updating}
-              className="bg-[#B0F847] text-black font-medium px-6 hover:bg-[#B0F847]/80 cursor-pointer"
-            >
-              {updating
-                ? "Đang cập nhật..."
-                : order.orderStatus === 0 || order.orderStatus === 1
-                ? "Xác nhận đơn hàng"
-                : order.orderStatus === 2
-                ? "Đã đóng gói xong"
-                : "Bắt đầu xử lí"}
-            </Button>
+            <div className="flex items-center gap-3">
+              {(order.orderStatus === 1 || order.orderStatus === 2) && (
+                <Button
+                  onClick={() => setCancelOpen(true)}
+                  disabled={updating}
+                  className="bg-red-600 text-white font-medium px-6 hover:bg-red-600/90 cursor-pointer"
+                >
+                  Hủy đơn
+                </Button>
+              )}
+
+              <Button
+                onClick={() => {
+                  if (order.orderStatus === 2) {
+                    setConfirmPickupOpen(true);
+                  } else if (order.orderStatus === 1) {
+                    setConfirmConfirmOpen(true);
+                  } else {
+                    handleUpdateStatus();
+                  }
+                }}
+                disabled={updating}
+                className="bg-[#B0F847] text-black font-medium px-6 hover:bg-[#B0F847]/80 cursor-pointer"
+              >
+                {updating
+                  ? "Đang cập nhật..."
+                  : order.orderStatus === 1
+                  ? "Xác nhận đơn hàng"
+                  : order.orderStatus === 2
+                  ? "Đã đóng gói xong"
+                  : "Bắt đầu xử lí"}
+              </Button>
+            </div>
           </div>
         )}
 
@@ -359,6 +416,62 @@ export default function StatusOrder({ order, onStatusUpdated }: Props) {
                 }}
               >
                 Xác nhận
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        {/* Confirm 1 -> 2 */}
+        <AlertDialog
+          open={confirmConfirmOpen}
+          onOpenChange={setConfirmConfirmOpen}
+        >
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Xác nhận đơn hàng</AlertDialogTitle>
+              <AlertDialogDescription>
+                Bạn có chắc chắn muốn xác nhận đơn hàng này? Trạng thái sẽ
+                chuyển sang &quot;Đang chuẩn bị hàng&quot;.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={updating}>Hủy</AlertDialogCancel>
+              <AlertDialogAction
+                disabled={updating}
+                onClick={async () => {
+                  setConfirmConfirmOpen(false);
+                  await updateTo(2);
+                }}
+              >
+                Xác nhận
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        {/* Cancel to 5 */}
+        <AlertDialog open={cancelOpen} onOpenChange={setCancelOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Hủy đơn hàng</AlertDialogTitle>
+              <AlertDialogDescription>
+                Bạn có chắc chắn muốn hủy đơn hàng này? Hành động này không thể
+                hoàn tác.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={updating}>
+                Quay lại
+              </AlertDialogCancel>
+              <AlertDialogAction
+                disabled={updating}
+                onClick={async () => {
+                  setCancelOpen(false);
+                  await updateTo(5);
+                }}
+                className="bg-red-600 hover:bg-red-600/90 text-white"
+              >
+                Xác nhận hủy
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>

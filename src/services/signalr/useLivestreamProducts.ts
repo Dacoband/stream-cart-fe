@@ -105,7 +105,7 @@ export function useLivestreamProducts(livestreamId?: string) {
     return () => {
       mounted = false;
     };
-  }, [livestreamId]);
+  }, [livestreamId,products]);
 
   return useMemo(() => ({ products, loading, error }), [products, loading, error]);
 }

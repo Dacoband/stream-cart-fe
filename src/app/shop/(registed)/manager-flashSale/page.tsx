@@ -11,7 +11,7 @@ function page() {
         <div className="">
           <h2 className="text-xl font-bold">Flash Sale</h2>
         </div>
-        <Link href="/shop/manager-vouchers/new-voucher">
+        <Link href="/shop/manager-flashSale/new-flashSale">
           <Button className="bg-[#B0F847] text-black shadow flex gap-2 py-2 px-4 text-base cursor-pointer hover:bg-[#B0F847]/80 hover:text-black/80">
             <CirclePlus />
             Tạo Flash Sale

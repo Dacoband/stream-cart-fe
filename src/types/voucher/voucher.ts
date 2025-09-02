@@ -21,6 +21,41 @@ export interface Voucher{
     lastModifiedAt:Date;
     lastModifiedBy:string;
     shopName:string;
+    shopImageUrl?: string;       
+  hoursRemaining?: number;     
+  isExpiringSoon?: boolean;
+}
+export interface VoucherAppliedResult {
+  discountAmount: number;      
+  finalAmount: number;          
+  discountPercentage: number;
+  discountMessage: string;
+  voucher?: Voucher;
+}
+export interface VoucherAvailableItem {
+  voucher: Pick<
+    Voucher,
+    | "id"
+    | "shopId"
+    | "code"
+    | "description"
+    | "type"
+    | "typeDisplayName"
+    | "value"
+    | "maxValue"
+    | "minOrderAmount"
+    | "startDate"
+    | "endDate"
+    | "remainingQuantity"
+    | "shopName"
+    | "shopImageUrl"
+    | "hoursRemaining"
+    | "isExpiringSoon"
+  >;
+  discountAmount: number;
+  finalAmount: number;
+  discountPercentage: number;
+  discountMessage: string;
 }
 export interface CreateVoucher{
     code:string;
@@ -42,5 +77,11 @@ export interface UpdateVoucher{
    startDate:Date;
     endDate:Date;
     availableQuantity:number
+
+}
+export interface SearchVoucher{
+  orderAmount:number;
+  shopId:string;
+  sortByDiscountDesc:boolean;
 
 }

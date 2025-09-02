@@ -1,6 +1,6 @@
 
 import rootApi from "../../rootApi";
-import { CreateProductDTO,filterProduct, GetPagedProductsParams  } from "@/types/product/product";
+import { CreateProductDTO,filterProduct, GetPagedProductsParams, ProductSearchParams, ProductSearchResponse  } from "@/types/product/product";
 
 export const getAllProducts = async () => {
   try {
@@ -156,4 +156,32 @@ export const updateStockProductById = async (productId: string, data: { quantity
     console.error("Error updating product stock:", error);
     throw error;
   }
+}
+
+export const searchProducts = async (params: ProductSearchParams): Promise<ProductSearchResponse> => {
+  try {
+    if (!params.searchTerm || params.searchTerm.trim() === '') {
+      throw new Error('searchTerm is required');
+    }
+    const response = await rootApi.get('products/search', {
+      params: {
+        SearchTerm: params.searchTerm,
+        PageNumber: params.pageNumber,
+        PageSize: params.pageSize,
+        CategoryId: params.categoryId,
+        MinPrice: params.minPrice,
+        MaxPrice: params.maxPrice,
+        ShopId: params.shopId,
+        SortBy: params.sortBy,
+        InStockOnly: params.inStockOnly,
+        MinRating: params.minRating,
+        OnSaleOnly: params.onSaleOnly,
+      },
+    });
+    return response.data as ProductSearchResponse;
+  } catch (error) {
+    console.error('Error searching products:', error);
+    throw error;
+  }
 };
+

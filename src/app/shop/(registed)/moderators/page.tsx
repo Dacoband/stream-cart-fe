@@ -22,7 +22,7 @@ function ModeratorsPage() {
     } finally {
       setLoading(false);
     }
-  }, [user?.shopId]); // chỉ phụ thuộc shopId
+  }, [user?.shopId]);
 
   useEffect(() => {
     fetchModerators();

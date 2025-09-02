@@ -5,6 +5,7 @@ import {
   WithdrawalApprovalResponse,
 } from '@/types/payment/payment'
 import rootApi from '../../rootApi'
+import { AxiosError } from 'axios'
 
 export const createQRPayment = async (orderIds: string[]) => {
   try {
@@ -77,7 +78,13 @@ export const createDeposit = async (
       throw new Error('Số tiền nạp phải từ 10.000đ đến 50.000.000đ')
     }
 
-    const body: any = {
+    interface DepositBody {
+      amount: number
+      shopId?: string
+      description?: string
+    }
+
+    const body: DepositBody = {
       amount: payload.amount,
       ...(payload.shopId ? { shopId: payload.shopId } : {}),
       ...(payload.description ? { description: payload.description } : {}),
@@ -92,8 +99,8 @@ export const createDeposit = async (
     return res.data
   } catch (error) {
     console.error('Error creating deposit:', error)
-    // @ts-ignore
-    const message = error?.response?.data?.error || (error as Error).message
+    const err = error as AxiosError<{ message?: string; errors?: string[] }>
+    const message = err?.response?.data?.errors?.[0] || (error as Error).message
     throw new Error(message || 'Failed to create deposit.')
   }
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { CircleUser, ScrollText, Bell, UserRound, MapPin } from "lucide-react";
+import { CircleUser, ScrollText, UserRound, MapPin } from "lucide-react";
 import {
   SidebarContent,
   SidebarGroupContent,
@@ -35,11 +35,6 @@ export function AppSidebar() {
       title: "Địa chỉ",
       url: "/customer/address-user",
       icon: MapPin,
-    },
-    {
-      title: "Thông báo",
-      url: "/customer/notification",
-      icon: Bell,
     },
   ];
 

@@ -1,26 +1,26 @@
-'use client'
+"use client";
 
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useRef, useState } from "react";
 import {
   createCategory,
   getAllCategories,
   updateCategory,
-} from '@/services/api/categories/categorys'
-import { uploadImage } from '@/services/api/uploadImage'
-import { Button } from '@/components/ui/button'
+} from "@/services/api/categories/categorys";
+import { uploadImage } from "@/services/api/uploadImage";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog'
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
+} from "@/components/ui/dialog";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import {
   createCategorySchema,
   CreateCategorySchema,
-} from '@/components/schema/category_schema'
+} from "@/components/schema/category_schema";
 import {
   Form,
   FormItem,
@@ -28,203 +28,201 @@ import {
   FormControl,
   FormMessage,
   FormField,
-} from '@/components/ui/form'
-import { Input } from '@/components/ui/input'
-import Image from 'next/image'
-import { ImagePlus, Loader2, TriangleAlert } from 'lucide-react'
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import Image from "next/image";
+import { ImagePlus, Loader2, TriangleAlert } from "lucide-react";
 import {
   Select,
   SelectTrigger,
   SelectContent,
   SelectItem,
   SelectValue,
-} from '@/components/ui/select'
-import { Category, filterCategory } from '@/types/category/category'
-import { toast } from 'sonner'
-import { Textarea } from '@/components/ui/textarea'
-import { AxiosError } from 'axios'
+} from "@/components/ui/select";
+import { Category, filterCategory } from "@/types/category/category";
+import { toast } from "sonner";
+import { Textarea } from "@/components/ui/textarea";
+import { AxiosError } from "axios";
 
 interface CreateCategoryModalProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  onSuccess: () => void
-  parentCategoryID?: string
-  mode?: 'create' | 'update'
-  initialData?: Category | null
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSuccess: () => void;
+  parentCategoryID?: string;
+  mode?: "create" | "update";
+  initialData?: Category | null;
 }
 
 /** Kiểu trả về khi upload ảnh */
 interface UploadImageResponse {
-  imageUrl: string
-  message?: string
+  imageUrl: string;
+  message?: string;
 }
 
 /** Kiểu list categories từ API getAllCategories */
 interface GetAllCategoriesResponse {
   data: {
-    categories: Category[]
-  }
+    categories: Category[];
+  };
 }
 
 type CategoryLike = Category & {
   /** Phòng trường hợp backend dùng key khác casing */
-  iconUrl?: string | null
-  parentCategoryID?: string | null
-}
+  iconUrl?: string | null;
+  parentCategoryID?: string | null;
+};
 
 const CreateCategoryModal: React.FC<CreateCategoryModalProps> = ({
   open,
   onOpenChange,
   onSuccess,
   parentCategoryID,
-  mode = 'create',
+  mode = "create",
   initialData = null,
 }) => {
   const form = useForm<CreateCategorySchema>({
     resolver: zodResolver(createCategorySchema),
     defaultValues: {
-      categoryName: '',
-      description: '',
-      iconURL: '',
-      slug: '',
-      parentCategoryID: '',
+      categoryName: "",
+      description: "",
+      iconURL: "",
+      slug: "",
+      parentCategoryID: "",
     },
-  })
+  });
 
   const {
     handleSubmit,
     reset,
     setValue,
     formState: { isSubmitting },
-  } = form
+  } = form;
 
-  const [uploading, setUploading] = useState(false)
-  const [uploadError, setUploadError] = useState<string | null>(null)
-  const [categories, setCategories] = useState<Category[]>([])
-  const [loadingCategories, setLoadingCategories] = useState(false)
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [loadingCategories, setLoadingCategories] = useState(false);
 
-  const fileInputRef = useRef<HTMLInputElement>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const fetchData = async () => {
     try {
-      setLoadingCategories(true)
+      setLoadingCategories(true);
       const params: filterCategory = {
         PageIndex: 1,
         PageSize: 100,
-        CategoryName: '',
+        CategoryName: "",
         IsDeleted: false,
-      }
-      const res: GetAllCategoriesResponse = await getAllCategories(params)
-      setCategories(res.data.categories)
-    } catch (err) {
-      toast.error('Không thể tải danh mục')
-      // có thể log err nếu cần debug
+      };
+      const res: GetAllCategoriesResponse = await getAllCategories(params);
+      setCategories(res.data.categories);
+    } catch (error) {
+      console.error("Fetch Error get All Categories:", error);
+      toast.error("Không thể tải danh mục");
     } finally {
-      setLoadingCategories(false)
+      setLoadingCategories(false);
     }
-  }
+  };
 
   useEffect(() => {
     if (!open) {
-      reset()
-      setUploadError(null)
-      return
+      reset();
+      setUploadError(null);
+      return;
     }
 
-    fetchData()
+    fetchData();
 
-    if (mode === 'update' && initialData) {
+    if (mode === "update" && initialData) {
       const src =
         (initialData as CategoryLike).iconURL ??
         (initialData as CategoryLike).iconUrl ??
-        ''
-      setValue('categoryName', initialData.categoryName)
-      setValue('description', initialData.description || '')
-      setValue('iconURL', src)
-      setValue('slug', initialData.slug || '')
+        "";
+      setValue("categoryName", initialData.categoryName);
+      setValue("description", initialData.description || "");
+      setValue("iconURL", src);
+      setValue("slug", initialData.slug || "");
       // GIỮ nguyên parent khi update (tránh reset về '')
       setValue(
-        'parentCategoryID',
-        (initialData as CategoryLike).parentCategoryID ?? ''
-      )
+        "parentCategoryID",
+        (initialData as CategoryLike).parentCategoryID ?? ""
+      );
     } else if (parentCategoryID) {
-      setValue('parentCategoryID', parentCategoryID)
+      setValue("parentCategoryID", parentCategoryID);
     }
-  }, [open, reset, parentCategoryID, setValue, mode, initialData])
+  }, [open, reset, parentCategoryID, setValue, mode, initialData]);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-    setUploadError(null)
-    setUploading(true)
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadError(null);
+    setUploading(true);
     try {
-      const res = (await uploadImage(file)) as UploadImageResponse
-      setValue('iconURL', res.imageUrl, {
+      const res = (await uploadImage(file)) as UploadImageResponse;
+      setValue("iconURL", res.imageUrl, {
         shouldValidate: true,
         shouldDirty: true,
         shouldTouch: true,
-      })
-      toast.success(res.message || 'Tải ảnh lên thành công')
+      });
+      toast.success(res.message || "Tải ảnh lên thành công");
     } catch (error) {
-      const err = error as AxiosError<{ message?: string; errors?: string[] }>
+      const err = error as AxiosError<{ message?: string; errors?: string[] }>;
       const message =
         err?.response?.data?.errors?.[0] ||
         err?.response?.data?.message ||
-        'Tải ảnh thất bại'
-      setUploadError(message)
-      toast.error(message)
+        "Tải ảnh thất bại";
+      setUploadError(message);
+      toast.error(message);
     } finally {
-      setUploading(false)
+      setUploading(false);
     }
-  }
+  };
 
   const onSubmit = async (values: CreateCategorySchema) => {
     try {
       const parent =
-        values.parentCategoryID === '' || values.parentCategoryID === 'none'
+        values.parentCategoryID === "" || values.parentCategoryID === "none"
           ? null
-          : values.parentCategoryID
+          : values.parentCategoryID;
 
-      // Gửi cả iconURL & alias iconUrl để tương thích API
       const payload = {
         categoryName: values.categoryName,
-        description: values.description || '',
-        slug: values.slug || '',
+        description: values.description || "",
+        slug: values.slug || "",
         parentCategoryID: parent,
-        iconURL: values.iconURL || '',
-        iconUrl: values.iconURL || '',
-      }
+        iconURL: values.iconURL || "",
+        iconUrl: values.iconURL || "",
+      };
 
-      if (mode === 'update' && initialData) {
-        await updateCategory(initialData.categoryId, payload)
-        toast.success('Cập nhật danh mục thành công')
+      if (mode === "update" && initialData) {
+        await updateCategory(initialData.categoryId, payload);
+        toast.success("Cập nhật danh mục thành công");
       } else {
-        const res = await createCategory(payload)
-        // nếu API có trả message có thể đọc như (res as { message?: string }).message
-        toast.success('Tạo danh mục thành công')
+        await createCategory(payload);
+        toast.success("Tạo danh mục thành công");
       }
 
-      onSuccess()
-      onOpenChange(false)
-      reset()
+      onSuccess();
+      onOpenChange(false);
+      reset();
     } catch (error) {
-      const err = error as AxiosError<{ message?: string; errors?: string[] }>
+      const err = error as AxiosError<{ message?: string; errors?: string[] }>;
       const message =
         err?.response?.data?.errors?.[0] ||
         err?.response?.data?.message ||
-        (mode === 'update'
-          ? 'Cập nhật danh mục thất bại. Vui lòng thử lại!'
-          : 'Tạo danh mục thất bại. Vui lòng thử lại!')
-      toast.error(message)
+        (mode === "update"
+          ? "Cập nhật danh mục thất bại. Vui lòng thử lại!"
+          : "Tạo danh mục thất bại. Vui lòng thử lại!");
+      toast.error(message);
     }
-  }
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle className="text-xl font-bold">
-            {mode === 'update' ? 'Cập nhật danh mục' : 'Thêm danh mục mới'}
+            {mode === "update" ? "Cập nhật danh mục" : "Thêm danh mục mới"}
           </DialogTitle>
         </DialogHeader>
 
@@ -286,8 +284,8 @@ const CreateCategoryModal: React.FC<CreateCategoryModalProps> = ({
                         role="button"
                         tabIndex={0}
                         onKeyDown={(ev) => {
-                          if (ev.key === 'Enter' || ev.key === ' ') {
-                            fileInputRef.current?.click()
+                          if (ev.key === "Enter" || ev.key === " ") {
+                            fileInputRef.current?.click();
                           }
                         }}
                       >
@@ -334,9 +332,9 @@ const CreateCategoryModal: React.FC<CreateCategoryModalProps> = ({
                   <FormLabel>Danh mục cha</FormLabel>
                   <FormControl>
                     <Select
-                      value={field.value || 'none'}
+                      value={field.value || "none"}
                       onValueChange={(v) =>
-                        field.onChange(v === '' || v === 'none' ? null : v)
+                        field.onChange(v === "" || v === "none" ? null : v)
                       }
                       disabled={isSubmitting || loadingCategories}
                     >
@@ -344,8 +342,8 @@ const CreateCategoryModal: React.FC<CreateCategoryModalProps> = ({
                         <SelectValue
                           placeholder={
                             loadingCategories
-                              ? 'Đang tải...'
-                              : 'Chọn danh mục cha (nếu có)'
+                              ? "Đang tải..."
+                              : "Chọn danh mục cha (nếu có)"
                           }
                         />
                       </SelectTrigger>
@@ -382,19 +380,19 @@ const CreateCategoryModal: React.FC<CreateCategoryModalProps> = ({
                 disabled={isSubmitting || uploading}
               >
                 {isSubmitting
-                  ? mode === 'update'
-                    ? 'Đang cập nhật...'
-                    : 'Đang tạo...'
-                  : mode === 'update'
-                  ? 'Cập nhật'
-                  : 'Tạo'}
+                  ? mode === "update"
+                    ? "Đang cập nhật..."
+                    : "Đang tạo..."
+                  : mode === "update"
+                  ? "Cập nhật"
+                  : "Tạo"}
               </Button>
             </DialogFooter>
           </form>
         </Form>
       </DialogContent>
     </Dialog>
-  )
-}
+  );
+};
 
-export default CreateCategoryModal
+export default CreateCategoryModal;

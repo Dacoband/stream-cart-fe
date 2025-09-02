@@ -1,5 +1,6 @@
 import { RegisterShop, FilterShop } from './../../../types/shop/shop'
 import rootApi from '../../rootApi'
+import type { ShopSearchResult } from '../../../types/shop/shop'
 
 // Register Shop
 export const registerShop = async (data: RegisterShop) => {
@@ -140,5 +141,16 @@ export const rejectShop = async (shopId: string, reason: string) => {
   } catch (error) {
     console.error('Error rejecting shop:', error)
     throw new Error('Xảy ra lỗi trong quá trình từ chối cửa hàng.')
+  }
+}
+
+export const searchShops = async (query: string): Promise<ShopSearchResult[]> => {
+  if (!query.trim()) return []
+  try {
+    const response = await rootApi.get('shops/search', { params: { query } })
+    return (response.data?.data || response.data) as ShopSearchResult[]
+  } catch (error) {
+    console.error('Error searching shops:', error)
+    throw error
   }
 }
