@@ -18,6 +18,8 @@ export interface RefundItemDto {
 export interface CreateRefundRequestDto {
   orderId: string
   refundItems: RefundItemDto[]
+  bankName: string
+  bankNumber: string
 }
 
 export interface UpdateRefundStatusDto {

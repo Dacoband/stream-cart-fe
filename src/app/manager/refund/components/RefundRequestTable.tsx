@@ -19,46 +19,63 @@ const isEmptyGuid = (id?: string | null) =>
   !id || id === '00000000-0000-0000-0000-000000000000'
 
 /* ============ UI helpers ============ */
+const Badge = ({
+  className = '',
+  children,
+}: {
+  className?: string
+  children: React.ReactNode
+}) => (
+  <span
+    className={
+      'inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ' +
+      className
+    }
+  >
+    {children}
+  </span>
+)
+
 const renderStatus = (status: RefundStatus) => {
   switch (status) {
     case RefundStatus.Created:
       return (
-        <span className="px-3 py-1 rounded-full text-sm font-medium bg-yellow-100 text-yellow-700">
+        <Badge className="bg-yellow-100 text-yellow-800 ring-1 ring-yellow-200">
           Gửi yêu cầu
-        </span>
+        </Badge>
       )
     case RefundStatus.Confirmed:
     case RefundStatus.Packed:
     case RefundStatus.OnDelivery:
     case RefundStatus.Delivered:
       return (
-        <span className="px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-700">
+        <Badge className="bg-blue-100 text-blue-800 ring-1 ring-blue-200">
           Đang xử lý
-        </span>
+        </Badge>
       )
     case RefundStatus.Completed:
       return (
-        <span className="px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-700">
+        <Badge className="bg-green-100 text-green-800 ring-1 ring-green-200">
           Hoàn hàng thành công
-        </span>
+        </Badge>
       )
     case RefundStatus.Refunded:
       return (
-        <span className="px-3 py-1 rounded-full text-sm font-medium bg-emerald-100 text-emerald-700">
+        <Badge className="bg-emerald-100 text-emerald-800 ring-1 ring-emerald-200">
           Hoàn tiền thành công
-        </span>
+        </Badge>
       )
     case RefundStatus.Rejected:
       return (
-        <span className="px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-700">
+        <Badge className="bg-red-100 text-red-700 ring-1 ring-red-200">
           Bị từ chối
-        </span>
+        </Badge>
       )
     default:
       return (
-        <span className="px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-700">
+        <Badge className="bg-gray-100 text-gray-700 ring-1 ring-gray-200">
           Không xác định
-        </span>
+        </Badge>
       )
   }
 }
@@ -170,11 +187,9 @@ export const RefundRequestTable: React.FC<Props> = ({
             <TabsPrimitive.Trigger
               key={tab.value}
               value={tab.value as TabValue}
-              className="px-3 py-2 -mb-px border-b-2 border-transparent
-                         data-[state=active]:border-lime-600
-                         data-[state=active]:text-lime-600
-                         data-[state=active]:font-medium
-                         flex-none whitespace-nowrap"
+              className="px-3 py-2 -mb-px border-b-2 border-transparent data-[state=active]:border-lime-600
+                         data-[state=active]:text-lime-600 data-[state=active]:font-medium flex-none whitespace-nowrap
+                         hover:text-lime-700"
             >
               {tab.label}
             </TabsPrimitive.Trigger>
@@ -182,7 +197,10 @@ export const RefundRequestTable: React.FC<Props> = ({
         </TabsPrimitive.List>
 
         {/* Header */}
-        <div className="grid grid-cols-[1.2fr_1.2fr_1.2fr_1.5fr_1.5fr_1fr] bg-[#B0F847] px-5 py-2 font-semibold text-gray-800 shadow-sm">
+        <div
+          className="grid grid-cols-[1.3fr_1.1fr_1.1fr_1.6fr_1.3fr_auto]
+                     bg-[#B0F847] px-5 py-2 font-semibold text-gray-800 shadow-sm rounded-md"
+        >
           <div>Mã đơn hàng</div>
           <div>Số tiền hoàn</div>
           <div>Trạng thái</div>
@@ -203,7 +221,7 @@ export const RefundRequestTable: React.FC<Props> = ({
                 Không có yêu cầu hoàn hàng
               </div>
             ) : (
-              paged.map((refund) => {
+              paged.map((refund, idx) => {
                 const isCreated = refund.status === RefundStatus.Created // 0
                 const canRefundMoney = refund.status === RefundStatus.Completed // 5
 
@@ -214,11 +232,19 @@ export const RefundRequestTable: React.FC<Props> = ({
                 return (
                   <Card
                     key={refund.id}
-                    className="p-0 rounded-none mb-5 shadow-none"
+                    className={`p-0 rounded-xl mb-4 border border-gray-100 transition
+                               hover:shadow-sm ${
+                                 idx % 2 === 0 ? 'bg-white' : 'bg-gray-50/60'
+                               }`}
                   >
-                    <CardTitle className="bg-gray-100">
-                      <div className="flex justify-between px-5 py-2.5 text-sm text-gray-500">
-                        <span>Mã yêu cầu: {refund.id}</span>
+                    <CardTitle className="bg-gradient-to-r from-gray-50 to-white rounded-t-xl border-b">
+                      <div className="flex justify-between gap-3 px-5 py-2.5 text-xs sm:text-sm text-gray-500">
+                        <span>
+                          Mã yêu cầu:{' '}
+                          <span className="font-medium text-gray-700">
+                            {refund.id}
+                          </span>
+                        </span>
                         <span>
                           Ngày yêu cầu:{' '}
                           {formatFullDateTimeVN(refund.requestedAt)}
@@ -226,81 +252,104 @@ export const RefundRequestTable: React.FC<Props> = ({
                       </div>
                     </CardTitle>
 
-                    <CardContent className="grid grid-cols-[1.2fr_1.2fr_1.2fr_1.5fr_1.5fr_1fr] px-5 py-3 items-center">
-                      {/* orderCode */}
-                      <div className="truncate">{refund.orderCode ?? '—'}</div>
+                    <CardContent
+                      className="grid grid-cols-1 md:grid-cols-[1.3fr_1.1fr_1.1fr_1.6fr_1.3fr_auto]
+                                 gap-3 px-5 py-4 items-center"
+                    >
+                      {/* orderCode (bold) */}
+                      <div className="truncate">
+                        <span className="font-semibold text-gray-900">
+                          {refund.orderCode ?? '—'}
+                        </span>
+                      </div>
 
                       {/* refund amount */}
-                      <div className="text-rose-600 font-medium">
+                      <div className="text-rose-600 font-semibold">
                         <PriceTag value={refund.refundAmount} />
                       </div>
 
                       {/* status */}
-                      <div>{renderStatus(refund.status)}</div>
+                      <div className="min-w-[140px]">
+                        {renderStatus(refund.status)}
+                      </div>
 
                       {/* processed by + time */}
                       <div className="text-sm text-gray-700">
-                        {isEmptyGuid(refund.processedByUserId) ||
-                        !refund.processedAt ? (
-                          <span>Chưa được xử lý</span>
+                        {isEmptyGuid(refund.lastModifiedBy) ||
+                        !refund.lastModifiedAt ? (
+                          <span className="italic text-gray-500">
+                            Chưa được xử lý
+                          </span>
                         ) : (
-                          <div className="flex flex-col">
-                            <span className="font-medium">
-                              {refund.processedByName ??
-                                refund.processedByUserId}
+                          <div className="flex flex-col leading-tight">
+                            <span className="font-medium text-gray-800">
+                              {refund.processedByName ?? refund.lastModifiedBy}
                             </span>
-                            <span className="text-gray-500">
-                              {formatFullDateTimeVN(refund.processedAt!)}
+                            <span className="text-xs text-gray-500">
+                              {formatFullDateTimeVN(refund.lastModifiedAt!)}
                             </span>
                           </div>
                         )}
                       </div>
 
                       {/* transaction id: chỉ khi Refunded (6) */}
-                      <div>
+                      <div className="text-xs md:text-sm text-gray-800 font-mono truncate">
                         {refund.status === RefundStatus.Refunded
                           ? refund.transactionId ?? '—'
                           : '—'}
                       </div>
 
-                      {/* actions */}
-                      <div className="justify-self-end flex gap-2">
-                        {/* Chi tiết */}
-                        <Link href={`/refunds/${refund.id}`}>
-                          <button className="text-blue-500 hover:underline flex items-center gap-1">
-                            <PackageSearch size={16} /> Chi tiết
-                          </button>
-                        </Link>
+                      {/* actions (dọc): hàng 1 = Chi tiết, hàng 2 = Từ chối + Phê duyệt, hàng 3 = Hoàn tiền */}
+                      <div className="justify-self-end flex flex-col items-end gap-2 max-w-[280px]">
+                        {/* Row 1: Chi tiết */}
+                        <div className="w-full flex justify-end">
+                          <Link href={`/manager/refund/${refund.id}`}>
+                            <button
+                              className="px-3 py-1.5 border rounded-lg text-sm shadow-sm hover:bg-blue-50
+                                         text-blue-600 border-blue-200 flex items-center gap-1"
+                            >
+                              <PackageSearch size={16} /> Chi tiết
+                            </button>
+                          </Link>
+                        </div>
 
-                        {/* Created (0): Từ chối / Phê duyệt */}
+                        {/* Row 2: Từ chối / Phê duyệt (nếu có) */}
                         {isCreated && (
-                          <>
+                          <div className="w-full flex justify-end gap-2">
                             <button
                               disabled={rejecting || approving}
                               onClick={() => onReject?.(refund.id)}
-                              className="px-3 py-1 border rounded-md text-sm text-red-600 hover:bg-red-50 disabled:opacity-50"
+                              className="px-3 py-1.5  border rounded-lg text-sm shadow-sm
+                                         text-red-600 border-red-200 hover:bg-red-50 disabled:opacity-50"
                             >
                               {rejecting ? 'Đang từ chối…' : 'Từ chối'}
                             </button>
                             <button
                               disabled={approving || rejecting}
                               onClick={() => onApprove?.(refund.id)}
-                              className="px-3 py-1 border rounded-md text-sm text-green-600 hover:bg-green-50 disabled:opacity-50"
+                              className="px-3 py-1.5 border rounded-lg text-sm shadow-sm
+                                         text-green-600 border-green-200 hover:bg-green-50 disabled:opacity-50"
                             >
                               {approving ? 'Đang phê duyệt…' : 'Phê duyệt'}
                             </button>
-                          </>
+                          </div>
                         )}
 
-                        {/* Completed (5): Hoàn tiền */}
+                        {/* Row 3: Hoàn tiền (nếu có) */}
                         {canRefundMoney && (
-                          <button
-                            disabled={refunding}
-                            onClick={() => onRefundMoney?.(refund.id)}
-                            className="px-3 py-1 border rounded-md text-sm text-emerald-700 hover:bg-emerald-50 disabled:opacity-50"
-                          >
-                            {refunding ? 'Đang hoàn tiền…' : 'Hoàn tiền'}
-                          </button>
+                          <div className="w-full flex justify-end">
+                            <Link
+                              href={`/manager/refund/payment?id=${refund.id}`}
+                            >
+                              <button
+                                disabled={refunding}
+                                className="px-3 py-1.5 border rounded-lg text-sm shadow-sm
+                   text-emerald-700 border-emerald-200 hover:bg-emerald-50 disabled:opacity-50"
+                              >
+                                {refunding ? 'Đang hoàn tiền…' : 'Hoàn tiền'}
+                              </button>
+                            </Link>
+                          </div>
                         )}
                       </div>
                     </CardContent>
@@ -319,7 +368,7 @@ export const RefundRequestTable: React.FC<Props> = ({
 
           <div className="flex items-center gap-2 flex-wrap">
             <button
-              className="px-3 py-1 border rounded-md text-sm disabled:opacity-50"
+              className="px-3 py-1.5 border rounded-md text-sm disabled:opacity-50 hover:bg-gray-50"
               disabled={page <= 1}
               onClick={() => setPage((p) => Math.max(1, p - 1))}
             >
@@ -336,11 +385,12 @@ export const RefundRequestTable: React.FC<Props> = ({
                   <button
                     key={p}
                     onClick={() => setPage(p)}
-                    className={`px-3 py-1 rounded-md text-sm border ${
-                      p === page
-                        ? 'bg-lime-600 text-white border-lime-600'
-                        : 'bg-white hover:bg-gray-50'
-                    }`}
+                    className={`px-3 py-1.5 rounded-md text-sm border transition
+                      ${
+                        p === page
+                          ? 'bg-lime-600 text-white border-lime-600'
+                          : 'bg-white hover:bg-gray-50'
+                      }`}
                   >
                     {p}
                   </button>
@@ -349,7 +399,7 @@ export const RefundRequestTable: React.FC<Props> = ({
             </div>
 
             <button
-              className="px-3 py-1 border rounded-md text-sm disabled:opacity-50"
+              className="px-3 py-1.5 border rounded-md text-sm disabled:opacity-50 hover:bg-gray-50"
               disabled={page >= totalPages}
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
             >

@@ -4,6 +4,7 @@ import React, { useEffect, useMemo, useState } from 'react'
 
 import { Input } from '@/components/ui/input'
 import { toast } from 'sonner'
+import { useRouter } from 'next/navigation'
 
 // services
 import {
@@ -39,7 +40,7 @@ export default function RefundRequestsPage() {
   const [approvingIds, setApprovingIds] = useState<Record<string, boolean>>({})
   const [rejectingIds, setRejectingIds] = useState<Record<string, boolean>>({})
   const [refundingIds, setRefundingIds] = useState<Record<string, boolean>>({})
-
+  const router = useRouter()
   useEffect(() => {
     let cancelled = false
 
@@ -90,22 +91,22 @@ export default function RefundRequestsPage() {
           // processedByName
           let processedByName: string | undefined = undefined
           const emptyGuid = '00000000-0000-0000-0000-000000000000'
-          if (r.processedByUserId && r.processedByUserId !== emptyGuid) {
-            if (userNameCache.has(r.processedByUserId)) {
-              processedByName = userNameCache.get(r.processedByUserId)!
+          if (r.lastModifiedBy && r.lastModifiedAt !== emptyGuid) {
+            if (userNameCache.has(r.lastModifiedBy)) {
+              processedByName = userNameCache.get(r.lastModifiedBy)!
             } else {
               try {
-                const u = await getUserById(r.processedByUserId)
+                const u = await getUserById(r.lastModifiedBy)
                 const name =
                   u?.fullname ||
                   u?.fullName ||
                   u?.username ||
                   u?.email ||
-                  r.processedByUserId
+                  r.lastModifiedBy
                 processedByName = name
-                userNameCache.set(r.processedByUserId, name)
+                userNameCache.set(r.lastModifiedBy, name)
               } catch {
-                processedByName = r.processedByUserId
+                processedByName = r.lastModifiedBy
               }
             }
           }
