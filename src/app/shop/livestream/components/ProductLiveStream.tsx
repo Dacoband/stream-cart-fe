@@ -1,7 +1,6 @@
 "use client";
 
 import React from "react";
-import { ProductLiveStream } from "@/types/livestream/productLivestream";
 import { Card, CardContent, CardTitle } from "@/components/ui/card";
 // realtime-first: use SignalR via useLivestreamRealtime; API fallback not needed here
 import Image from "next/image";
@@ -9,63 +8,15 @@ import { Input } from "@/components/ui/input";
 import { ImageIcon, Pin, Search } from "lucide-react";
 import PriceTag from "@/components/common/PriceTag";
 import { Button } from "@/components/ui/button";
-import { useLivestreamRealtime } from "@/services/signalr/useLivestreamRealtime";
+import { useLivestreamProducts } from "@/services/signalr/useLivestreamProducts";
 
 type ProductsProps = {
   livestreamId: string;
 };
 
 function ProductsLiveStream({ livestreamId }: ProductsProps) {
-  const [products, setProducts] = React.useState<ProductLiveStream[]>([]);
   const [search, setSearch] = React.useState("");
-  const realtime = useLivestreamRealtime(livestreamId);
-
-  // map realtime products (normalized in hook) to typed ProductLiveStream when possible
-  React.useEffect(() => {
-    const list = (realtime.products ?? []) as unknown[];
-    // best-effort shape mapping, tolerate backend casing/fields
-    const mapped = list.map((raw) => {
-      const r = raw as Record<string, unknown>;
-      const get = (keys: string[]) => {
-        for (const k of keys) if (r[k] !== undefined) return r[k];
-        return undefined;
-      };
-      const toStr = (v: unknown) => (v == null ? undefined : String(v));
-      const toNum = (v: unknown) => {
-        const n = Number(v);
-        return Number.isFinite(n) ? (n as number) : undefined;
-      };
-      const toBool = (v: unknown) => (v == null ? undefined : Boolean(v));
-      return {
-        id: toStr(get(["id", "Id", "ID"])) || "",
-        livestreamId:
-          toStr(get(["livestreamId", "LivestreamId"])) || livestreamId,
-        productId: toStr(get(["productId", "ProductId"])) || "",
-        variantId: toStr(get(["variantId", "VariantId"])) || undefined,
-        isPin: (toBool(get(["isPin", "IsPin"])) ?? false) as boolean,
-        price: toNum(get(["price", "Price"])) ?? 0,
-        originalPrice:
-          toNum(get(["originalPrice", "OriginalPrice"])) ?? undefined,
-        stock: toNum(get(["stock", "Stock"])) ?? 0,
-        productName: toStr(get(["productName", "ProductName"])) || "",
-        productImageUrl:
-          toStr(
-            get(["productImageUrl", "ProductImageUrl", "imageUrl", "ImageUrl"])
-          ) || undefined,
-        variantName: toStr(get(["variantName", "VariantName"])) || undefined,
-        sku: toStr(get(["sku", "SKU", "Sku"])) || undefined,
-      } as ProductLiveStream;
-    });
-    setProducts(mapped);
-  }, [realtime.products, livestreamId]);
-
-  // no manual debounce needed; hook mutates products on events
-
-  // initial load: ask server to push the current products to this client
-  React.useEffect(() => {
-    realtime.refreshProducts?.();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [livestreamId]);
+  const { products, loading, error } = useLivestreamProducts(livestreamId);
 
   // Lọc sản phẩm theo tên
   const filteredProducts = products.filter((p) =>
@@ -91,6 +42,14 @@ function ProductsLiveStream({ livestreamId }: ProductsProps) {
 
       {/* Danh sách sản phẩm */}
       <CardContent className="overflow-y-auto flex-1 mt-5 px-2 space-y-3">
+        {loading && (
+          <p className="text-center text-gray-500 text-sm mt-4">
+            Đang tải sản phẩm…
+          </p>
+        )}
+        {error && (
+          <p className="text-center text-red-600 text-sm mt-2">{error}</p>
+        )}
         {filteredProducts.length > 0 ? (
           filteredProducts.map((product) => (
             <Card key={product.id} className=" py-2 px-2 rounded-none gap-2 ">

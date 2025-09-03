@@ -74,5 +74,6 @@ export type Order = {
   shippingProviderId: string;
   voucherCode: string | null;
   livestreamId: string | null;
+  netAmount: number;
   items: OrderItemResponse[];
 };

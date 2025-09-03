@@ -9,7 +9,7 @@ function page() {
           <h2 className="text-xl font-bold">Danh sách tài khoản</h2>
         </div>
       </div>
-      <div>
+      <div className="mx-5 mb-10">
         <TableAccount />
       </div>
     </div>
