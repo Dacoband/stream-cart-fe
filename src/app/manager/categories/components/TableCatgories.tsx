@@ -402,7 +402,6 @@ const TableCatgories: React.FC<Props> = ({
                               className="rounded"
                             />
                           ) : (
-                            // Placeholder khi không có ảnh
                             <div className="w-12 h-12 rounded bg-gray-100 flex items-center justify-center text-xs text-gray-500">
                               N/A
                             </div>
