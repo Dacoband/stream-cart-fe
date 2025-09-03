@@ -5,6 +5,7 @@ import BreadcrumbProduct from "./components/BreadcrumbProduct";
 import DescriptionProduct from "./components/DescriptionProduct";
 import InforShop from "./components/InforShop";
 import OperationProduct from "./components/OperationProduct";
+import ProductReview from "./components/ProductReview";
 import { getProductDetailById } from "@/services/api/product/product";
 import { ProductDetail } from "@/types/product/product";
 import NotFound from "@/components/common/NotFound";
@@ -80,6 +81,9 @@ export default function ProductPage() {
         </div>
         <div className="bg-white py-8 rounded-sm w-full mx-auto shadow">
           <DescriptionProduct product={product} />
+        </div>
+        <div className="bg-white py-8 rounded-sm w-full mx-auto shadow">
+          <ProductReview product={product} />
         </div>
       </div>
       <ChatBot open={openBot} setOpen={handleOpenBot} />
