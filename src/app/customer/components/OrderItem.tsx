@@ -280,29 +280,30 @@ export function OrderItem({ order }: OrderItemProps) {
               )}
 
               {order.orderStatus === 4 && (
-                <div>
-                <Button
-                  className="bg-gray-400 text-gray-600 hover:bg-black/90 rounded-none cursor-pointer"
-                 
-                >
-                  Hoàn trả hàng
-                </Button><Button
-                  className="bg-black text-white hover:bg-black/90 cursor-pointer"
-                  onClick={async (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    setConfirmReceiveOpen(true);
-                  }}
-                >
-                  Đã nhận hàng
-                </Button></div>
-                
+                <div className="flex gap-4">
+                  <Button
+                    type="button"
+                    className=" bg-gray-200 hover:bg-gray-300 rounded-none text-black hover:text-black/80 cursor-pointer"
+                  >
+                    Hoàn trả hàng
+                  </Button>
+                  <Button
+                    className="bg-[#B0F847] rounded-none text-black hover:bg-[#B0F847]/80 hover:text-black/80 cursor-pointer"
+                    onClick={async (e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setConfirmReceiveOpen(true);
+                    }}
+                  >
+                    Đã nhận hàng
+                  </Button>
+                </div>
               )}
 
               {order.orderStatus === 10 && (
                 <Button
                   variant="secondary"
-                  className="bg-[#B0F847] rounded-none text-black hover:brightness-95 cursor-pointer"
+                  className="bg-[#B0F847] rounded-none text-black hover:bg-[#B0F847]/80 hover:text-black/80 cursor-pointer"
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();

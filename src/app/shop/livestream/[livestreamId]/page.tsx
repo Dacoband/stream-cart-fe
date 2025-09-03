@@ -54,7 +54,6 @@ export default function SellerLiveStream() {
     fetchLivestreamData();
   }, [livestreamId]);
 
-  // Detect available media devices before connecting to LiveKit to avoid NotFoundError
   useEffect(() => {
     let mounted = true;
     async function detectDevices() {
@@ -80,7 +79,6 @@ export default function SellerLiveStream() {
         }
       } catch {
         if (mounted) {
-          // Fall back to enabling both; LiveKit will surface errors which we handle in onError
           setHasCamera(true);
           setHasMic(true);
           setDevicesChecked(true);
