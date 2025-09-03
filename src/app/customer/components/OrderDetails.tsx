@@ -7,7 +7,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { getOrderById } from "@/services/api/order/order";
 import { getOrderProductByOrderId } from "@/services/api/order/ordersItem";
 import { getProductDetailById } from "@/services/api/product/product";
+import { getOrderReviews } from "@/services/api/review/review";
+import { getshopById } from "@/services/api/shop/shop";
 import { Order, OrderItemResponse } from "@/types/order/order";
+import { Review } from "@/types/review/review";
+import { Shop } from "@/types/shop/shop";
 import {
   AlertCircle,
   ArrowLeft,
@@ -20,6 +24,7 @@ import {
   XCircle,
   NotebookPen,
   Store,
+  Star,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -122,10 +127,12 @@ function OrderDetails() {
   const orderId = (params as { id?: string }).id as string;
 
   const [order, setOrder] = useState<Order | null>(null);
+  const [shop, setShop] = useState<Shop | null>(null);
   const [orderItems, setOrderItems] = useState<OrderItemResponse[]>([]);
   const [itemAttributes, setItemAttributes] = useState<
     Record<string, Record<string, string>>
   >({});
+  const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
   const [cancelOpen, setCancelOpen] = useState(false);
   const [updating, setUpdating] = useState(false);
@@ -170,6 +177,38 @@ function OrderDetails() {
 
     fetchOrderDetail();
   }, [orderId]);
+
+  // Fetch order reviews
+  useEffect(() => {
+    const fetchReviews = async () => {
+      if (!orderId) return;
+      try {
+        const reviewsData = await getOrderReviews(orderId);
+        setReviews(reviewsData?.data || reviewsData || []);
+      } catch (error) {
+        console.error("Error fetching reviews:", error);
+        setReviews([]);
+      }
+    };
+    
+    fetchReviews();
+  }, [orderId]);
+
+  // Fetch shop information
+  useEffect(() => {
+    const fetchShop = async () => {
+      if (!order?.shopId) return;
+      try {
+        const shopData = await getshopById(order.shopId);
+        setShop(shopData || null);
+      } catch (error) {
+        console.error("Error fetching shop:", error);
+        setShop(null);
+      }
+    };
+    
+    fetchShop();
+  }, [order?.shopId]);
 
   // Fetch product attributes for items with variants
   useEffect(() => {
@@ -356,7 +395,7 @@ function OrderDetails() {
             <CardHeader className="mb-2">
               <CardTitle className="flex items-center gap-2">
                 <Store className="w-5 h-5 text-orange-600" />
-                {order.shopId}
+                {shop?.shopName || "Cửa hàng"}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -432,6 +471,81 @@ function OrderDetails() {
               )}
             </CardContent>
           </div>
+          {/* Reviews Section */}
+          {reviews.length > 0 && (
+            <div>
+              <CardHeader className="mb-2">
+                <CardTitle className="flex items-center gap-2">
+                  <Star className="w-5 h-5 text-yellow-600" />
+                  Đánh giá của bạn
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {reviews.map((review) => {
+                    const orderItem = orderItems.find(item => item.productId === review.productID);
+                    return (
+                      <div key={review.id} className="border rounded-lg p-4 bg-gray-50">
+                        <div className="flex gap-3 mb-3">
+                          {orderItem && (
+                            <Image
+                              src={orderItem.productImageUrl || "/assets/emptyData.png"}
+                              alt={orderItem.productName}
+                              width={48}
+                              height={48}
+                              className="w-12 h-12 object-cover rounded"
+                            />
+                          )}
+                          <div className="flex-1">
+                            <div className="font-medium text-sm mb-1">
+                              {orderItem?.productName || review.productName}
+                            </div>
+                            <div className="flex items-center gap-1 mb-2">
+                              {[1, 2, 3, 4, 5].map((star) => (
+                                <Star
+                                  key={star}
+                                  size={16}
+                                  className={
+                                    star <= review.rating
+                                      ? "fill-yellow-400 text-yellow-400"
+                                      : "text-gray-300"
+                                  }
+                                />
+                              ))}
+                              <span className="text-sm text-gray-600 ml-2">
+                                {new Date(review.createdAt).toLocaleDateString("vi-VN")}
+                              </span>
+                            </div>
+                            {review.reviewText && (
+                              <p className="text-sm text-gray-700 mb-2">
+                                {review.reviewText}
+                              </p>
+                            )}
+                            {review.imageUrls && review.imageUrls.length > 0 && (
+                              <div className="flex gap-2">
+                                {review.imageUrls
+                                  .filter((url) => url && typeof url === 'string' && url.trim() !== '')
+                                  .map((url, index) => (
+                                  <Image
+                                    key={index}
+                                    src={url.startsWith('http') ? url : `/assets/emptyData.png`}
+                                    alt={`Review image ${index + 1}`}
+                                    width={60}
+                                    height={60}
+                                    className="w-15 h-15 object-cover rounded border"
+                                  />
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </div>
+          )}
           <div>
             <CardHeader className="mb-2">
               <CardTitle className="flex items-center gap-2">

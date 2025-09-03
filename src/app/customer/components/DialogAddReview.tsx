@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Star, Upload, X } from "lucide-react";
 import { createReview } from "@/services/api/review/review";
+import { uploadImage } from "@/services/api/uploadImage";
 import { toast } from "sonner";
 import Image from "next/image";
 import { Order } from "@/types/order/order";
@@ -39,6 +40,7 @@ export function DialogAddReview({
     >
   >({});
   const [submitting, setSubmitting] = useState(false);
+  const [uploading, setUploading] = useState<Record<string, boolean>>({});
 
   // Initialize reviews state for all items when dialog opens
   React.useEffect(() => {
@@ -75,21 +77,35 @@ export function DialogAddReview({
     updateReview(productId, "rating", rating);
   };
 
-  const handleImageUpload = (productId: string, files: FileList | null) => {
+  const handleImageUpload = async (productId: string, files: FileList | null) => {
     if (!files) return;
-    const urls: string[] = [];
-    Array.from(files).forEach((file) => {
-      if (file.type.startsWith("image/")) {
-        urls.push(URL.createObjectURL(file));
-      }
-    });
+
+    setUploading(prev => ({ ...prev, [productId]: true }));
     
-    updateReview(productId, "imageUrls", [
-      ...reviews[productId]?.imageUrls || [],
-      ...urls,
-    ]);
-    
-    toast.success(`Đã thêm ${urls.length} ảnh`);
+    try {
+      const uploadPromises = Array.from(files).map(async (file) => {
+        if (file.type.startsWith("image/")) {
+          const response = await uploadImage(file);
+          return response.url || response.imageUrl || response; // Handle different response structures
+        }
+        return null;
+      });
+
+      const urls = await Promise.all(uploadPromises);
+      const validUrls = urls.filter(url => url !== null) as string[];
+      
+      updateReview(productId, "imageUrls", [
+        ...reviews[productId]?.imageUrls || [],
+        ...validUrls,
+      ]);
+      
+      toast.success(`Đã upload ${validUrls.length} ảnh thành công`);
+    } catch (error) {
+      console.error("Error uploading images:", error);
+      toast.error("Lỗi upload ảnh, vui lòng thử lại");
+    } finally {
+      setUploading(prev => ({ ...prev, [productId]: false }));
+    }
   };
 
   const removeImage = (productId: string, index: number) => {
@@ -126,7 +142,7 @@ export function DialogAddReview({
 
       await Promise.all(promises);
       
-      toast.success("Đã gửi đánh giá thành công!");
+      toast.success("Cảm ơn bạn đã đánh giá đơn hàng!");
       onOpenChange(false);
       onSuccess?.();
       
@@ -270,14 +286,16 @@ export function DialogAddReview({
                         handleImageUpload(item.productId!, e.target.files)
                       }
                       className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                      disabled={uploading[item.productId!]}
                     />
                     <Button
                       type="button"
                       variant="outline"
                       className="w-full border-dashed"
+                      disabled={uploading[item.productId!]}
                     >
                       <Upload size={16} className="mr-2" />
-                      Thêm hình ảnh
+                      {uploading[item.productId!] ? "Đang upload..." : "Thêm hình ảnh"}
                     </Button>
                   </div>
                 </div>
