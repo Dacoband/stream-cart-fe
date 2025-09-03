@@ -81,11 +81,6 @@ const items = [
     url: "/shop/profile-shop",
     icon: Store,
   },
-  {
-    title: "Cập nhật cá nhân",
-    url: "/shop/my-profile",
-    icon: UsersRound,
-  },
 ];
 
 export function AppSidebar() {
