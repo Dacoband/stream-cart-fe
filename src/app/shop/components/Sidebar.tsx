@@ -11,6 +11,7 @@ import {
   UsersRound,
   Zap,
   Crown,
+  Store,
 } from "lucide-react";
 import {
   Sidebar,
@@ -75,6 +76,16 @@ const items = [
     url: "/shop/my-membership",
     icon: Crown,
   },
+  {
+    title: "Cập nhật Shop",
+    url: "/shop/profile-shop",
+    icon: Store,
+  },
+  {
+    title: "Cập nhật cá nhân",
+    url: "/shop/my-profile",
+    icon: UsersRound,
+  },
 ];
 
 export function AppSidebar() {
@@ -84,7 +95,10 @@ export function AppSidebar() {
     user?.role === 3
       ? items.filter(
           (it) =>
-            it.url !== "/admin/transactions" && it.url !== "/shop/moderators"
+            it.url !== "/shop/profile-shop" &&
+            it.url !== "/shop/moderators" &&
+            it.url !== "/shop/my-membership" &&
+            it.url !== "/shop/memberships"
         )
       : items;
 
