@@ -5,7 +5,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
@@ -64,10 +63,7 @@ type Props = {
 
 const TableCatgories: React.FC<Props> = ({
   categories,
-  // loading,
-  // page,
-  // setPage,
-  // totalPages,
+
   onSearch,
   onRefresh,
   statusFilter,
@@ -80,8 +76,7 @@ const TableCatgories: React.FC<Props> = ({
     name: string;
     isDeleted: boolean;
   } | null>(null);
-  // const [detailCategory, setDetailCategory] = useState<Category | null>(null);
-  // const [loadingDetail, setLoadingDetail] = useState(false)
+
   const [loadingDetail, setLoadingDetail] = useState(false);
 
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
@@ -165,7 +160,7 @@ const TableCatgories: React.FC<Props> = ({
       toast.success(
         `${actionText} danh mục "${selectedCategory.name}" thành công!`
       );
-      onRefresh(); // Refresh the data after successful action
+      onRefresh();
     } catch (error) {
       console.error("Error deleting category:", error);
       toast.error(`Không thể ${action} danh mục. Vui lòng thử lại!`);
@@ -279,7 +274,7 @@ const TableCatgories: React.FC<Props> = ({
                     ? "Tất cả danh mục"
                     : statusFilter === false
                     ? "Đang hoạt động"
-                    : "Đã xóa"}
+                    : "Ngừng hoạt động"}
                   <ChevronDown className="ml-2 w-4 h-4" />
                 </Button>
               </DropdownMenuTrigger>
@@ -301,11 +296,14 @@ const TableCatgories: React.FC<Props> = ({
           <Table className="border-t border-gray-200">
             <TableHeader className="bg-[#B0F847]/50">
               <TableRow>
-                <TableHead className="w-[50%] text-base py-4 font-medium px-5">
+                <TableHead className="w-[20%] text-base py-4 font-medium px-5">
                   Tên danh mục
                 </TableHead>
                 <TableHead className="text-center text-base font-medium px-5">
                   Icon
+                </TableHead>
+                <TableHead className="text-base font-medium px-5">
+                  Mô tả
                 </TableHead>
                 <TableHead className="text-center text-base font-medium px-5">
                   Trạng thái
@@ -330,6 +328,9 @@ const TableCatgories: React.FC<Props> = ({
                         <Skeleton className="h-10 w-10 rounded" />
                       </div>
                     </TableCell>
+                    <TableCell>
+                      <Skeleton className="h-5 w-64" />
+                    </TableCell>
                     <TableCell className="text-center">
                       <Skeleton className="h-6 w-24 mx-auto rounded-full" />
                     </TableCell>
@@ -342,7 +343,7 @@ const TableCatgories: React.FC<Props> = ({
                 ))
               ) : categories.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={4}>
+                  <TableCell colSpan={5}>
                     <div className="flex flex-col items-center justify-center py-10">
                       <Image
                         src="/assets/nodata.png"
@@ -401,8 +402,7 @@ const TableCatgories: React.FC<Props> = ({
                               className="rounded"
                             />
                           ) : (
-                            // Placeholder khi không có ảnh
-                            <div className="w-10 h-10 rounded bg-gray-100 flex items-center justify-center text-xs text-gray-500">
+                            <div className="w-12 h-12 rounded bg-gray-100 flex items-center justify-center text-xs text-gray-500">
                               N/A
                             </div>
                           );
@@ -410,10 +410,19 @@ const TableCatgories: React.FC<Props> = ({
                       </div>
                     </TableCell>
 
+                    <TableCell className="align-middle px-5 max-w-[28rem]">
+                      <span
+                        className="text-sm text-gray-700 line-clamp-2"
+                        title={c.description || ""}
+                      >
+                        {c.description || ""}
+                      </span>
+                    </TableCell>
+
                     <TableCell className="text-center align-middle px-5">
                       {c.isDeleted ? (
                         <span className="px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-600">
-                          Đã xóa
+                          Ngừng hoạt động
                         </span>
                       ) : (
                         <span className="px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-600">
@@ -437,24 +446,11 @@ const TableCatgories: React.FC<Props> = ({
                             align="end"
                             onClick={(e) => e.stopPropagation()}
                           >
-                            <DropdownMenuLabel>Thao tác</DropdownMenuLabel>
-                            <DropdownMenuItem
-                              onClick={() => handleViewDetail(c.categoryId)}
-                            >
-                              Xem chi tiết
-                            </DropdownMenuItem>
                             <DropdownMenuItem
                               onClick={() => handleUpdateCategory(c)}
                             >
                               Chỉnh sửa
                             </DropdownMenuItem>
-                            {!c.isDeleted && (
-                              <DropdownMenuItem
-                                onClick={() => handleAddSubcategory(c)}
-                              >
-                                Thêm danh mục con
-                              </DropdownMenuItem>
-                            )}
                             <DropdownMenuSeparator />
                             {c.isDeleted ? (
                               <DropdownMenuItem
@@ -480,7 +476,7 @@ const TableCatgories: React.FC<Props> = ({
                                   )
                                 }
                               >
-                                Xóa
+                                Ngừng hoạt động
                               </DropdownMenuItem>
                             )}
                           </DropdownMenuContent>
@@ -491,7 +487,7 @@ const TableCatgories: React.FC<Props> = ({
                   expandedItems.has(c.categoryId) &&
                   getSubcategories(c.categoryId).length === 0 ? (
                     <TableRow key={`sub-${c.categoryId}`}>
-                      <TableCell colSpan={4}>
+                      <TableCell colSpan={5}>
                         <div className="flex items-center justify-center py-4">
                           <div className="text-gray-500 text-sm">
                             Không có danh mục con

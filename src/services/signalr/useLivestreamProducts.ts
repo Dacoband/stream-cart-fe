@@ -45,8 +45,8 @@ export function useLivestreamProducts(livestreamId?: string) {
           
           if (targetId) {
             console.log("[DEBUG] 🎯 Updating stock for product:", targetId, "newStock:", newStock);
-            console.log("[DEBUG] Current products before update:", products.map(p => ({id: p.id, stock: p.stock, name: p.productName})));
             setProducts((prev) => {
+              console.log("[DEBUG] Current products before update:", prev.map(p => ({id: p.id, stock: p.stock, name: p.productName})));
               const updated = prev.map((it) => (it.id === targetId ? { ...it, stock: Number.isFinite(newStock) ? newStock : it.stock } : it));
               console.log("[DEBUG] 🎯 Products after stock update:", updated.map(p => ({id: p.id, stock: p.stock, name: p.productName})));
               return updated;
@@ -105,7 +105,7 @@ export function useLivestreamProducts(livestreamId?: string) {
     return () => {
       mounted = false;
     };
-  }, [livestreamId,products]);
+  }, [livestreamId]);
 
   return useMemo(() => ({ products, loading, error }), [products, loading, error]);
 }

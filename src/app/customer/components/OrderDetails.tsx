@@ -1,42 +1,58 @@
 "use client";
 import PriceTag from "@/components/common/PriceTag";
-import { Badge } from "@/components/ui/badge";
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
+// Breadcrumb components were imported previously but unused; removed to satisfy lint.
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getOrderById } from "@/services/api/order/order";
 import { getOrderProductByOrderId } from "@/services/api/order/ordersItem";
 import { getProductDetailById } from "@/services/api/product/product";
+import { getOrderReviews } from "@/services/api/review/review";
+import { getshopById } from "@/services/api/shop/shop";
 import { Order, OrderItemResponse } from "@/types/order/order";
+import { Review } from "@/types/review/review";
+import { Shop } from "@/types/shop/shop";
 import {
   AlertCircle,
   ArrowLeft,
-  Calendar,
   CheckCircle,
   Clock,
   CreditCard,
   MapPin,
   Package,
-  Phone,
   Truck,
   XCircle,
+  NotebookPen,
+  Store,
+  Star,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { updateOrderStatus } from "@/services/api/order/order";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import StatusOrderDetail from "./StatusOrderDetail";
+import { Input } from "@/components/ui/input";
 
 function getStatusInfo(status: number) {
   const statusMap = {
+    0: {
+      label: "Chờ thanh toán",
+      color: "bg-yellow-100 text-yellow-800 border-yellow-200",
+      icon: Clock,
+      description: "Bạn cần thanh toán để tiếp tục đơn hàng",
+    },
     1: {
       label: "Chờ xác nhận",
       color: "bg-yellow-100 text-yellow-800 border-yellow-200",
@@ -44,16 +60,16 @@ function getStatusInfo(status: number) {
       description: "Đơn hàng đang chờ shop xác nhận",
     },
     2: {
-      label: "Đã xác nhận",
+      label: "Đang chuẩn bị",
       color: "bg-blue-100 text-blue-800 border-blue-200",
       icon: CheckCircle,
-      description: "Shop đã xác nhận đơn hàng",
+      description: "Shop đang đóng gói",
     },
     3: {
-      label: "Đang chuẩn bị",
+      label: "Chờ lấy hàng",
       color: "bg-purple-100 text-purple-800 border-purple-200",
       icon: Package,
-      description: "Shop đang chuẩn bị hàng",
+      description: "Đơn vị vận chuyển đang đến lấy hàng",
     },
     7: {
       label: "Đang giao hàng",
@@ -73,6 +89,12 @@ function getStatusInfo(status: number) {
       icon: XCircle,
       description: "Đơn hàng đã bị hủy",
     },
+    10: {
+      label: "Đã hoàn thành",
+      color: "bg-green-100 text-green-800 border-green-200",
+      icon: CheckCircle,
+      description: "Đơn hàng đã hoàn thành",
+    },
   };
 
   return (
@@ -85,17 +107,35 @@ function getStatusInfo(status: number) {
   );
 }
 
+// Simple masking helpers for privacy-safe rendering
+function maskPhone(phone?: string) {
+  if (!phone) return "";
+  return phone.replace(/(\d{3})\d{4}(\d{3,})/, "$1****$2");
+}
+
+function maskAddress(addr?: string) {
+  if (!addr) return "";
+  // Keep start and end, mask middle part
+  if (addr.length <= 8) return addr;
+  return addr.slice(0, 6) + "***" + addr.slice(-4);
+}
+
 function OrderDetails() {
   const params = useParams();
+  const router = useRouter();
   // Customer route is /customer/(hasSidebar)/order-details/[id]
   const orderId = (params as { id?: string }).id as string;
 
   const [order, setOrder] = useState<Order | null>(null);
+  const [shop, setShop] = useState<Shop | null>(null);
   const [orderItems, setOrderItems] = useState<OrderItemResponse[]>([]);
   const [itemAttributes, setItemAttributes] = useState<
     Record<string, Record<string, string>>
   >({});
+  const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
+  const [cancelOpen, setCancelOpen] = useState(false);
+  const [updating, setUpdating] = useState(false);
 
   useEffect(() => {
     const fetchOrderDetail = async () => {
@@ -138,6 +178,38 @@ function OrderDetails() {
     fetchOrderDetail();
   }, [orderId]);
 
+  // Fetch order reviews
+  useEffect(() => {
+    const fetchReviews = async () => {
+      if (!orderId) return;
+      try {
+        const reviewsData = await getOrderReviews(orderId);
+        setReviews(reviewsData?.data || reviewsData || []);
+      } catch (error) {
+        console.error("Error fetching reviews:", error);
+        setReviews([]);
+      }
+    };
+    
+    fetchReviews();
+  }, [orderId]);
+
+  // Fetch shop information
+  useEffect(() => {
+    const fetchShop = async () => {
+      if (!order?.shopId) return;
+      try {
+        const shopData = await getshopById(order.shopId);
+        setShop(shopData || null);
+      } catch (error) {
+        console.error("Error fetching shop:", error);
+        setShop(null);
+      }
+    };
+    
+    fetchShop();
+  }, [order?.shopId]);
+
   // Fetch product attributes for items with variants
   useEffect(() => {
     const fetchAttributes = async () => {
@@ -164,6 +236,20 @@ function OrderDetails() {
 
     fetchAttributes();
   }, [orderItems]);
+
+  const handleCancelOrder = async () => {
+    if (!order) return;
+    try {
+      setUpdating(true);
+      await updateOrderStatus(order.id, 5);
+      toast.success("Đã hủy đơn hàng");
+      router.refresh();
+    } catch {
+      toast.error("Không thể hủy đơn hàng");
+    } finally {
+      setUpdating(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -207,304 +293,360 @@ function OrderDetails() {
   }
 
   const statusInfo = getStatusInfo(order.orderStatus);
-  const StatusIcon = statusInfo.icon;
 
   return (
-    <div className="min-h-screen ">
+    <div className="h-[calc(100vh-9rem)] overflow-y-auto custom-scroll ">
       {/* Header */}
-      <div className="bg-white shadow-sm sticky top-0 z-10">
-        <div className="max-w-4xl mx-auto px-4 py-6">
-          <Breadcrumb>
-            <BreadcrumbList>
-              <BreadcrumbItem>
-                <BreadcrumbLink asChild>
-                  <Link
-                    href="/customer/manage-orders"
-                    className="text-blue-600 hover:text-blue-800"
-                  >
-                    Đơn hàng của tôi
-                  </Link>
-                </BreadcrumbLink>
-              </BreadcrumbItem>
-              <BreadcrumbSeparator />
-              <BreadcrumbItem>
-                <BreadcrumbPage className="font-medium">
-                  {order.orderCode}
-                </BreadcrumbPage>
-              </BreadcrumbItem>
-            </BreadcrumbList>
-          </Breadcrumb>
+      <div className="bg-white flex py-4 px-10 justify-between shadow-sm sticky top-0 z-10">
+        <div className="">
+          <Link
+            href="/customer/manage-orders"
+            className="text-lime-600 flex items-center  hover:text-lime-800 text-base"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Quay lại đơn hàng
+          </Link>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-black/80 mr-2 pr-2 border-r">
+            Mã đơn: {order.orderCode}
+          </span>
+          <span
+            className={`inline-block py-1 px-2 text-xs font-medium border rounded ${statusInfo.color}`}
+          >
+            {statusInfo.label}
+          </span>
         </div>
       </div>
 
-      <div className="max-w-4xl mx-auto px-4 py-8 space-y-6">
+      <div className="w-full mx-auto px-4 py-8 space-y-6">
         {/* Order Status Card */}
-        <Card className="overflow-hidden">
-          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 px-6 py-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="p-3 bg-white rounded-full shadow-sm">
-                  <StatusIcon className="w-6 h-6 text-blue-600" />
-                </div>
-                <div>
-                  <h1 className="text-2xl font-bold text-gray-900">
-                    Đơn hàng #{order.orderCode}
-                  </h1>
-                  <p className="text-gray-600 mt-1">
-                    Đặt hàng lúc{" "}
-                    {new Date(order.orderDate).toLocaleString("vi-VN")}
+        <StatusOrderDetail order={order} />
+        <Card className="rounded-none space-y-5">
+          <div className="grid grid-cols-2 gap-5">
+            <div>
+              <CardHeader className="mb-2">
+                <CardTitle className="flex items-center gap-2">
+                  <MapPin className="w-5 h-5 text-lime-600" />
+                  Địa chỉ giao hàng
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-gray-600">
+                    <span>Người nhận: </span>
+                    {order.shippingAddress.fullName}
+                  </p>
+                  <p className="text-sm text-gray-600">
+                    <span>SĐT: </span> {maskPhone(order.shippingAddress.phone)}
+                  </p>
+
+                  <p className="text-sm text-gray-600">
+                    <span>Địa chỉ: </span>{" "}
+                    {maskAddress(order.shippingAddress.addressLine1)}
                   </p>
                 </div>
-              </div>
-              <Badge
-                className={`px-4 py-2 text-sm font-medium ${statusInfo.color}`}
-              >
-                {statusInfo.label}
-              </Badge>
+              </CardContent>
             </div>
-            <p className="text-gray-700 mt-3 text-sm">
-              {statusInfo.description}
-            </p>
-          </div>
-
-          {/* Tracking Information */}
-          {order.trackingCode && (
-            <CardContent className="border-t bg-blue-25">
-              <div className="flex items-center gap-4 p-4 bg-blue-50 rounded-lg">
-                <Truck className="w-8 h-8 text-blue-600" />
-                <div className="flex-1">
-                  <h3 className="font-semibold text-gray-900">
-                    Thông tin vận chuyển
-                  </h3>
-                  <div className="mt-2 space-y-1">
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-gray-600">Mã vận đơn:</span>
-                      <span className="font-mono text-sm font-medium">
-                        {order.trackingCode}
-                      </span>
+            <div className="h-full">
+              {order.trackingCode && (
+                <>
+                  <CardHeader className="mb-2">
+                    <CardTitle className="flex items-center gap-2">
+                      <Truck className="w-5 h-5 text-lime-600" />
+                      Thông tin vận chuyển
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2">
+                      <div className="flex justify-between">
+                        <span>Mã vận đơn:</span>
+                        <span className="font-medium">
+                          {order.trackingCode}
+                        </span>
+                      </div>
+                      {order.estimatedDeliveryDate && (
+                        <div className="flex justify-between">
+                          <span>Ngày giao dự kiến:</span>
+                          <span>
+                            {new Date(
+                              order.estimatedDeliveryDate
+                            ).toLocaleDateString("vi-VN")}
+                          </span>
+                        </div>
+                      )}
+                      {order.actualDeliveryDate && (
+                        <div className="flex justify-between">
+                          <span>Ngày giao thực tế:</span>
+                          <span>
+                            {new Date(
+                              order.actualDeliveryDate
+                            ).toLocaleDateString("vi-VN")}
+                          </span>
+                        </div>
+                      )}
                     </div>
-                    {order.estimatedDeliveryDate && (
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm text-gray-600">
-                          Dự kiến giao:
-                        </span>
-                        <span className="text-sm font-medium">
-                          {new Date(
-                            order.estimatedDeliveryDate
-                          ).toLocaleDateString("vi-VN")}
-                        </span>
-                      </div>
-                    )}
-                    {order.actualDeliveryDate && (
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm text-gray-600">Đã giao:</span>
-                        <span className="text-sm font-medium text-green-600">
-                          {new Date(
-                            order.actualDeliveryDate
-                          ).toLocaleDateString("vi-VN")}
-                        </span>
-                      </div>
-                    )}
-                  </div>
+                  </CardContent>
+                </>
+              )}
+            </div>
+          </div>
+          <div>
+            <CardHeader className="mb-2">
+              <CardTitle className="flex items-center gap-2">
+                <Store className="w-5 h-5 text-orange-600" />
+                {shop?.shopName || "Cửa hàng"}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {orderItems.length === 0 ? (
+                <div className="text-center py-8 text-gray-500">
+                  <Package className="w-12 h-12 mx-auto mb-2 text-gray-300" />
+                  <p>Không có sản phẩm trong đơn hàng</p>
                 </div>
-              </div>
-            </CardContent>
-          )}
-        </Card>
+              ) : (
+                <div className="border rounded-md overflow-hidden">
+                  <div className="grid grid-cols-20 bg-gray-50 text-sm font-medium text-gray-600 px-4 py-2">
+                    <div className="col-span-1">STT</div>
+                    <div className="col-span-7">Sản phẩm</div>
+                    <div className="col-span-4 text-right">Đơn giá</div>
+                    <div className="col-span-4 text-right">Số lượng</div>
+                    <div className="col-span-4 text-right">Thành tiền</div>
+                  </div>
+                  {orderItems.map((item, idx) => {
+                    const attrs = itemAttributes[item.id];
 
-        {/* Products Card */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Package className="w-5 h-5 text-blue-600" />
-              Sản phẩm đã đặt ({orderItems.length} sản phẩm)
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {orderItems.length === 0 ? (
-              <div className="text-center py-12 text-gray-500">
-                <Package className="w-16 h-16 mx-auto mb-4 text-gray-300" />
-                <p>Không có sản phẩm trong đơn hàng</p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {orderItems.map((item, idx) => {
-                  const attrs = itemAttributes[item.id];
-                  const isGift =
-                    (item.unitPrice ?? 0) === 0 || (item.totalPrice ?? 0) === 0;
-                  const attrsText = attrs
-                    ? Object.entries(attrs)
-                        .map(([key, value]) => `${key}: ${value}`)
-                        .join(", ")
-                    : "";
-
-                  return (
-                    <div
-                      key={item.id}
-                      className={`flex gap-4 p-4 rounded-lg border ${
-                        idx !== orderItems.length - 1 ? "border-b" : ""
-                      } hover:bg-gray-50 transition-colors`}
-                    >
-                      <Image
-                        src={item.productImageUrl || "/assets/emptydata.png"}
-                        alt={item.productName}
-                        width={80}
-                        height={80}
-                        className="w-20 h-20 object-cover rounded-lg border"
-                      />
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 flex-wrap mb-1">
-                              {isGift && (
-                                <Badge className="text-xs bg-rose-100 text-rose-700 border-rose-200">
-                                  🎁 Quà tặng
-                                </Badge>
-                              )}
-                              <h4 className="font-semibold text-gray-900 line-clamp-2">
+                    const attrsText = attrs
+                      ? Object.entries(attrs)
+                          .map(([key, value]) => `${key}: ${value}`)
+                          .join(", ")
+                      : "";
+                    return (
+                      <div
+                        key={item.id}
+                        className="grid grid-cols-20 gap-3 px-4 py-3 border-t"
+                      >
+                        <div className="col-span-1 flex items-center text-sm text-gray-700">
+                          {idx + 1}
+                        </div>
+                        <div className="col-span-7 flex gap-3">
+                          <Image
+                            src={
+                              item.productImageUrl || "/assets/emptydata.png"
+                            }
+                            alt={item.productName}
+                            width={64}
+                            height={64}
+                            className="w-16 h-16 object-cover rounded"
+                          />
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <h4
+                                className="font-medium text-gray-900 truncate"
+                                title={item.productName}
+                              >
                                 {item.productName}
                               </h4>
                             </div>
                             {attrsText && (
-                              <p className="text-sm text-gray-600 mb-2">
+                              <div className="text-xs text-gray-600 mt-1">
                                 {attrsText}
-                              </p>
+                              </div>
                             )}
-                            <div className="flex items-center gap-4 text-sm">
-                              <span className="text-gray-500">
-                                <PriceTag value={item.unitPrice} /> ×{" "}
-                                {item.quantity}
+                          </div>
+                        </div>
+                        <div className="col-span-4 text-right text-sm text-gray-700">
+                          <PriceTag value={item.unitPrice} />
+                        </div>
+                        <div className="col-span-4 text-right text-sm text-gray-700">
+                          {item.quantity}
+                        </div>
+                        <div className="col-span-4 text-right font-medium text-rose-600">
+                          <PriceTag value={item.totalPrice} />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </CardContent>
+          </div>
+          {/* Reviews Section */}
+          {reviews.length > 0 && (
+            <div>
+              <CardHeader className="mb-2">
+                <CardTitle className="flex items-center gap-2">
+                  <Star className="w-5 h-5 text-yellow-600" />
+                  Đánh giá của bạn
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {reviews.map((review) => {
+                    const orderItem = orderItems.find(item => item.productId === review.productID);
+                    return (
+                      <div key={review.id} className="border rounded-lg p-4 bg-gray-50">
+                        <div className="flex gap-3 mb-3">
+                          {orderItem && (
+                            <Image
+                              src={orderItem.productImageUrl || "/assets/emptyData.png"}
+                              alt={orderItem.productName}
+                              width={48}
+                              height={48}
+                              className="w-12 h-12 object-cover rounded"
+                            />
+                          )}
+                          <div className="flex-1">
+                            <div className="font-medium text-sm mb-1">
+                              {orderItem?.productName || review.productName}
+                            </div>
+                            <div className="flex items-center gap-1 mb-2">
+                              {[1, 2, 3, 4, 5].map((star) => (
+                                <Star
+                                  key={star}
+                                  size={16}
+                                  className={
+                                    star <= review.rating
+                                      ? "fill-yellow-400 text-yellow-400"
+                                      : "text-gray-300"
+                                  }
+                                />
+                              ))}
+                              <span className="text-sm text-gray-600 ml-2">
+                                {new Date(review.createdAt).toLocaleDateString("vi-VN")}
                               </span>
                             </div>
-                          </div>
-                          <div className="text-right">
-                            <div className="font-semibold text-lg text-rose-600">
-                              <PriceTag value={item.totalPrice} />
-                            </div>
+                            {review.reviewText && (
+                              <p className="text-sm text-gray-700 mb-2">
+                                {review.reviewText}
+                              </p>
+                            )}
+                            {review.imageUrls && review.imageUrls.length > 0 && (
+                              <div className="flex gap-2">
+                                {review.imageUrls
+                                  .filter((url) => url && typeof url === 'string' && url.trim() !== '')
+                                  .map((url, index) => (
+                                  <Image
+                                    key={index}
+                                    src={url.startsWith('http') ? url : `/assets/emptyData.png`}
+                                    alt={`Review image ${index + 1}`}
+                                    width={60}
+                                    height={60}
+                                    className="w-15 h-15 object-cover rounded border"
+                                  />
+                                ))}
+                              </div>
+                            )}
                           </div>
                         </div>
                       </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </div>
+          )}
+          <div>
+            <CardHeader className="mb-2">
+              <CardTitle className="flex items-center gap-2">
+                <NotebookPen className="w-5 h-5 text-lime-600" />
+                Ghi chú từ khách hàng
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {order.customerNotes ? (
+                <Input
+                  className="text-gray-700"
+                  value={order.customerNotes}
+                  readOnly
+                />
+              ) : (
+                <Input
+                  className="text-gray-500 rounded-none"
+                  value="Không có ghi chú"
+                  readOnly
+                />
+              )}
+            </CardContent>
+          </div>
+        </Card>
+        <Card className="rounded-none">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <CreditCard className="w-5 h-5 text-purple-600" />
+              Thông tin thanh toán
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              <div className="flex justify-between">
+                <span>Phương thức thanh toán:</span>
+                <span>
+                  {order.paymentMethod === "COD"
+                    ? "Thanh toán COD"
+                    : order.paymentMethod === "BankTransfer"
+                    ? "Thanh toán QR"
+                    : "Không xác định"}
+                </span>
               </div>
-            )}
+              <div className="flex justify-between">
+                <span>Tổng tiền hàng:</span>
+                <span>
+                  <PriceTag value={order.totalPrice} />
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span>Phí vận chuyển:</span>
+                <span>
+                  <PriceTag value={order.shippingFee} />
+                </span>
+              </div>
+              {order.discountAmount > 0 && (
+                <div className="flex justify-between text-orange-600">
+                  <span>Giảm giá:</span>
+                  <span>
+                    -<PriceTag value={order.discountAmount} />
+                  </span>
+                </div>
+              )}
+              <hr />
+              <div className="flex justify-between font-medium text-xl">
+                <span>Tổng thanh toán:</span>
+                <span className="text-rose-600">
+                  <PriceTag value={order.finalAmount} />
+                </span>
+              </div>
+            </div>
           </CardContent>
         </Card>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Delivery Address */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <MapPin className="w-5 h-5 text-green-600" />
-                Địa chỉ giao hàng
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                <div className="flex items-center gap-2">
-                  <span className="font-semibold text-gray-900">
-                    {order.shippingAddress.fullName}
-                  </span>
-                </div>
-                <div className="flex items-center gap-2 text-gray-600">
-                  <Phone className="w-4 h-4" />
-                  <span>{order.shippingAddress.phone}</span>
-                </div>
-                <div className="flex items-start gap-2 text-gray-600">
-                  <MapPin className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                  <span>{order.shippingAddress.addressLine1}</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Payment Information */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <CreditCard className="w-5 h-5 text-purple-600" />
-                Thông tin thanh toán
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Phương thức:</span>
-                  <span className="font-medium">
-                    {order.paymentMethod === "COD"
-                      ? "Thanh toán khi nhận hàng (COD)"
-                      : order.paymentMethod === "BankTransfer"
-                      ? "Thanh toán qua QR"
-                      : "Không xác định"}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Tổng tiền hàng:</span>
-                  <span>
-                    <PriceTag value={order.totalPrice} />
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Phí vận chuyển:</span>
-                  <span>
-                    <PriceTag value={order.shippingFee} />
-                  </span>
-                </div>
-                {order.discountAmount > 0 && (
-                  <div className="flex justify-between text-green-600">
-                    <span>Giảm giá:</span>
-                    <span>
-                      -<PriceTag value={order.discountAmount} />
-                    </span>
-                  </div>
-                )}
-                <hr className="my-2" />
-                <div className="flex justify-between items-center">
-                  <span className="font-semibold text-lg">
-                    Tổng thanh toán:
-                  </span>
-                  <span className="font-bold text-xl text-rose-600">
-                    <PriceTag value={order.finalAmount} />
-                  </span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Customer Notes */}
-        {order.customerNotes && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Calendar className="w-5 h-5 text-orange-600" />
-                Ghi chú của bạn
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
-                <p className="text-gray-700">{order.customerNotes}</p>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Action Buttons */}
-        <div className="flex gap-4 justify-center pt-6">
-          <Link href="/customer/manage-orders">
-            <Button variant="outline" size="lg">
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Quay lại đơn hàng của tôi
-            </Button>
-          </Link>
-          {order.orderStatus === 5 && (
-            <Button size="lg" className="bg-blue-600 hover:bg-blue-700">
-              Đánh giá sản phẩm
-            </Button>
-          )}
-        </div>
+        {/* Confirm cancel dialog */}
+        <AlertDialog open={cancelOpen} onOpenChange={setCancelOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Hủy đơn hàng</AlertDialogTitle>
+              <AlertDialogDescription>
+                Bạn có chắc chắn muốn hủy đơn hàng này? Hành động này không thể
+                hoàn tác.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={updating}>
+                Quay lại
+              </AlertDialogCancel>
+              <AlertDialogAction
+                className="bg-red-600 hover:bg-red-600/90 text-white"
+                disabled={updating}
+                onClick={async () => {
+                  await handleCancelOrder();
+                  setCancelOpen(false);
+                }}
+              >
+                Xác nhận hủy
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </div>
   );

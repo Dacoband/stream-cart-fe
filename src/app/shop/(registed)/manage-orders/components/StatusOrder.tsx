@@ -114,7 +114,7 @@ const statusConfig: Record<
     textColor: "text-green-700",
     borderColor: "border-green-200",
     needsAction: false,
-    description: "Đơn hàng đã giao thành công",
+    description: "Đơn hàng đã giao thành công, tiền đã vào ví của bạn",
   },
   5: {
     label: "Đã hủy",
@@ -148,7 +148,12 @@ export default function StatusOrder({ order, onStatusUpdated }: Props) {
   } as const;
 
   const currentConfig = statusConfig[order.orderStatus] || defaultConfig;
-  const currentIndex = Math.max(0, statusFlow.indexOf(order.orderStatus));
+  const effectiveStatusForTimeline =
+    order.orderStatus === 10 ? 4 : order.orderStatus;
+  const currentIndex = Math.max(
+    0,
+    statusFlow.indexOf(effectiveStatusForTimeline)
+  );
 
   const deadlineMessage =
     order.orderStatus === 1
@@ -449,7 +454,6 @@ export default function StatusOrder({ order, onStatusUpdated }: Props) {
           </AlertDialogContent>
         </AlertDialog>
 
-        {/* Cancel to 5 */}
         <AlertDialog open={cancelOpen} onOpenChange={setCancelOpen}>
           <AlertDialogContent>
             <AlertDialogHeader>

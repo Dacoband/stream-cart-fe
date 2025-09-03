@@ -294,9 +294,7 @@ function TableOrder() {
                     <div>
                       {order.paymentMethod === "COD"
                         ? "Thanh toán COD"
-                        : order.paymentMethod === "BankTransfer"
-                        ? "Thanh toán QR"
-                        : "Không xác định"}
+                        : "Thanh toán QR"}
                     </div>
 
                     <div>

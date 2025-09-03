@@ -44,7 +44,6 @@ function Newpage() {
   }, [date]);
   const formatDate = (date: Date) => {
     return date.toLocaleDateString("sv-SE");
-    // sv-SE cho ra yyyy-MM-dd
   };
   const canCreate = useMemo(() => {
     if (!date || slot == null) return false;
