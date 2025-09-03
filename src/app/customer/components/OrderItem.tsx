@@ -26,6 +26,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { DialogAddReview } from "./DialogAddReview";
 interface OrderItemProps {
   order: Order;
 }
@@ -39,6 +40,7 @@ export function OrderItem({ order }: OrderItemProps) {
   >({});
   const [cancelOpen, setCancelOpen] = useState(false);
   const [confirmReceiveOpen, setConfirmReceiveOpen] = useState(false);
+  const [reviewDialogOpen, setReviewDialogOpen] = useState(false);
   const [updating, setUpdating] = useState(false);
 
   useEffect(() => {
@@ -278,7 +280,13 @@ export function OrderItem({ order }: OrderItemProps) {
               )}
 
               {order.orderStatus === 4 && (
+                <div>
                 <Button
+                  className="bg-gray-400 text-gray-600 hover:bg-black/90 rounded-none cursor-pointer"
+                 
+                >
+                  Hoàn trả hàng
+                </Button><Button
                   className="bg-black text-white hover:bg-black/90 cursor-pointer"
                   onClick={async (e) => {
                     e.preventDefault();
@@ -287,13 +295,19 @@ export function OrderItem({ order }: OrderItemProps) {
                   }}
                 >
                   Đã nhận hàng
-                </Button>
+                </Button></div>
+                
               )}
 
               {order.orderStatus === 10 && (
                 <Button
                   variant="secondary"
                   className="bg-[#B0F847] rounded-none text-black hover:brightness-95 cursor-pointer"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setReviewDialogOpen(true);
+                  }}
                 >
                   Đánh giá
                 </Button>
@@ -357,6 +371,17 @@ export function OrderItem({ order }: OrderItemProps) {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+
+        {/* Review Dialog */}
+        <DialogAddReview
+          open={reviewDialogOpen}
+          onOpenChange={setReviewDialogOpen}
+          order={order}
+          onSuccess={() => {
+            // Optionally refresh data or show success message
+            router.refresh();
+          }}
+        />
       </Card>
     </Link>
   );
