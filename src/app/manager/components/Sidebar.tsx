@@ -9,6 +9,7 @@ import {
   Wallet,
   Gem,
   ClipboardCheck,
+  PackageSearch,
 } from 'lucide-react'
 import {
   Sidebar,
@@ -25,6 +26,11 @@ const items = [
     title: 'Thống kê',
     url: '/manager/dashboard',
     icon: PieChart,
+  },
+  {
+    title: 'Hoàn hàng',
+    url: '/manager/refund',
+    icon: PackageSearch,
   },
 
   {
