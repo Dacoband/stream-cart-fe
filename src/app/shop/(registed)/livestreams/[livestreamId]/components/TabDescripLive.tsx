@@ -22,6 +22,7 @@ import type {
   LivestreamProduct,
 } from "@/types/livestream/livestream";
 import AlertDelete from "../../components/AlertDeleteLive";
+import UpdateLivestreamModal from "./UpdateLivestreamModal";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 interface TabDescripLiveProps {
@@ -37,6 +38,7 @@ export default function TabDescripLive(props: TabDescripLiveProps) {
   const [confirmDeleteLivestream, setConfirmDeleteLivestream] =
     useState<Livestream | null>(null);
   const [loadingDelete, setLoadingDelete] = useState(false);
+  const [showUpdateModal, setShowUpdateModal] = useState(false);
   const getActionLabel = useCallback(
     (ls: Livestream) => {
       if (ls.actualEndTime) return "Đã kết thúc";
@@ -249,7 +251,7 @@ export default function TabDescripLive(props: TabDescripLiveProps) {
 
             if (isScheduledUpcoming) {
               return (
-                <div>
+                <div className="flex gap-4">
                   <Button
                     size="sm"
                     variant="outline"
@@ -258,7 +260,9 @@ export default function TabDescripLive(props: TabDescripLiveProps) {
                   >
                     Sắp diễn ra
                   </Button>{" "}
-                  <Button>Cập nhật LiveStream</Button>
+                  <Button onClick={() => setShowUpdateModal(true)}>
+                    Cập nhật LiveStream
+                  </Button>
                   <Button
                     variant="destructive"
                     onClick={() => setConfirmDeleteLivestream(livestream)}
@@ -270,7 +274,7 @@ export default function TabDescripLive(props: TabDescripLiveProps) {
             }
 
             if (livestream.status) {
-              // Trạng thái đang Live
+              // Trạng thái đang Live - chỉ hiển thị nút tiếp tục
               return (
                 <Button
                   size="sm"
@@ -284,22 +288,34 @@ export default function TabDescripLive(props: TabDescripLiveProps) {
             }
 
             return (
-              <Button
-                size="sm"
-                variant="outline"
-                className={
-                  livestream.actualEndTime
-                    ? "text-gray-700 border-gray-500 cursor-not-allowed bg-white"
-                    : "text-blue-600 border-blue-600 cursor-pointer hover:text-blue-400 hover:border-blue-400 hover:bg-white"
-                }
-                onClick={() =>
-                  !livestream.actualEndTime &&
-                  handleStartLivestream(livestream.id)
-                }
-                disabled={!!livestream.actualEndTime}
-              >
-                {getActionLabel(livestream)}
-              </Button>
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className={
+                    livestream.actualEndTime
+                      ? "text-gray-700 border-gray-500 cursor-not-allowed bg-white"
+                      : "text-blue-600 border-blue-600 cursor-pointer hover:text-blue-400 hover:border-blue-400 hover:bg-white"
+                  }
+                  onClick={() =>
+                    !livestream.actualEndTime &&
+                    handleStartLivestream(livestream.id)
+                  }
+                  disabled={!!livestream.actualEndTime}
+                >
+                  {getActionLabel(livestream)}
+                </Button>
+                
+                {/* Nút cập nhật cho livestream đã kết thúc hoặc chưa bắt đầu */}
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="text-green-600 border-green-600 cursor-pointer hover:text-green-400 hover:border-green-400 hover:bg-white bg-white"
+                  onClick={() => setShowUpdateModal(true)}
+                >
+                  Cập nhật
+                </Button>
+              </div>
             );
           })()}
         </div>
@@ -309,6 +325,16 @@ export default function TabDescripLive(props: TabDescripLiveProps) {
           loading={loadingDelete}
           onCancel={() => setConfirmDeleteLivestream(null)}
           onConfirm={handleConfirmDelete}
+        />
+        
+        <UpdateLivestreamModal
+          open={showUpdateModal}
+          livestream={livestream}
+          onClose={() => setShowUpdateModal(false)}
+          onSuccess={() => {
+            onReload?.();
+            toast.success("Cập nhật livestream thành công!");
+          }}
         />
       </div>
     </div>
