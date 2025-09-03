@@ -185,3 +185,44 @@ export const searchProducts = async (params: ProductSearchParams): Promise<Produ
   }
 };
 
+export const updateProduct = async (
+  id: string,
+  data: {
+    productName?: string;
+    description?: string;
+    sku?: string;
+    categoryId?: string;
+    basePrice?: number;
+    discountPrice?: number;
+    weight?: number;
+    length?: number;
+    width?: number;
+    height?: number;
+    hasVariant?: boolean;
+  }
+) => {
+  try {
+    if (!id) throw new Error('Missing product id');
+    const token = localStorage.getItem('token');
+    if (!token) throw new Error('Not found token.');
+
+    const payload: Record<string, unknown> = {};
+    Object.entries(data).forEach(([k, v]) => {
+      if (v !== undefined && v !== null) {
+        payload[k] = v;
+      }
+    });
+
+    const response = await rootApi.put(`products/${id}`, payload, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    return response.data?.data || response.data;
+  } catch (error) {
+    console.error('Error updating product:', error);
+    throw error;
+  }
+};
+

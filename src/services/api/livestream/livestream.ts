@@ -173,21 +173,35 @@ export const endLivestreamById = async (Id: string) => {
   }
 };
 
-export const updateLivestream = async (Id: string,data:UpdateLivestream ) => {
+export const updateLivestream = async (Id: string, data: UpdateLivestream) => {
   try {
-    
-const token = localStorage.getItem("token");
+    const token = localStorage.getItem("token");
     if (!token) {
       throw new Error("Not found token.");
     }
-    const response = await rootApi.put(`/livestreams/${Id}`,data, {
+
+    const response = await fetch(`https://brightpa.me/api/livestreams/${Id}`, {
+      method: 'PUT',
       headers: {
-        Authorization: `Bearer ${token}`,
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
       },
+      body: JSON.stringify(data),
     });
-    return response.data.data;
+
+    const result = await response.json();
+    
+    if (!response.ok) {
+      throw new Error(result.message || 'Failed to update livestream');
+    }
+    
+    if (!result.success) {
+      throw new Error(result.message || 'API returned unsuccessful response');
+    }
+    
+    return result.data;
   } catch (error) {
-    console.error("Error fetching start livestreams:", error);
+    console.error("Error updating livestream:", error);
     throw error;
   }
 };
