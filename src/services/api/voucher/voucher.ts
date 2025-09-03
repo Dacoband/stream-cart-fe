@@ -1,3 +1,4 @@
+import { SearchVoucher } from './../../../types/voucher/voucher';
 import rootApi from '@/services/rootApi';
 
 export interface CreateVoucherDTO {
@@ -86,3 +87,24 @@ const token = localStorage.getItem("token");
     throw error;
   }
 }
+export const addVoucherByShop = async (data:SearchVoucher) => {
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) throw new Error("Not found token.");
+
+    const response = await rootApi.post(
+      `/vouchers/available`,
+      data,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    return response.data.data;
+  } catch (error) {
+    console.error("Error fetching voucher by order ID:", error);
+    throw error;
+  }
+};

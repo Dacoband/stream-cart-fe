@@ -1,6 +1,6 @@
-"use client";
+'use client'
 
-import { usePathname } from "next/navigation";
+import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard,
   Store,
@@ -9,7 +9,7 @@ import {
   Wallet,
   Gem,
   ClipboardCheck,
-} from "lucide-react";
+} from 'lucide-react'
 import {
   Sidebar,
   SidebarContent,
@@ -18,49 +18,49 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-} from "@/components/ui/sidebar";
+} from '@/components/ui/sidebar'
 
 const items = [
   {
-    title: "Thống kê",
-    url: "/manager/dashboard",
+    title: 'Thống kê',
+    url: '/manager/dashboard',
     icon: PieChart,
   },
 
   {
-    title: "Cửa hàng hoạt động",
-    url: "/manager/shops",
+    title: 'Cửa hàng hoạt động',
+    url: '/manager/shops',
     icon: Store,
   },
   {
-    title: "Duyệt cửa hàng",
-    url: "/manager/pending",
+    title: 'Duyệt cửa hàng',
+    url: '/manager/pending',
     icon: ClipboardCheck,
   },
   {
-    title: "Danh mục",
-    url: "/manager/categories",
+    title: 'Danh mục',
+    url: '/manager/categories',
     icon: LayoutDashboard,
   },
   {
-    title: "Gói thành viên",
-    url: "/manager/memberships",
+    title: 'Gói thành viên',
+    url: '/manager/memberships',
     icon: Gem,
   },
   {
-    title: "Đơn hoàn trả",
-    url: "/manager/refunds",
+    title: 'Đơn hoàn trả',
+    url: '/manager/refunds',
     icon: Package,
   },
   {
-    title: "Giao dịch",
-    url: "/manager/transactions",
+    title: 'Giao dịch',
+    url: '/manager/transaction',
     icon: Wallet,
   },
-];
+]
 
 export function AppSidebar() {
-  const pathname = usePathname();
+  const pathname = usePathname()
 
   return (
     <Sidebar
@@ -77,8 +77,8 @@ export function AppSidebar() {
                     asChild
                     className={
                       pathname === item.url
-                        ? "bg-base text-black mx-auto "
-                        : "text-white hover:bg-gray-800 hover:text-gray-400 mx-auto"
+                        ? 'bg-base text-black mx-auto '
+                        : 'text-white hover:bg-gray-800 hover:text-gray-400 mx-auto'
                     }
                   >
                     <a
@@ -98,5 +98,5 @@ export function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
     </Sidebar>
-  );
+  )
 }

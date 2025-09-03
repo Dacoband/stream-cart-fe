@@ -56,7 +56,7 @@ const SubcategoryItem: React.FC<SubcategoryItemProps> = ({
         className="hover:bg-gray-50 cursor-pointer"
         onClick={() => onViewDetail(subCategory.categoryId)}
       >
-        <TableCell className="text-base py-4 align-middle px-5 ">
+        <TableCell className="text-base py-4 align-middle px-5  ">
           <div
             className="flex items-center gap-2"
             style={{ paddingLeft: `${level * 36}px` }}
@@ -92,6 +92,14 @@ const SubcategoryItem: React.FC<SubcategoryItemProps> = ({
               height={40}
             />
           </div>
+        </TableCell>
+        <TableCell className="align-middle px-5 max-w-[28rem]">
+          <span
+            className="text-sm text-gray-700 line-clamp-2"
+            title={subCategory.description || ""}
+          >
+            {subCategory.description || ""}
+          </span>
         </TableCell>
         <TableCell className="text-center align-middle px-5">
           {subCategory.isDeleted ? (
@@ -129,13 +137,7 @@ const SubcategoryItem: React.FC<SubcategoryItemProps> = ({
                 <DropdownMenuItem onClick={() => onUpdateCategory(subCategory)}>
                   Chỉnh sửa
                 </DropdownMenuItem>
-                {!subCategory.isDeleted && (
-                  <DropdownMenuItem
-                    onClick={() => onAddSubcategory(subCategory)}
-                  >
-                    Thêm danh mục con
-                  </DropdownMenuItem>
-                )}
+                {/* Removed 'Thêm danh mục con' per request */}
                 <DropdownMenuSeparator />
                 {subCategory.isDeleted ? (
                   <DropdownMenuItem

@@ -3,6 +3,9 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Bot } from "lucide-react";
 import { getChatBot, createChatBot } from "@/services/api/chat/chat";
 import { ChatMess, ChatHistory } from "@/types/chat/chatbot";
+import { useAuth } from "@/lib/AuthContext";
+import { usePathname, useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 interface ChatBotProps {
   open: boolean;
@@ -10,6 +13,9 @@ interface ChatBotProps {
 }
 
 export default function ChatBot({ open, setOpen }: ChatBotProps) {
+  const { user } = useAuth();
+  const router = useRouter();
+  const pathname = usePathname();
   const [loading, setLoading] = useState(false);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -75,35 +81,48 @@ export default function ChatBot({ open, setOpen }: ChatBotProps) {
     }
   };
 
+  const handleToggleOpen = () => {
+    if (!user) {
+      toast.error("Vui lòng đăng nhập.");
+      router.push(
+        `/authentication/login?redirect=${encodeURIComponent(pathname || "/")}`
+      );
+      return;
+    }
+    setOpen(!open);
+  };
+
   return (
     <>
       <button
-        onClick={() => setOpen(!open)}
+        onClick={handleToggleOpen}
         className={`fixed bottom-24 right-5 z-50 w-14 h-14 flex items-center justify-center
                   rounded-full shadow-lg transition-all duration-300
                   hover:scale-110 hover:rotate-6
-                  ${open
-                    ? "bg-gradient-to-r from-[#FFD700] to-[#FFA500]"  // màu khi mở
-                    : "bg-gradient-to-r from-[#B0F847] to-[#8AD62F]"} // màu mặc định
+                  ${
+                    open
+                      ? "bg-gradient-to-r from-[#FFD700] to-[#FFA500]"
+                      : "bg-gradient-to-r from-[#B0F847] to-[#8AD62F]"
+                  } 
         `}
       >
         <Bot className="w-7 h-7 text-black" />
       </button>
 
       {open && (
-        <div className="fixed bottom-30 right-22 w-[28rem] h-[55%] bg-white shadow-xl rounded-t-xl rounded-l-xl z-50 flex flex-col overflow-hidden">
-          {/* Header */}
+        <div className="fixed bottom-5 right-22 w-[40rem] h-[55%] bg-white shadow-xl rounded-t-xl rounded-l-xl z-50 flex flex-col overflow-hidden">
           <div className="bg-gradient-to-r from-[#B0F847] to-[#8AD62F] p-3 text-black font-bold flex justify-between items-center">
             <span>ChatBot</span>
-            <button onClick={() => setOpen(false)} className="text-black font-bold">
+            <button
+              onClick={() => setOpen(false)}
+              className="text-black font-bold"
+            >
               ✖
             </button>
           </div>
 
-          {/* Nội dung chat */}
           <div className="flex-1 flex overflow-hidden">
-            {/* Sidebar lịch sử */}
-            <div className="w-36 border-r border-gray-200 flex flex-col overflow-hidden">
+            <div className="w-48 border-r border-gray-200 flex flex-col overflow-hidden">
               <div className="px-3 py-2 text-[12px] font-semibold text-gray-600 bg-gray-50">
                 Lịch sử
               </div>
@@ -123,7 +142,9 @@ export default function ChatBot({ open, setOpen }: ChatBotProps) {
                         : ""
                     }`}
                   >
-                    <div className="line-clamp-2 break-words text-gray-700">{q.user_message}</div>
+                    <div className="line-clamp-2 break-words text-gray-700">
+                      {q.user_message}
+                    </div>
                     <div className="text-[10px] text-gray-400 mt-1">
                       {new Date(q.timestamp).toLocaleTimeString()}
                     </div>
@@ -133,9 +154,20 @@ export default function ChatBot({ open, setOpen }: ChatBotProps) {
             </div>
 
             <div className="flex-1 flex flex-col">
-              <div ref={listRef} className="flex-1 p-3 overflow-y-auto text-sm space-y-2">
-                {loading && <div className="text-center text-xs text-gray-500">Đang tải...</div>}
-                {error && <div className="text-center text-xs text-red-500">{error}</div>}
+              <div
+                ref={listRef}
+                className="flex-1 p-3 overflow-y-auto text-sm space-y-2"
+              >
+                {loading && (
+                  <div className="text-center text-xs text-gray-500">
+                    Đang tải...
+                  </div>
+                )}
+                {error && (
+                  <div className="text-center text-xs text-red-500">
+                    {error}
+                  </div>
+                )}
                 {!loading && history.length === 0 && !error && (
                   <div className="self-start bg-gray-200 p-2 rounded-lg w-fit max-w-[70%]">
                     Xin chào, mình có thể giúp gì cho bạn? 🤖

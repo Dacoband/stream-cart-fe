@@ -13,7 +13,6 @@ import {
   Bell,
   CircleArrowOutDownRight,
   CircleUser,
-  MessageCircleMore,
   ScrollText,
   ShoppingCart,
   UserRound,
@@ -27,7 +26,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/lib/AuthContext";
 import SearchBar from "./SearchBar";
 import { useCart } from "@/lib/CartContext";
+import { useNotificationStore } from "@/lib/notificationStore";
+import NotificationDropdown from "./NotificationDropDown";
 export function Navigation() {
+  const unreadNoti = useNotificationStore((s) => s.unreadCount);
   const pathname = usePathname();
   const { user, loading, logout } = useAuth();
   const router = useRouter();
@@ -96,16 +98,23 @@ export function Navigation() {
 
             {cartCount > 0 && (
               <span className="absolute -top-1.5 -right-2.5 bg-[#B0F847] text-black text-[12.5px] min-w-[18px] h-[18px] flex items-center justify-center rounded-full px-[4px] font-bold leading-none shadow-md">
-                {cartCount}
+                {cartCount > 99 ? "99+" : cartCount}
               </span>
             )}
           </Button>
-          <Button
-            onClick={handleClick}
-            className="w-10 h-10 flex items-center text-2xl cursor-pointer justify-center text-[#B0F847] rounded-full bg-[#34373b] hover:bg-[#B0F847] hover:text-black"
-          >
-            <Bell className="min-w-[25px] min-h-[25px] " />
-          </Button>
+          <NotificationDropdown>
+            <Button
+              onClick={handleClick}
+              className="relative w-10 h-10 cursor-pointer flex items-center justify-center text-[#B0F847] bg-[#34373b] hover:bg-[#B0F847] hover:text-black rounded-full"
+            >
+              <Bell className="min-w-[22px] min-h-[22px]" />
+              {unreadNoti > 0 && (
+                <span className="absolute -top-1.5 -right-2.5 bg-[#B0F847] text-black text-[12px] min-w-[18px] h-[18px] flex items-center justify-center rounded-full px-[4px] font-bold leading-none shadow-md">
+                  {unreadNoti > 99 ? "99+" : unreadNoti}
+                </span>
+              )}
+            </Button>
+          </NotificationDropdown>
           {/* <Button
             onClick={handleClick}
             className="w-10 h-10  flex items-center text-2xl cursor-pointer text-[#B0F847] justify-center rounded-full bg-[#34373b] hover:bg-[#B0F847] hover:text-black pr-4"

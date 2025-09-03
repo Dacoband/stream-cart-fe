@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { ArrowRight, Clock, ImageIcon, Zap } from "lucide-react";
 import Image from "next/image";
 import { getFlashSaleCurrent } from "@/services/api/product/flashSale";
-import { FlashSaleProduct } from "@/types/product/flashSale";
+import { FlashSaleProductHome } from "@/types/product/flashSale";
 import { Product } from "@/types/product/product";
 import { getProductById } from "@/services/api/product/product";
 import LoadingCard from "./LoadingCard";
@@ -13,7 +13,9 @@ import PriceTag from "@/components/common/PriceTag";
 import Link from "next/link";
 
 function FlashSale() {
-  const [flashSaleList, setFlashSaleList] = useState<FlashSaleProduct[]>([]);
+  const [flashSaleList, setFlashSaleList] = useState<FlashSaleProductHome[]>(
+    []
+  );
   const [productList, setProductList] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -24,7 +26,7 @@ function FlashSale() {
         setFlashSaleList(flashSales);
 
         const products = await Promise.all(
-          flashSales.map(async (item: FlashSaleProduct) => {
+          flashSales.map(async (item: FlashSaleProductHome) => {
             const product = await getProductById(item.productId);
             return product;
           })

@@ -10,6 +10,8 @@ export interface Cart {
 export interface CartItemByShop {
   shopId: string;
   shopName: string;
+  numberOfProduct:number;
+  totalPriceInShop:number
   products: CartProduct[];
 }
 

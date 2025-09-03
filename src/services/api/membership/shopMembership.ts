@@ -42,3 +42,23 @@ export const filterShopMembership = async (filter: FilterShopMembership) => {
     throw error
   }
 }
+
+export const deactivateShopMembership = async (id: string) => {
+  try {
+    const token = localStorage.getItem('token')
+    if (!token) {
+      throw new Error('Not found token.')
+    }
+
+    const response = await rootApi.delete(`/shopmembership/${id}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
+
+    return response.data
+  } catch (error) {
+    console.error('Error deactivating shop membership:', error)
+    throw error
+  }
+}

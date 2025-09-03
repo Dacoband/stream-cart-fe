@@ -22,21 +22,32 @@ import {
   CheckCircle,
   XCircle,
 } from "lucide-react";
-import { filterShopMembership } from "@/services/api/membership/shopMembership";
+import {
+  filterShopMembership,
+  deactivateShopMembership,
+} from "@/services/api/membership/shopMembership";
 import {
   DetailShopMembershipDTO,
   FilterShopMembership,
 } from "@/types/membership/shopMembership";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/AuthContext";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { AxiosError } from "axios";
 
-/* ===========================
-   Constants & helpers
-=========================== */
 const STATUS = {
   Ongoing: "Ongoing", // Đang hoạt động
   Waiting: "Waiting", // Chờ hoạt động
-  Cancelled: "Cancelled", // Đã hủy
+  Cancelled: "Canceled", // Đã hủy
   Overdue: "Overdue", // Hết hạn
 } as const;
 
@@ -124,9 +135,13 @@ export default function MyMembershipPage() {
   // UI/state
   const [mounted, setMounted] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   // Data
   const [items, setItems] = useState<DetailShopMembershipDTO[]>([]);
+  const [pendingItem, setPendingItem] =
+    useState<DetailShopMembershipDTO | null>(null);
 
   // Filters
   const [activeTab, setActiveTab] = useState<string>(STATUS.Ongoing); // trạng thái = tab
@@ -166,12 +181,9 @@ export default function MyMembershipPage() {
       setLoading(true);
       const res = await filterShopMembership(payload);
       const normalized: DetailShopMembershipDTO[] =
-        res?.detailShopMembership ?? res?.items ?? res?.data ?? [];
+        res?.detailShopMembership ?? [];
+      console.log(res);
       setItems(Array.isArray(normalized) ? normalized : []);
-      if (!normalized?.length) {
-        // không toast ở đây để tránh phiền, chỉ log
-        // console.debug('API ok, nhưng không có dữ liệu.')
-      }
     } catch (e) {
       console.error(e);
       toast.error("Không thể tải danh sách gói thành viên");
@@ -205,19 +217,31 @@ export default function MyMembershipPage() {
   // )
 
   // Hủy gói (Ongoing/Waiting)
-  const handleCancel = async (m: DetailShopMembershipDTO) => {
-    const ok = window.confirm(`Xác nhận hủy gói #${m.id}?`);
-    if (!ok) return;
+  const handleCancel = (m: DetailShopMembershipDTO) => {
+    setPendingItem(m);
+    setConfirmOpen(true);
+  };
+
+  const confirmCancel = async () => {
+    if (!pendingItem) return;
     try {
-      // TODO: call API cancel thật
-      toast.success(`Đã hủy gói #${m.id}`);
-      setItems((prev) =>
-        prev.map((x) =>
-          x.id === m.id ? { ...x, status: STATUS.Cancelled } : x
-        )
-      );
-    } catch {
-      toast.error("Hủy gói thất bại. Vui lòng thử lại.");
+      setDeleting(true);
+      await deactivateShopMembership(pendingItem.id);
+      toast.success("Đã hủy gói thành viên thành công");
+      // Refetch to ensure consistency
+      lastParamsKey.current = "";
+      await fetchMemberships();
+      setConfirmOpen(false);
+      setPendingItem(null);
+    } catch (error) {
+      console.error(error);
+      const err = error as AxiosError<{ message?: string; errors?: string[] }>;
+      const message =
+        err?.response?.data?.errors?.[0] ||
+        "Hủy gói thất bại. Vui lòng thử lại.";
+      toast.error(message);
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -474,6 +498,28 @@ export default function MyMembershipPage() {
           )
         )}
       </Tabs>
+      {/* Confirm cancel dialog */}
+      <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Xác nhận hủy gói</AlertDialogTitle>
+            <AlertDialogDescription>
+              Bạn có chắc muốn hủy gói thành viên này? Việc hủy gói sẽ không
+              được hoàn lại tiền hay hoàn tác
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Không</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-600 hover:bg-red-500 text-white"
+              onClick={confirmCancel}
+              disabled={deleting}
+            >
+              {deleting ? "Đang hủy..." : "Hủy gói"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
