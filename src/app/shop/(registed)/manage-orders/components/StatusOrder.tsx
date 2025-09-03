@@ -449,7 +449,6 @@ export default function StatusOrder({ order, onStatusUpdated }: Props) {
           </AlertDialogContent>
         </AlertDialog>
 
-        {/* Cancel to 5 */}
         <AlertDialog open={cancelOpen} onOpenChange={setCancelOpen}>
           <AlertDialogContent>
             <AlertDialogHeader>
