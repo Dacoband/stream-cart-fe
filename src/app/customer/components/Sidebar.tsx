@@ -1,7 +1,14 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { CircleUser, ScrollText, UserRound, MapPin } from "lucide-react";
+import {
+  CircleUser,
+  ScrollText,
+  UserRound,
+  MapPin,
+  Star,
+  LucideBanknoteArrowDown,
+} from "lucide-react";
 import {
   SidebarContent,
   SidebarGroupContent,
@@ -35,6 +42,16 @@ export function AppSidebar() {
       title: "Địa chỉ",
       url: "/customer/address-user",
       icon: MapPin,
+    },
+    {
+      title: "Hoàn tiền",
+      url: "/customer/refund",
+      icon: LucideBanknoteArrowDown,
+    },
+    {
+      title: "Đánh giá đơn hàng",
+      url: "/customer/my-review",
+      icon: Star,
     },
   ];
 

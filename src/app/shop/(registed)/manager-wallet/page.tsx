@@ -1,37 +1,37 @@
-'use client'
+"use client";
 
-import React from 'react'
-import { Card, CardContent, CardTitle } from '@/components/ui/card'
-import { Wallet, Banknote } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { useAuth } from '@/lib/AuthContext'
+import React from "react";
+import { Card, CardContent, CardTitle } from "@/components/ui/card";
+import { Wallet, Banknote } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useAuth } from "@/lib/AuthContext";
 import {
   getWalletShopId,
   updateShopWalletBankingInfo,
-} from '@/services/api/wallet/wallet'
-import { WalletDTO } from '@/types/wallet/wallet'
-import { Skeleton } from '@/components/ui/skeleton'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+} from "@/services/api/wallet/wallet";
+import { WalletDTO } from "@/types/wallet/wallet";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import TableOrder, {
   type OrderRow,
   type Status as OrderStatus,
-} from './components/tableOrder'
+} from "./components/tableOrder";
 
 import TableTransaction, {
   type Row as TxRow,
   type TxStatus,
-} from './components/tableTransaction'
+} from "./components/tableTransaction";
 
 import {
   filterWalletTransactions,
   createWalletTransaction,
-} from '@/services/api/wallet/walletTransaction'
+} from "@/services/api/wallet/walletTransaction";
 import {
   WalletTransactionDTO,
   WalletTransactionType,
-} from '@/types/wallet/walletTransactionDTO'
-import { toast } from 'sonner'
+} from "@/types/wallet/walletTransactionDTO";
+import { toast } from "sonner";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -41,98 +41,99 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/components/ui/alert-dialog'
-import { Input } from '@/components/ui/input'
-import { getListBank } from '@/services/api/listbank/listbank'
-import { Bank } from '@/types/listbank/listbank'
-import { useRouter } from 'next/navigation'
+} from "@/components/ui/alert-dialog";
+import { Input } from "@/components/ui/input";
+import { getListBank } from "@/services/api/listbank/listbank";
+import { Bank } from "@/types/listbank/listbank";
+import { useRouter } from "next/navigation";
 
-type TabKey = 'orders' | 'withdrawals' | 'deposits' | 'systems'
+type TabKey = "orders" | "withdrawals" | "deposits" | "systems";
 
 const TAB_TO_TYPE: Record<TabKey, number> = {
   orders: 2,
   withdrawals: 0,
   deposits: 1,
   systems: 3,
-}
+};
 
 function formatVND(n?: number) {
-  return typeof n === 'number'
-    ? new Intl.NumberFormat('vi-VN', {
-        style: 'currency',
-        currency: 'VND',
+  return typeof n === "number"
+    ? new Intl.NumberFormat("vi-VN", {
+        style: "currency",
+        currency: "VND",
       }).format(n)
-    : '—'
+    : "—";
 }
 
 const mapStatusTx = (s: number | string): TxStatus => {
-  if (typeof s === 'number') {
+  if (typeof s === "number") {
     // tuỳ backend: 0=Success, 1=Failed, 2=Pending, 3=Cancelled
-    if (s === 0) return 'COMPLETED'
-    if (s === 1) return 'FAILED'
-    if (s === 2) return 'PENDING'
-    if (s === 3) return 'CANCELED' // luôn dùng CANCELLED (2 L)
-    return 'FAILED'
+    if (s === 0) return "COMPLETED";
+    if (s === 1) return "FAILED";
+    if (s === 2) return "PENDING";
+    if (s === 3) return "CANCELED"; // luôn dùng CANCELLED (2 L)
+    return "FAILED";
   }
-  const v = String(s).toLowerCase()
-  if (v === 'success') return 'COMPLETED'
-  if (v === 'failed' || v === 'fail' || v === 'error') return 'FAILED'
-  if (v === 'pending' || v === 'retry') return 'PENDING'
-  if (v === 'canceled' || v === 'cancelled') return 'CANCELED'
-  return 'FAILED'
-}
+  const v = String(s).toLowerCase();
+  if (v === "success") return "COMPLETED";
+  if (v === "failed" || v === "fail" || v === "error") return "FAILED";
+  if (v === "pending" || v === "retry") return "PENDING";
+  if (v === "canceled" || v === "cancelled") return "CANCELED";
+  return "FAILED";
+};
 
-const toStartOfDayIso = (d: string) => new Date(`${d}T00:00:00`).toISOString()
-const toEndOfDayIso = (d: string) => new Date(`${d}T23:59:59.999`).toISOString()
+const toStartOfDayIso = (d: string) => new Date(`${d}T00:00:00`).toISOString();
+const toEndOfDayIso = (d: string) =>
+  new Date(`${d}T23:59:59.999`).toISOString();
 
 const parseWalletFromResponse = (res: WalletDTO): WalletDTO | null => {
-  if (!res) return null
-  if ((res as WalletDTO).id) return res as WalletDTO
+  if (!res) return null;
+  if ((res as WalletDTO).id) return res as WalletDTO;
   // if ((res as { data?: WalletDTO }).data) return res.data as WalletDTO
-  return null
-}
+  return null;
+};
 
 export default function Page() {
-  const { user } = useAuth()
-  const router = useRouter()
+  const { user } = useAuth();
+  const router = useRouter();
 
-  const [wallet, setWallet] = React.useState<WalletDTO | null>(null)
-  const [loading, setLoading] = React.useState(true)
-  const [error, setError] = React.useState<string | null>(null)
+  const [wallet, setWallet] = React.useState<WalletDTO | null>(null);
+  const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState<string | null>(null);
 
-  const [orders, setOrders] = React.useState<OrderRow[]>([])
-  const [withdrawals, setWithdrawals] = React.useState<TxRow[]>([])
-  const [deposits, setDeposits] = React.useState<TxRow[]>([])
-  const [systems, setSystems] = React.useState<TxRow[]>([])
+  const [orders, setOrders] = React.useState<OrderRow[]>([]);
+  const [withdrawals, setWithdrawals] = React.useState<TxRow[]>([]);
+  const [deposits, setDeposits] = React.useState<TxRow[]>([]);
+  const [systems, setSystems] = React.useState<TxRow[]>([]);
 
-  const [activeTab, setActiveTab] = React.useState<TabKey>('orders')
+  const [activeTab, setActiveTab] = React.useState<TabKey>("orders");
 
-  const [fromDate, setFromDate] = React.useState('')
-  const [toDate, setToDate] = React.useState('')
-  const [statusFilter, setStatusFilter] = React.useState<'ALL' | 0 | 1 | 2 | 3>(
-    'ALL'
-  )
+  const [fromDate, setFromDate] = React.useState("");
+  const [toDate, setToDate] = React.useState("");
+  const [statusFilter, setStatusFilter] = React.useState<"ALL" | 0 | 1 | 2 | 3>(
+    "ALL"
+  );
 
-  const [withdrawOpen, setWithdrawOpen] = React.useState(false)
-  const [depositOpen, setDepositOpen] = React.useState(false)
-  const [txAmount, setTxAmount] = React.useState('')
-  const [submitting, setSubmitting] = React.useState(false)
+  const [withdrawOpen, setWithdrawOpen] = React.useState(false);
+  const [depositOpen, setDepositOpen] = React.useState(false);
+  const [txAmount, setTxAmount] = React.useState("");
+  const [submitting, setSubmitting] = React.useState(false);
 
-  const [bankOpen, setBankOpen] = React.useState(false)
-  const [bankSubmitting, setBankSubmitting] = React.useState(false)
-  const [bankList, setBankList] = React.useState<Bank[]>([])
-  const [bankName, setBankName] = React.useState('')
-  const [bankAccountNumber, setBankAccountNumber] = React.useState('')
+  const [bankOpen, setBankOpen] = React.useState(false);
+  const [bankSubmitting, setBankSubmitting] = React.useState(false);
+  const [bankList, setBankList] = React.useState<Bank[]>([]);
+  const [bankName, setBankName] = React.useState("");
+  const [bankAccountNumber, setBankAccountNumber] = React.useState("");
 
-  const bankCacheRef = React.useRef<Bank[] | null>(null)
-  const requestSeq = React.useRef(0)
+  const bankCacheRef = React.useRef<Bank[] | null>(null);
+  const requestSeq = React.useRef(0);
 
   // Debounce filter input
   const [debouncedFilters, setDebouncedFilters] = React.useState({
-    from: '',
-    to: '',
-    status: 'ALL' as 'ALL' | 0 | 1 | 2 | 3,
-  })
+    from: "",
+    to: "",
+    status: "ALL" as "ALL" | 0 | 1 | 2 | 3,
+  });
   React.useEffect(() => {
     const t = setTimeout(
       () =>
@@ -142,21 +143,21 @@ export default function Page() {
           status: statusFilter,
         }),
       300
-    )
-    return () => clearTimeout(t)
-  }, [fromDate, toDate, statusFilter])
+    );
+    return () => clearTimeout(t);
+  }, [fromDate, toDate, statusFilter]);
 
   const refetch = React.useCallback(() => {
-    requestSeq.current += 1
-    const curSeq = requestSeq.current
+    requestSeq.current += 1;
+    const curSeq = requestSeq.current;
 
     const run = async () => {
       if (!user?.shopId) {
-        setLoading(false)
-        return
+        setLoading(false);
+        return;
       }
-      setLoading(true)
-      setError(null)
+      setLoading(true);
+      setError(null);
       try {
         const [resWallet, resList] = await Promise.all([
           getWalletShopId(user.shopId),
@@ -164,7 +165,7 @@ export default function Page() {
             ShopId: user.shopId,
             Types: [TAB_TO_TYPE[activeTab]],
             Status:
-              debouncedFilters.status === 'ALL'
+              debouncedFilters.status === "ALL"
                 ? undefined
                 : debouncedFilters.status,
             FromTime: debouncedFilters.from
@@ -176,27 +177,27 @@ export default function Page() {
             PageIndex: 1,
             PageSize: 50,
           }),
-        ])
+        ]);
 
-        if (curSeq !== requestSeq.current) return
+        if (curSeq !== requestSeq.current) return;
 
-        const walletData = parseWalletFromResponse(resWallet)
-        setWallet(walletData)
+        const walletData = parseWalletFromResponse(resWallet);
+        setWallet(walletData);
 
         const items: WalletTransactionDTO[] =
           (resList as { data?: WalletTransactionDTO[] }).data ??
           (Array.isArray(resList) ? resList : []) ??
-          []
+          [];
 
-        if (activeTab === 'orders') {
+        if (activeTab === "orders") {
           const mapped = items.map<OrderRow>((it) => {
-            const st = mapStatusTx(it.status)
+            const st = mapStatusTx(it.status);
             const orderStatus: OrderStatus =
-              st === 'COMPLETED'
-                ? 'COMPLETED'
-                : st === 'PENDING'
-                ? 'PENDING'
-                : 'CANCELLED' // ← luôn dùng CANCELLED
+              st === "COMPLETED"
+                ? "COMPLETED"
+                : st === "PENDING"
+                ? "PENDING"
+                : "CANCELLED";
             return {
               id: it.orderId || it.id,
               title:
@@ -205,71 +206,71 @@ export default function Page() {
               income: it.amount,
               createdAt: it.createdAt,
               status: orderStatus,
-              source: 'Từ đơn hàng',
-            }
-          })
-          setOrders(mapped)
+              source: "Từ đơn hàng",
+            };
+          });
+          setOrders(mapped);
         } else {
           const toTxRow = (it: WalletTransactionDTO): TxRow => ({
             id: it.id,
-            bankName: it.bankAccount ?? '',
-            bankAccountNumber: it.bankNumber ?? '',
-            bankAccountName: it.bankAccount ?? '',
+            bankName: it.bankAccount ?? "",
+            bankAccountNumber: it.bankNumber ?? "",
+            bankAccountName: it.bankAccount ?? "",
             amount: it.amount,
             status: mapStatusTx(it.status),
             createdAt: it.createdAt,
             processedAt: it.lastModifiedAt ?? null,
             transactionId: it.transactionId ?? null,
             description: it.description ?? null,
-          })
+          });
 
-          if (activeTab === 'withdrawals') setWithdrawals(items.map(toTxRow))
-          if (activeTab === 'deposits') setDeposits(items.map(toTxRow))
-          if (activeTab === 'systems') setSystems(items.map(toTxRow))
+          if (activeTab === "withdrawals") setWithdrawals(items.map(toTxRow));
+          if (activeTab === "deposits") setDeposits(items.map(toTxRow));
+          if (activeTab === "systems") setSystems(items.map(toTxRow));
         }
       } catch {
-        setError('Không thể tải thông tin ví')
-        setWallet(null)
-        setOrders([])
-        setWithdrawals([])
-        setDeposits([])
-        setSystems([])
+        setError("Không thể tải thông tin ví");
+        setWallet(null);
+        setOrders([]);
+        setWithdrawals([]);
+        setDeposits([]);
+        setSystems([]);
       } finally {
-        if (curSeq === requestSeq.current) setLoading(false)
+        if (curSeq === requestSeq.current) setLoading(false);
       }
-    }
+    };
 
-    run()
+    run();
   }, [
     user?.shopId,
     activeTab,
     debouncedFilters.from,
     debouncedFilters.to,
     debouncedFilters.status,
-  ])
+  ]);
 
   React.useEffect(() => {
-    refetch()
-  }, [refetch])
+    refetch();
+  }, [refetch]);
 
   React.useEffect(() => {
     const loadBanks = async () => {
-      if (!bankOpen) return
+      if (!bankOpen) return;
       if (bankCacheRef.current) {
-        setBankList(bankCacheRef.current)
-        return
+        setBankList(bankCacheRef.current);
+        return;
       }
       try {
-        const banks = await getListBank()
-        const sorted = [...banks].sort((a, b) => a.name.localeCompare(b.name))
-        bankCacheRef.current = sorted
-        setBankList(sorted)
+        const banks = await getListBank();
+        const sorted = [...banks].sort((a, b) => a.name.localeCompare(b.name));
+        bankCacheRef.current = sorted;
+        setBankList(sorted);
       } catch {
-        toast.error('Không tải được danh sách ngân hàng')
+        toast.error("Không tải được danh sách ngân hàng");
       }
-    }
-    loadBanks()
-  }, [bankOpen])
+    };
+    loadBanks();
+  }, [bankOpen]);
 
   return (
     <div className="flex flex-col gap-5 min-h-full">
@@ -296,8 +297,8 @@ export default function Page() {
                         variant="default"
                         className="bg-green-600 hover:bg-green-700 cursor-pointer"
                         onClick={() => {
-                          setTxAmount('')
-                          setDepositOpen(true)
+                          setTxAmount("");
+                          setDepositOpen(true);
                         }}
                       >
                         Nạp tiền
@@ -307,8 +308,8 @@ export default function Page() {
                         variant="default"
                         className="bg-blue-600 hover:bg-blue-700 cursor-pointer"
                         onClick={() => {
-                          setTxAmount('')
-                          setWithdrawOpen(true)
+                          setTxAmount("");
+                          setWithdrawOpen(true);
                         }}
                       >
                         Yêu cầu rút
@@ -342,16 +343,16 @@ export default function Page() {
                 <div className="flex flex-col flex-1">
                   <div className="flex justify-between items-center">
                     <CardTitle className="text-green-700">
-                      Tài khoản: {wallet?.bankName || 'Chưa cập nhật'}
+                      Tài khoản: {wallet?.bankName || "Chưa cập nhật"}
                     </CardTitle>
                     <Button
                       size="sm"
                       variant="default"
                       className="bg-green-600 hover:bg-green-700 cursor-pointer"
                       onClick={() => {
-                        setBankAccountNumber(wallet?.bankAccountNumber ?? '')
-                        setBankName(wallet?.bankName ?? '')
-                        setBankOpen(true)
+                        setBankAccountNumber(wallet?.bankAccountNumber ?? "");
+                        setBankName(wallet?.bankName ?? "");
+                        setBankOpen(true);
                       }}
                     >
                       Cập nhật
@@ -367,8 +368,8 @@ export default function Page() {
                       <p className="text-red-600">{error}</p>
                     ) : (
                       <p className="font-medium text-green-800">
-                        Số tài khoản:{' '}
-                        {wallet?.bankAccountNumber || 'Chưa cập nhật'}
+                        Số tài khoản:{" "}
+                        {wallet?.bankAccountNumber || "Chưa cập nhật"}
                       </p>
                     )}
                   </div>
@@ -400,17 +401,17 @@ export default function Page() {
                 <select
                   className="w-full h-10 border rounded px-3"
                   value={
-                    typeof statusFilter === 'string'
-                      ? 'ALL'
+                    typeof statusFilter === "string"
+                      ? "ALL"
                       : String(statusFilter)
                   }
                   onChange={(e) => {
-                    const v = e.target.value
-                    if (v === 'ALL') setStatusFilter('ALL')
+                    const v = e.target.value;
+                    if (v === "ALL") setStatusFilter("ALL");
                     else {
-                      const n = Number(v)
+                      const n = Number(v);
                       if (n === 0 || n === 1 || n === 2 || n === 3)
-                        setStatusFilter(n)
+                        setStatusFilter(n);
                     }
                   }}
                 >
@@ -425,9 +426,9 @@ export default function Page() {
                 <Button
                   variant="outline"
                   onClick={() => {
-                    setFromDate('')
-                    setToDate('')
-                    setStatusFilter('ALL')
+                    setFromDate("");
+                    setToDate("");
+                    setStatusFilter("ALL");
                   }}
                 >
                   Đặt lại
@@ -530,33 +531,33 @@ export default function Page() {
                   className="bg-blue-600 hover:bg-blue-700 text-white"
                   disabled={submitting}
                   onClick={async () => {
-                    const value = Number(txAmount)
+                    const value = Number(txAmount);
                     if (!Number.isFinite(value) || value <= 0) {
-                      toast.error('Số tiền phải lớn hơn 0')
-                      return
+                      toast.error("Số tiền phải lớn hơn 0");
+                      return;
                     }
                     if (value < 51_000) {
-                      toast.error('Số tiền rút tối thiểu là 51.000đ')
-                      return
+                      toast.error("Số tiền rút tối thiểu là 51.000đ");
+                      return;
                     }
                     if (!user?.shopId) {
-                      toast.error('Thiếu ShopId')
-                      return
+                      toast.error("Thiếu ShopId");
+                      return;
                     }
                     try {
-                      setSubmitting(true)
+                      setSubmitting(true);
                       await createWalletTransaction({
                         type: WalletTransactionType.Withdraw,
                         amount: value,
-                      })
-                      toast.success('Tạo yêu cầu rút tiền thành công')
-                      refetch()
-                      setWithdrawOpen(false)
-                      setTxAmount('')
+                      });
+                      toast.success("Tạo yêu cầu rút tiền thành công");
+                      refetch();
+                      setWithdrawOpen(false);
+                      setTxAmount("");
                     } catch {
-                      toast.error('Tạo yêu cầu rút tiền thất bại')
+                      toast.error("Tạo yêu cầu rút tiền thất bại");
                     } finally {
-                      setSubmitting(false)
+                      setSubmitting(false);
                     }
                   }}
                 >
@@ -590,21 +591,23 @@ export default function Page() {
                   className="bg-green-600 hover:bg-green-700 text-white"
                   disabled={submitting}
                   onClick={() => {
-                    const value = Number(txAmount)
+                    const value = Number(txAmount);
                     if (!Number.isFinite(value) || value <= 0) {
-                      toast.error('Số tiền phải lớn hơn 0')
-                      return
+                      toast.error("Số tiền phải lớn hơn 0");
+                      return;
                     }
                     if (value < 10_000 || value > 50_000_000) {
-                      toast.error('Số tiền nạp phải từ 10.000đ đến 50.000.000đ')
-                      return
+                      toast.error(
+                        "Số tiền nạp phải từ 10.000đ đến 50.000.000đ"
+                      );
+                      return;
                     }
 
                     router.push(
                       `/shop/manager-wallet/deposit?amount=${encodeURIComponent(
                         String(value)
                       )}`
-                    )
+                    );
                   }}
                 >
                   Xác nhận
@@ -674,30 +677,30 @@ export default function Page() {
                   }
                   onClick={async () => {
                     if (bankName.trim().length === 0) {
-                      toast.error('Vui lòng chọn ngân hàng')
-                      return
+                      toast.error("Vui lòng chọn ngân hàng");
+                      return;
                     }
                     if (bankAccountNumber.trim().length === 0) {
-                      toast.error('Vui lòng nhập số tài khoản')
-                      return
+                      toast.error("Vui lòng nhập số tài khoản");
+                      return;
                     }
                     if (!user?.shopId) {
-                      toast.error('Thiếu ShopId')
-                      return
+                      toast.error("Thiếu ShopId");
+                      return;
                     }
                     try {
-                      setBankSubmitting(true)
+                      setBankSubmitting(true);
                       const updated = await updateShopWalletBankingInfo(
                         user.shopId,
                         { bankName, bankAccountNumber }
-                      )
-                      setWallet(updated)
-                      toast.success('Cập nhật ngân hàng thành công')
-                      setBankOpen(false)
+                      );
+                      setWallet(updated);
+                      toast.success("Cập nhật ngân hàng thành công");
+                      setBankOpen(false);
                     } catch {
-                      toast.error('Cập nhật ngân hàng thất bại')
+                      toast.error("Cập nhật ngân hàng thất bại");
                     } finally {
-                      setBankSubmitting(false)
+                      setBankSubmitting(false);
                     }
                   }}
                 >
@@ -709,5 +712,5 @@ export default function Page() {
         </Card>
       </div>
     </div>
-  )
+  );
 }

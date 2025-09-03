@@ -118,7 +118,7 @@ export const getSlotCreate = async (date: Date) => {
         Authorization: `Bearer ${token}`,
       },
       params: {
-        date: date.toISOString(), 
+ date: date.toLocaleDateString("sv-SE")
       },
     });
 

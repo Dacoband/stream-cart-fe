@@ -1,6 +1,7 @@
 "use client";
 import { Button } from "@/components/ui/button";
 import React, { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   CirclePlus,
   Edit,
@@ -57,6 +58,7 @@ import DialogUpdateStock from "./components/DialogUpdateStock";
 import { toast } from "sonner";
 
 function Page() {
+  const router = useRouter();
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [products, setProducts] = useState<Product[]>([]);
@@ -520,7 +522,10 @@ function Page() {
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                              <DropdownMenuItem className="text-blue-600 flex justify-start">
+                              <DropdownMenuItem
+                                className="text-blue-600 flex justify-start cursor-pointer"
+                                onClick={() => router.push(`/shop/manager-products/${product.id}`)}
+                              >
                                 <Edit size={18} className="mr-2" />
                                 Cập nhật
                               </DropdownMenuItem>

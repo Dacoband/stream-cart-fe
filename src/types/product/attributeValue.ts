@@ -12,3 +12,6 @@ export interface CreateAttributeValue{
     attributeId:string;
     valueName:string;
 }
+export interface UpdateAttributeValue{
+    valueName?:string;
+}

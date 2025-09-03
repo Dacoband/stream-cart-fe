@@ -9,3 +9,17 @@ export const getProductAttributeByProductId = async (productId:string) => {
     throw error;
   }
 };
+
+export const updateProductAttribute = async (
+  id: string,
+  data: { name?: string }
+) => {
+  try {
+    if (!id) throw new Error("Missing id");
+    const response = await rootApi.put(`product-attributes/${id}`, data);
+    return response.data?.data;
+  } catch (error) {
+    console.error("Error updating product attribute:", error);
+    throw error;
+  }
+};

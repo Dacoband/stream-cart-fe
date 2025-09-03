@@ -91,7 +91,7 @@ function ProductsLiveStream({ livestreamId }: ProductsProps) {
                     <p className="text-red-500 font-semibold mt-2">
                       <PriceTag value={product.price} />
                     </p>
-                    {typeof product.originalPrice !== "undefined" && (
+                    {product.originalPrice !== product.price && (
                       <p className="text-gray-500 font-semibold mt-2 line-through">
                         <PriceTag value={product.originalPrice} />
                       </p>
