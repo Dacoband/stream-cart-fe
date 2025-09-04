@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import { toast } from "sonner";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -38,7 +38,7 @@ import {
   Receipt,
   CheckCircle2,
   XCircle,
-  HandCoins,
+  // HandCoins,
   Package,
   ClipboardList,
   Clock,
@@ -202,7 +202,7 @@ export default function RefundDetailPage() {
   }, [refund, items]);
 
   const canApproveReject = refund?.status === RefundStatus.Created;
-  const canRefundMoney = refund?.status === RefundStatus.Completed;
+  // const canRefundMoney = refund?.status === RefundStatus.Completed;
 
   const handleApprove = async () => {
     if (!refund) return;
@@ -261,13 +261,13 @@ export default function RefundDetailPage() {
     }
   };
 
-  const router = useRouter();
+  // const router = useRouter();
 
-  const handleRefundMoney = () => {
-    if (!refund) return;
-    // Chuyển sang trang payment để xử lý QR + polling
-    router.push(`/manager/refund/payment?id=${refund.id}`);
-  };
+  // const handleRefundMoney = () => {
+  //   if (!refund) return;
+  //   // Chuyển sang trang payment để xử lý QR + polling
+  //   router.push(`/manager/refund/payment?id=${refund.id}`);
+  // };
 
   if (loading) {
     return (
@@ -314,7 +314,7 @@ export default function RefundDetailPage() {
           <BreadcrumbList>
             <BreadcrumbItem className="font-medium text-lg cursor-pointer">
               <BreadcrumbLink asChild>
-                <Link href="/manager/refund">Yêu cầu hoàn hàng</Link>
+                <Link href="/shop/manage-orders">Yêu cầu hoàn hàng</Link>
               </BreadcrumbLink>
             </BreadcrumbItem>
             <BreadcrumbSeparator />
@@ -348,7 +348,7 @@ export default function RefundDetailPage() {
               </Button>
             </>
           )}
-          {canRefundMoney && (
+          {/* {canRefundMoney && (
             <Button
               variant="outline"
               disabled={saving}
@@ -357,7 +357,7 @@ export default function RefundDetailPage() {
             >
               <HandCoins className="w-4 h-4 mr-2 text-emerald-600" /> Hoàn tiền
             </Button>
-          )}
+          )} */}
         </div>
       </div>
 

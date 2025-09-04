@@ -92,6 +92,39 @@ export const getShopRefunds = async (params?: {
           : params?.toDate,
     };
 
+    const res = await rootApi.get("refunds/shop", {
+      params: finalParams,
+      headers: authHeader(),
+    });
+    // Controller trả ApiResponse<PagedResult<RefundRequestDto>>
+    return res.data?.data;
+  } catch (error) {
+    console.error("Error fetching shop refunds:", error);
+    throw error;
+  }
+};
+
+export const getUserRefunds = async (params?: {
+  pageNumber?: number;
+  pageSize?: number;
+  status?: RefundStatus;
+  fromDate?: string | Date;
+  toDate?: string | Date;
+}) => {
+  try {
+    // Chuẩn hoá date -> ISO string nếu truyền Date
+    const finalParams = {
+      ...params,
+      fromDate:
+        params?.fromDate instanceof Date
+          ? params.fromDate.toISOString()
+          : params?.fromDate,
+      toDate:
+        params?.toDate instanceof Date
+          ? params.toDate.toISOString()
+          : params?.toDate,
+    };
+
     const res = await rootApi.get("refunds/user", {
       params: finalParams,
       headers: authHeader(),

@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { RefundRequestDto, RefundStatus } from "@/types/refund/refund";
 import Loading from "@/components/common/Loading";
-import { getShopRefunds } from "@/services/api/refund/refund"; // ← dùng đúng path export getShopRefunds bạn có
+import { getUserRefunds } from "@/services/api/refund/refund"; // ← dùng đúng path export getShopRefunds bạn có
 import { ShopRefundItemCard } from "./RefundItemCard";
 
 type Props = {
@@ -45,7 +45,7 @@ Props) {
         const merged: RefundRequestDto[] = [];
         if (statuses.length > 0) {
           for (const s of statuses) {
-            const res: Paged<RefundRequestDto> = await getShopRefunds({
+            const res: Paged<RefundRequestDto> = await getUserRefunds({
               pageNumber,
               pageSize: pagination.pageSize,
               status: s,
@@ -55,7 +55,7 @@ Props) {
             merged.push(...(res?.items ?? []));
           }
         } else {
-          const res: Paged<RefundRequestDto> = await getShopRefunds({
+          const res: Paged<RefundRequestDto> = await getUserRefunds({
             pageNumber,
             pageSize: pagination.pageSize,
             fromDate,
