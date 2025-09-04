@@ -12,7 +12,7 @@ import { getProductDetailById } from "@/services/api/product/product";
 import PriceTag from "@/components/common/PriceTag";
 import Link from "next/link";
 import { formatFullDateTimeVN } from "@/components/common/formatFullDateTimeVN";
-type TabValue = "all" | "1,2" | "3" | "7" | "4,10" | "5,8,9";
+type TabValue = "all" | "1,2" | "3" | "7" | "4,10" | "5" | "8,9";
 
 const parseStatusesFromTab = (tab: TabValue): number[] | undefined => {
   if (tab === "all") return undefined;
@@ -167,7 +167,8 @@ function TableOrder() {
               { value: "3", label: "Chờ lấy hàng" },
               { value: "7", label: "Đang giao" },
               { value: "4,10", label: "Đã giao" },
-              { value: "5,8,9", label: "Trả hàng/Hủy" },
+              { value: "5", label: "Đã hủy" },
+              { value: "8,9", label: "Hoàn hàng" },
             ].map((tab) => (
               <TabsPrimitive.Trigger
                 key={tab.value}

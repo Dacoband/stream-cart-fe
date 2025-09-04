@@ -227,8 +227,25 @@ export function OrderItem({ order }: OrderItemProps) {
           <div className="space-y-1 text-sm text-gray-600">
             {order.actualDeliveryDate ? (
               <div>
-                Ngày giao thực tế:{" "}
-                <FormatDate date={order.actualDeliveryDate} />
+                <div>
+                  {" "}
+                  Ngày giao thực tế:{" "}
+                  <FormatDate date={order.actualDeliveryDate} />
+                </div>
+                {status === 4 && (
+                  <div className="mt-2">
+                    Vui lòng xác nhận đơn khi hàng không có vấn đề. Sau{" "}
+                    <FormatDate
+                      date={
+                        new Date(
+                          new Date(order.actualDeliveryDate).getTime() +
+                            3 * 24 * 60 * 60 * 1000
+                        )
+                      }
+                    />{" "}
+                    không hoàn hàng
+                  </div>
+                )}
               </div>
             ) : (
               <>

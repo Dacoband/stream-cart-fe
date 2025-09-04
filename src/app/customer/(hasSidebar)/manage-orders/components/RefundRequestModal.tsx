@@ -1,10 +1,10 @@
-'use client'
+"use client";
 
-import React, { useEffect, useMemo, useState } from 'react'
-import Image from 'next/image'
-import { useRouter } from 'next/navigation'
-import { toast } from 'sonner'
-import { ImagePlus, RotateCcw, Loader2, Trash2 } from 'lucide-react'
+import React, { useEffect, useMemo, useState } from "react";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import { ImagePlus, RotateCcw, Loader2, Trash2 } from "lucide-react";
 
 import {
   Dialog,
@@ -13,153 +13,161 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
-import { ScrollArea } from '@/components/ui/scroll-area'
-import { Skeleton } from '@/components/ui/skeleton'
-import PriceTag from '@/components/common/PriceTag'
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Skeleton } from "@/components/ui/skeleton";
+import PriceTag from "@/components/common/PriceTag";
 
-import { getOrderProductByOrderId } from '@/services/api/order/ordersItem'
-import { getProductDetailById } from '@/services/api/product/product'
-import { getListBank } from '@/services/api/listbank/listbank'
-import { createRefundRequest } from '@/services/api/refund/refund'
-import { uploadImage } from '@/services/api/uploadImage'
+import { getOrderProductByOrderId } from "@/services/api/order/ordersItem";
+import { getProductDetailById } from "@/services/api/product/product";
+import { getListBank } from "@/services/api/listbank/listbank";
+import { createRefundRequest } from "@/services/api/refund/refund";
+import { uploadImage } from "@/services/api/uploadImage";
 
-import type { OrderItemResponse } from '@/types/order/order'
-import type { Bank } from '@/types/listbank/listbank'
-import { Product, ProductDetail } from '@/types/product/product'
-import { Variant } from '@/types/product/product'
+import type { OrderItemResponse } from "@/types/order/order";
+import type { Bank } from "@/types/listbank/listbank";
+import { Variant } from "@/types/product/product";
+import { AxiosError } from "axios";
 
-type VariantAttrs = Record<string, string>
-type Selected = { selected: boolean; reason: string; imageUrl?: string }
+type VariantAttrs = Record<string, string>;
+type Selected = { selected: boolean; reason: string; imageUrl?: string };
 
 type Props = {
-  open: boolean
-  onClose: () => void
-  orderId: string
-}
+  open: boolean;
+  onClose: () => void;
+  orderId: string;
+};
 
-const isEmpty = (s?: string | null) => !s || s.trim() === ''
+const isEmpty = (s?: string | null) => !s || s.trim() === "";
 
 export default function RefundRequestModal({ open, onClose, orderId }: Props) {
-  const router = useRouter()
-  const [loading, setLoading] = useState(false)
-  const [submitting, setSubmitting] = useState(false)
+  const router = useRouter();
+  const [loading, setLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
-  const [items, setItems] = useState<OrderItemResponse[]>([])
-  const [variantMap, setVariantMap] = useState<Record<string, VariantAttrs>>({})
-  const [sel, setSel] = useState<Record<string, Selected>>({})
-  const [banks, setBanks] = useState<Bank[]>([])
-  const [bankCode, setBankCode] = useState('')
-  const [bankAccount, setBankAccount] = useState('')
-  const [uploading, setUploading] = useState<Record<string, boolean>>({})
+  const [items, setItems] = useState<OrderItemResponse[]>([]);
+  const [variantMap, setVariantMap] = useState<Record<string, VariantAttrs>>(
+    {}
+  );
+  const [sel, setSel] = useState<Record<string, Selected>>({});
+  const [banks, setBanks] = useState<Bank[]>([]);
+  const [bankCode, setBankCode] = useState("");
+  const [bankAccount, setBankAccount] = useState("");
+  const [uploading, setUploading] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
-    if (!open) return
-    let cancelled = false
+    if (!open) return;
+    let cancelled = false;
 
     const run = async () => {
-      setLoading(true)
+      setLoading(true);
       try {
-        const payload = await getOrderProductByOrderId(orderId)
-        let orderItems: OrderItemResponse[] = []
-        if (Array.isArray(payload)) orderItems = payload
-        else if (payload?.items) orderItems = payload.items
-        else if (payload?.data?.items) orderItems = payload.data.items
-        if (cancelled) return
-        setItems(orderItems)
+        const payload = await getOrderProductByOrderId(orderId);
+        let orderItems: OrderItemResponse[] = [];
+        if (Array.isArray(payload)) orderItems = payload;
+        else if (payload?.items) orderItems = payload.items;
+        else if (payload?.data?.items) orderItems = payload.data.items;
+        if (cancelled) return;
+        setItems(orderItems);
 
-        const init: Record<string, Selected> = {}
+        const init: Record<string, Selected> = {};
         for (const it of orderItems)
-          init[it.id] = { selected: false, reason: '', imageUrl: '' }
-        setSel(init)
+          init[it.id] = { selected: false, reason: "", imageUrl: "" };
+        setSel(init);
 
-        const vmap: Record<string, VariantAttrs> = {}
+        const vmap: Record<string, VariantAttrs> = {};
         for (const it of orderItems) {
           if (it.productId && it.variantId) {
             try {
-              const detail = await getProductDetailById(it.productId)
+              const detail = await getProductDetailById(it.productId);
               const v = detail?.variants?.find(
                 (vv: Variant) => vv.variantId === it.variantId
-              )
-              if (v?.attributeValues) vmap[it.id] = v.attributeValues
+              );
+              if (v?.attributeValues) vmap[it.id] = v.attributeValues;
             } catch {}
           }
         }
-        if (!cancelled) setVariantMap(vmap)
+        if (!cancelled) setVariantMap(vmap);
 
         try {
-          const list = await getListBank()
-          if (!cancelled) setBanks(list || [])
+          const list = await getListBank();
+          if (!cancelled) setBanks(list || []);
         } catch {}
       } catch (e) {
-        console.error(e)
-        toast.error('Không thể tải sản phẩm của đơn hàng')
+        console.error(e);
+        toast.error("Không thể tải sản phẩm của đơn hàng");
       } finally {
-        if (!cancelled) setLoading(false)
+        if (!cancelled) setLoading(false);
       }
-    }
+    };
 
-    run()
+    run();
     return () => {
-      cancelled = true
-    }
-  }, [open, orderId])
+      cancelled = true;
+    };
+  }, [open, orderId]);
 
   const toggle = (id: string, checked: boolean) =>
-    setSel((p) => ({ ...p, [id]: { ...p[id], selected: checked } }))
+    setSel((p) => ({ ...p, [id]: { ...p[id], selected: checked } }));
   const changeReason = (id: string, reason: string) =>
-    setSel((p) => ({ ...p, [id]: { ...p[id], reason } }))
+    setSel((p) => ({ ...p, [id]: { ...p[id], reason } }));
   const changeImage = (id: string, imageUrl: string) =>
-    setSel((p) => ({ ...p, [id]: { ...p[id], imageUrl } }))
+    setSel((p) => ({ ...p, [id]: { ...p[id], imageUrl } }));
 
   const handleUpload = async (id: string, file?: File | null) => {
-    if (!file) return
+    if (!file) return;
     try {
-      setUploading((u) => ({ ...u, [id]: true }))
-      const res = await uploadImage(file)
+      setUploading((u) => ({ ...u, [id]: true }));
+      const res = await uploadImage(file);
       const url =
         res?.data?.url ??
         res?.data?.imageUrl ??
         res?.url ??
         res?.path ??
         res?.imageUrl ??
-        (typeof res === 'string' ? res : '')
+        (typeof res === "string" ? res : "");
 
       if (!url) {
-        throw new Error('Không nhận được URL ảnh từ server')
+        throw new Error("Không nhận được URL ảnh từ server");
       }
-      changeImage(id, url)
-      toast.success('Tải ảnh thành công')
-    } catch (e: any) {
-      console.error(e)
-      toast.error(e?.message ?? 'Tải ảnh thất bại')
+      changeImage(id, url);
+      toast.success("Tải ảnh thành công");
+    } catch (error: unknown) {
+      console.error("Start livefailed:", error);
+      const err = error as AxiosError<{ message?: string; errors?: string[] }>;
+      const message =
+        err?.response?.data?.errors?.[0] ||
+        err?.response?.data?.message ||
+        "Tải ảnh thất bại!";
+
+      toast.error(message);
     } finally {
-      setUploading((u) => ({ ...u, [id]: false }))
+      setUploading((u) => ({ ...u, [id]: false }));
     }
-  }
+  };
 
   const selectedCount = useMemo(
     () => Object.values(sel).filter((x) => x?.selected).length,
     [sel]
-  )
+  );
 
   const onSubmit = async () => {
-    const chosen = Object.entries(sel).filter(([, v]) => v.selected)
+    const chosen = Object.entries(sel).filter(([, v]) => v.selected);
     if (chosen.length === 0)
-      return toast.error('Vui lòng chọn ít nhất 1 sản phẩm')
+      return toast.error("Vui lòng chọn ít nhất 1 sản phẩm");
 
     for (const [id, v] of chosen) {
       if (isEmpty(v.reason)) {
-        const oi = items.find((x) => x.id === id)
-        return toast.error(`Nhập lý do cho "${oi?.productName ?? 'sản phẩm'}"`)
+        const oi = items.find((x) => x.id === id);
+        return toast.error(`Nhập lý do cho "${oi?.productName ?? "sản phẩm"}"`);
       }
     }
 
-    setSubmitting(true)
+    setSubmitting(true);
     try {
       await createRefundRequest({
         orderId,
@@ -172,18 +180,24 @@ export default function RefundRequestModal({ open, onClose, orderId }: Props) {
         })),
         bankName: bankCode,
         bankNumber: bankAccount,
-      })
+      });
 
-      toast.success('Gửi yêu cầu hoàn hàng thành công')
-      onClose()
-      router.push('/customer/refund')
-    } catch (e: any) {
-      console.error(e)
-      toast.error(e?.message ?? 'Tạo yêu cầu hoàn hàng thất bại')
+      toast.success("Gửi yêu cầu hoàn hàng thành công");
+      onClose();
+      router.push("/customer/refund");
+    } catch (error: unknown) {
+      console.error("Start livefailed:", error);
+      const err = error as AxiosError<{ message?: string; errors?: string[] }>;
+      const message =
+        err?.response?.data?.errors?.[0] ||
+        err?.response?.data?.message ||
+        "Yêu cầu hoàn đơn thất bại!";
+
+      toast.error(message);
     } finally {
-      setSubmitting(false)
+      setSubmitting(false);
     }
-  }
+  };
 
   return (
     <Dialog open={open} onOpenChange={(v) => (!v ? onClose() : void 0)}>
@@ -227,17 +241,17 @@ export default function RefundRequestModal({ open, onClose, orderId }: Props) {
                 </div>
               ) : (
                 items.map((it) => {
-                  const vattrs = variantMap[it.id]
+                  const vattrs = variantMap[it.id];
                   const vText = vattrs
                     ? Object.entries(vattrs)
                         .map(([k, v]) => `${k}: ${v}`)
-                        .join(' • ')
-                    : ''
+                        .join(" • ")
+                    : "";
                   const st = sel[it.id] || {
                     selected: false,
-                    reason: '',
-                    imageUrl: '',
-                  }
+                    reason: "",
+                    imageUrl: "",
+                  };
 
                   return (
                     <div
@@ -258,7 +272,7 @@ export default function RefundRequestModal({ open, onClose, orderId }: Props) {
                       {/* Sản phẩm (tên + SL dưới tên) */}
                       <div className="col-span-8 flex gap-3">
                         <Image
-                          src={it.productImageUrl || '/assets/emptydata.png'}
+                          src={it.productImageUrl || "/assets/emptydata.png"}
                           alt={it.productName}
                           width={64}
                           height={64}
@@ -320,9 +334,9 @@ export default function RefundRequestModal({ open, onClose, orderId }: Props) {
                                 className="hidden"
                                 disabled={!!uploading[it.id]}
                                 onChange={(e) => {
-                                  const file = e.target.files?.[0]
-                                  e.currentTarget.value = ''
-                                  handleUpload(it.id, file)
+                                  const file = e.target.files?.[0];
+                                  e.currentTarget.value = "";
+                                  handleUpload(it.id, file);
                                 }}
                                 onClick={(e) => e.stopPropagation()}
                                 onMouseDown={(e) => e.stopPropagation()}
@@ -352,8 +366,8 @@ export default function RefundRequestModal({ open, onClose, orderId }: Props) {
                                   className="p-1 rounded hover:bg-gray-100"
                                   title="Xoá ảnh"
                                   onClick={(e) => {
-                                    e.stopPropagation()
-                                    changeImage(it.id, '')
+                                    e.stopPropagation();
+                                    changeImage(it.id, "");
                                   }}
                                   onMouseDown={(e) => e.stopPropagation()}
                                 >
@@ -365,7 +379,7 @@ export default function RefundRequestModal({ open, onClose, orderId }: Props) {
                         </div>
                       </div>
                     </div>
-                  )
+                  );
                 })
               )}
             </ScrollArea>
@@ -419,10 +433,10 @@ export default function RefundRequestModal({ open, onClose, orderId }: Props) {
             disabled={submitting}
             className="bg-lime-600 hover:bg-lime-700 text-white"
           >
-            {submitting ? 'Đang gửi…' : 'Gửi yêu cầu'}
+            {submitting ? "Đang gửi…" : "Gửi yêu cầu"}
           </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  )
+  );
 }
