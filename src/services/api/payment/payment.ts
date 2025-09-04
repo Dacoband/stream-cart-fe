@@ -104,3 +104,29 @@ export const createDeposit = async (
     throw new Error(message || 'Failed to create deposit.')
   }
 }
+export const generateRefundQrCode = async (
+  refundRequestId: string
+): Promise<string> => {
+  try {
+    const token = localStorage.getItem('token')
+    if (!token) throw new Error('Not found token.')
+
+    const res = await rootApi.post<{ data: string }>(
+      `payments/refund/${refundRequestId}/generate-qr`,
+      {},
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    )
+
+    // API trả ApiResponse<string> => lấy res.data.data
+    return res.data?.data
+  } catch (error) {
+    console.error('Error generating refund QR code:', error)
+    const err = error as AxiosError<{ message?: string; errors?: string[] }>
+    const message = err?.response?.data?.errors?.[0] || (error as Error).message
+    throw new Error(message || 'Failed to generate refund QR code.')
+  }
+}
