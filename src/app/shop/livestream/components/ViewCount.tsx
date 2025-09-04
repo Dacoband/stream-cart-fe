@@ -24,13 +24,13 @@ export function ViewerCount({ livestreamId }: ViewerCountProps) {
       return stats.customerViewers;
     }
 
-    // Nếu không, fallback sang ViewersByRole
-    const roleMap = stats.viewersByRole || {};
-    for (const [role, count] of Object.entries(roleMap)) {
-      if (String(role).toLowerCase() === "customer") {
-        return Number(count) || 0;
-      }
-    }
+    // // Nếu không, fallback sang ViewersByRole
+    // const roleMap = stats.viewersByRole || {};
+    // for (const [role, count] of Object.entries(roleMap)) {
+    //   if (String(role).toLowerCase() === "customer") {
+    //     return Number(count) || 0;
+    //   }
+    // }
 
     return 0;
   }, [stats]);
@@ -43,8 +43,14 @@ export function ViewerCount({ livestreamId }: ViewerCountProps) {
     (async () => {
       try {
         await chatHubService.ensureStarted();
-        // join livestream group để nhận thống kê
-        await chatHubService.joinLivestream(livestreamId);
+        // Tham gia nhóm viewers để nhận thống kê chính xác
+        try {
+          await chatHubService.startViewingLivestream(livestreamId);
+        } catch {}
+        // Optional: cũng join phòng chat nếu server phát cùng nhóm
+        try {
+          await chatHubService.joinLivestream(livestreamId);
+        } catch {}
 
         chatHubService.onViewerStats((payload) => {
           if (!mounted) return;
@@ -61,6 +67,13 @@ export function ViewerCount({ livestreamId }: ViewerCountProps) {
 
     return () => {
       mounted = false;
+      // Rời nhóm viewers để tránh rò rỉ sự kiện
+      try {
+        chatHubService.stopViewingLivestream(livestreamId);
+      } catch {}
+      try {
+        chatHubService.leaveLivestream(livestreamId);
+      } catch {}
     };
   }, [livestreamId]);
 

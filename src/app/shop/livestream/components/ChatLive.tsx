@@ -9,7 +9,9 @@ import { Card, CardContent, CardFooter, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Send, Store, UserRound } from "lucide-react";
 import Image from "next/image";
-import { useAuth } from "@/lib/AuthContext";
+// import { useAuth } from "@/lib/AuthContext";
+import { getLivestreamById } from "@/services/api/livestream/livestream";
+import { useRouter } from "next/navigation";
 
 function ChatLive({
   livestreamId,
@@ -18,7 +20,8 @@ function ChatLive({
   livestreamId: string;
   disabledInput?: boolean;
 }) {
-  const { user } = useAuth();
+  const router = useRouter();
+  // const { user } = useAuth();
   const [newMessage, setNewMessage] = React.useState("");
   const [messages, setMessages] = React.useState<LivestreamMessagePayload[]>(
     []
@@ -28,6 +31,9 @@ function ChatLive({
   const listRef = React.useRef<HTMLDivElement | null>(null);
   // Track seen messages to prevent duplicates from double broadcasts or duplicate handlers
   const seenKeysRef = React.useRef<Set<string>>(new Set());
+  const [sellerId, setSellerId] = React.useState<string | null>(null);
+  // Avoid multiple navigations on repeated warnings
+  const navigatedRef = React.useRef<boolean>(false);
 
   const makeKey = React.useCallback((m: LivestreamMessagePayload) => {
     const ts = m.timestamp ? new Date(m.timestamp).getTime() : Date.now();
@@ -47,6 +53,11 @@ function ChatLive({
     (async () => {
       try {
         setLoading(true);
+        // Fetch sellerId to mark shop messages with store icon
+        try {
+          const live = await getLivestreamById(livestreamId);
+          if (mounted) setSellerId(live?.sellerId || live?.shopId || null);
+        } catch {}
         // Load existing history via REST (paginated wrapper: { currentPage, items: [] })
         interface HistoryItem {
           id: string;
@@ -120,7 +131,7 @@ function ChatLive({
         // Seller should not be counted as a viewer
         await chatHubService.joinLivestream(livestreamId);
 
-        chatHubService.onReceiveLivestreamMessage((payload) => {
+        chatHubService.onReceiveLivestreamMessage(async (payload) => {
           // de-dupe: skip if already seen
           try {
             const key = makeKey(payload);
@@ -136,6 +147,26 @@ function ChatLive({
               listRef.current.scrollTop = listRef.current.scrollHeight;
             }
           });
+
+          // Detect zero-GUID system sender and redirect if livestream ended
+          try {
+            const isZeroGuid =
+              (payload.senderId || "").toLowerCase() ===
+              "00000000-0000-0000-0000-000000000000";
+            if (isZeroGuid && !navigatedRef.current) {
+              // Re-check livestream status from server
+              const live = await getLivestreamById(livestreamId);
+              const status = (live as unknown as { status?: boolean })?.status;
+              if (status === false) {
+                navigatedRef.current = true;
+                router.push(
+                  `/shop/livestream/${livestreamId}/review-livestream`
+                );
+              }
+            }
+          } catch {
+            // ignore
+          }
         });
       } catch (e) {
         console.error("Chat init error", e);
@@ -147,7 +178,7 @@ function ChatLive({
       mounted = false;
       chatHubService.leaveLivestream(livestreamId);
     };
-  }, [livestreamId, makeKey]);
+  }, [livestreamId, makeKey, router]);
 
   const handleMessageSend = async () => {
     if (disabledInput) return;
@@ -189,8 +220,7 @@ function ChatLive({
                 {/* Avatar / Icon */}
                 {m.senderType === "Shop" ||
                 m.senderType === "Moderator" ||
-                m.senderType === "Seller" ||
-                (user?.id && m.senderId === user.id) ? (
+                (sellerId && m.senderId === sellerId) ? (
                   <div className="h-6 w-6 flex items-center justify-center rounded-full bg-lime-100 overflow-hidden shrink-0">
                     <Store className="h-4 w-4 text-lime-500" />
                   </div>
