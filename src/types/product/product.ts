@@ -22,6 +22,8 @@ export interface Product {
   lastModifiedBy: string
   hasPrimaryImage: boolean
   primaryImageUrl: string
+  reserveStock: number
+
 }
 export interface ProductDetail {
   productId: string

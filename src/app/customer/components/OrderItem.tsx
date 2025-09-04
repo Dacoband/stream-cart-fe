@@ -32,7 +32,10 @@ interface OrderItemProps {
 }
 
 export function OrderItem({ order }: OrderItemProps) {
-  const statusText = getStatusText(order.orderStatus as OrderStatus);
+  const [status, setStatus] = useState<OrderStatus>(
+    order.orderStatus as OrderStatus
+  );
+  const statusText = getStatusText(status);
   const [shop, setShop] = useState<Shop | null>(null);
   const router = useRouter();
   const [itemAttributes, setItemAttributes] = useState<
@@ -96,8 +99,8 @@ export function OrderItem({ order }: OrderItemProps) {
     };
   }, [order.items]);
 
-  const getStatusTextColor = (status: OrderStatus) => {
-    switch (status) {
+  const getStatusTextColor = (s: OrderStatus) => {
+    switch (s) {
       case OrderStatus.Cancelled:
       case OrderStatus.Refunded:
         return "bg-red-600";
@@ -113,6 +116,7 @@ export function OrderItem({ order }: OrderItemProps) {
       setUpdating(true);
       await updateOrderStatus(order.id, 5);
       toast.success("Đã hủy đơn hàng");
+      setStatus(5 as OrderStatus);
       router.refresh();
     } catch {
       toast.error("Không thể hủy đơn hàng");
@@ -126,6 +130,7 @@ export function OrderItem({ order }: OrderItemProps) {
       setUpdating(true);
       await updateOrderStatus(order.id, 10);
       toast.success("Xác nhận đã nhận hàng");
+      setStatus(10 as OrderStatus);
       router.refresh();
     } catch {
       toast.error("Không thể xác nhận đơn hàng");
@@ -135,9 +140,9 @@ export function OrderItem({ order }: OrderItemProps) {
   };
 
   return (
-    <Link href={`/customer/order-details/${order.id}`}>
-      <Card className="mb-4 rounded-none p-0">
-        <CardContent className="p-4">
+    <Card className="mb-4 rounded-none p-0">
+      <CardContent className="p-4">
+        <Link href={`/customer/order-details/${order.id}`}>
           <div className="flex justify-between items-start mb-3">
             <div className="flex flex-col gap-1">
               <div className="flex gap-2 items-center w-full">
@@ -155,7 +160,7 @@ export function OrderItem({ order }: OrderItemProps) {
               </span>
               <span
                 className={`inline-block py-1 px-2 text-xs text-white font-medium ${getStatusTextColor(
-                  order.orderStatus as OrderStatus
+                  status
                 )}`}
               >
                 {statusText}
@@ -217,58 +222,50 @@ export function OrderItem({ order }: OrderItemProps) {
               />
             </div>
           </div>
-
-          <div className="flex justify-between mb-2">
-            <div className="space-y-1 text-sm text-gray-600">
-              {order.actualDeliveryDate ? (
+        </Link>
+        <div className="flex justify-between mb-2">
+          <div className="space-y-1 text-sm text-gray-600">
+            {order.actualDeliveryDate ? (
+              <div>
                 <div>
+                  {" "}
                   Ngày giao thực tế:{" "}
                   <FormatDate date={order.actualDeliveryDate} />
                 </div>
-              ) : (
-                <>
-                  <div>
-                    Ngày đặt: <FormatDate date={order.orderDate} />
+                {status === 4 && (
+                  <div className="mt-2">
+                    Vui lòng xác nhận đơn khi hàng không có vấn đề. Sau{" "}
+                    <FormatDate
+                      date={
+                        new Date(
+                          new Date(order.actualDeliveryDate).getTime() +
+                            3 * 24 * 60 * 60 * 1000
+                        )
+                      }
+                    />{" "}
+                    không hoàn hàng
                   </div>
-                  <div>
-                    Ngày giao dự kiến:{" "}
-                    <FormatDate date={order.estimatedDeliveryDate} />
-                  </div>
-                </>
-              )}
-            </div>
+                )}
+              </div>
+            ) : (
+              <>
+                <div>
+                  Ngày đặt: <FormatDate date={order.orderDate} />
+                </div>
+                <div>
+                  Ngày giao dự kiến:{" "}
+                  <FormatDate date={order.estimatedDeliveryDate} />
+                </div>
+              </>
+            )}
+          </div>
 
-            <div className="flex items-center gap-2">
-              {order.orderStatus === 0 && (
-                <>
-                  <Button
-                    variant="outline"
-                    className="border border-rose-500 rounded-none text-rose-600 hover:bg-rose-50 cursor-pointer"
-                    onClick={async (e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      setCancelOpen(true);
-                    }}
-                  >
-                    Hủy đơn
-                  </Button>
-                  <Button
-                    className="bg-[#B0F847] rounded-none text-black hover:brightness-95 cursor-pointer"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      router.push(`/payment/order?orders=${order.id}`);
-                    }}
-                  >
-                    Thanh toán lại
-                  </Button>
-                </>
-              )}
-
-              {(order.orderStatus === 1 || order.orderStatus === 2) && (
+          <div className="flex items-center gap-2">
+            {status === 0 && (
+              <>
                 <Button
                   variant="outline"
-                  className="border border-rose-500 text-rose-600 hover:bg-rose-50 cursor-pointer"
+                  className="border border-rose-500 rounded-none text-rose-600 hover:bg-rose-50 cursor-pointer"
                   onClick={async (e) => {
                     e.preventDefault();
                     e.stopPropagation();
@@ -277,17 +274,43 @@ export function OrderItem({ order }: OrderItemProps) {
                 >
                   Hủy đơn
                 </Button>
-              )}
-
-              {order.orderStatus === 4 && (
-                <div>
                 <Button
-                  className="bg-gray-400 text-gray-600 hover:bg-black/90 rounded-none cursor-pointer"
-                 
+                  className="bg-[#B0F847] rounded-none text-black hover:brightness-95 cursor-pointer"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    router.push(`/payment/order?orders=${order.id}`);
+                  }}
+                >
+                  Thanh toán lại
+                </Button>
+              </>
+            )}
+
+            {(status === 1 || status === 2) && (
+              <Button
+                variant="outline"
+                className="border border-rose-500 text-rose-600 hover:bg-rose-50 cursor-pointer"
+                onClick={async (e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setCancelOpen(true);
+                }}
+              >
+                Hủy đơn
+              </Button>
+            )}
+
+            {status === 4 && (
+              <div className="flex gap-4">
+                <Button
+                  type="button"
+                  className=" bg-gray-200 hover:bg-gray-300 rounded-none text-black hover:text-black/80 cursor-pointer"
                 >
                   Hoàn trả hàng
-                </Button><Button
-                  className="bg-black text-white hover:bg-black/90 cursor-pointer"
+                </Button>
+                <Button
+                  className="bg-[#B0F847] rounded-none text-black hover:bg-[#B0F847]/80 hover:text-black/80 cursor-pointer"
                   onClick={async (e) => {
                     e.preventDefault();
                     e.stopPropagation();
@@ -295,94 +318,88 @@ export function OrderItem({ order }: OrderItemProps) {
                   }}
                 >
                   Đã nhận hàng
-                </Button></div>
-                
-              )}
-
-              {order.orderStatus === 10 && (
-                <Button
-                  variant="secondary"
-                  className="bg-[#B0F847] rounded-none text-black hover:brightness-95 cursor-pointer"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    setReviewDialogOpen(true);
-                  }}
-                >
-                  Đánh giá
                 </Button>
-              )}
-            </div>
+              </div>
+            )}
+
+            {status === 10 && (
+              <Button
+                variant="secondary"
+                className="bg-[#B0F847] rounded-none text-black hover:bg-[#B0F847]/80 hover:text-black/80 cursor-pointer"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setReviewDialogOpen(true);
+                }}
+              >
+                Đánh giá
+              </Button>
+            )}
           </div>
-        </CardContent>
-        {/* Confirm cancel */}
-        <AlertDialog open={cancelOpen} onOpenChange={setCancelOpen}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Hủy đơn hàng</AlertDialogTitle>
-              <AlertDialogDescription>
-                Bạn có chắc chắn muốn hủy đơn hàng này? Hành động này không thể
-                hoàn tác.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel disabled={updating}>
-                Quay lại
-              </AlertDialogCancel>
-              <AlertDialogAction
-                disabled={updating}
-                className="bg-red-600 hover:bg-red-600/90 text-white"
-                onClick={async () => {
-                  await cancelOrder();
-                  setCancelOpen(false);
-                }}
-              >
-                Xác nhận hủy
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+        </div>
+      </CardContent>
+      {/* Confirm cancel */}
+      <AlertDialog open={cancelOpen} onOpenChange={setCancelOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Hủy đơn hàng</AlertDialogTitle>
+            <AlertDialogDescription>
+              Bạn có chắc chắn muốn hủy đơn hàng này? Hành động này không thể
+              hoàn tác.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={updating}>Quay lại</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={updating}
+              className="bg-red-600 hover:bg-red-600/90 text-white"
+              onClick={async () => {
+                await cancelOrder();
+                setCancelOpen(false);
+              }}
+            >
+              Xác nhận hủy
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
-        {/* Confirm received */}
-        <AlertDialog
-          open={confirmReceiveOpen}
-          onOpenChange={setConfirmReceiveOpen}
-        >
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Xác nhận đã nhận hàng</AlertDialogTitle>
-              <AlertDialogDescription>
-                Bạn xác nhận đã nhận được hàng và sản phẩm đúng mô tả?
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel disabled={updating}>
-                Quay lại
-              </AlertDialogCancel>
-              <AlertDialogAction
-                disabled={updating}
-                onClick={async () => {
-                  await confirmReceived();
-                  setConfirmReceiveOpen(false);
-                }}
-              >
-                Xác nhận
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+      {/* Confirm received */}
+      <AlertDialog
+        open={confirmReceiveOpen}
+        onOpenChange={setConfirmReceiveOpen}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Xác nhận đã nhận hàng</AlertDialogTitle>
+            <AlertDialogDescription>
+              Bạn xác nhận đã nhận được hàng và sản phẩm đúng mô tả?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={updating}>Quay lại</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={updating}
+              onClick={async () => {
+                await confirmReceived();
+                setConfirmReceiveOpen(false);
+              }}
+            >
+              Xác nhận
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
-        {/* Review Dialog */}
-        <DialogAddReview
-          open={reviewDialogOpen}
-          onOpenChange={setReviewDialogOpen}
-          order={order}
-          onSuccess={() => {
-            // Optionally refresh data or show success message
-            router.refresh();
-          }}
-        />
-      </Card>
-    </Link>
+      {/* Review Dialog */}
+      <DialogAddReview
+        open={reviewDialogOpen}
+        onOpenChange={setReviewDialogOpen}
+        order={order}
+        onSuccess={() => {
+          router.refresh();
+        }}
+      />
+    </Card>
   );
 }

@@ -18,6 +18,7 @@ import {
   IdCard,
 } from "lucide-react";
 // import { useRouter } from "next/navigation";
+// import { useRouter } from 'next/navigation'
 
 import {
   filterWalletTransactions,
@@ -305,34 +306,34 @@ export default function AdminTransactionsPage() {
   const [detailsLoading, setDetailsLoading] = React.useState(false);
   const [detailsTx, setDetailsTx] = React.useState<Row | undefined>(undefined);
 
-  // const router = useRouter();
-  // const [submitting, setSubmitting] = React.useState(false);
-  // const [txAmount, setTxAmount] = React.useState<string>("");
+  // const router = useRouter()
+  // const [submitting, setSubmitting] = React.useState(false)
+  // const [txAmount, setTxAmount] = React.useState<string>('')
 
   // const handleWithdrawConfirm = async (): Promise<void> => {
-  //   if (submitting) return;
-  //   const value = Number(txAmount);
+  //   if (submitting) return
+  //   const value = Number(txAmount)
   //   if (!Number.isFinite(value) || value <= 0) {
-  //     toast.error("Số tiền phải lớn hơn 0");
-  //     return;
+  //     toast.error('Số tiền phải lớn hơn 0')
+  //     return
   //   }
   //   if (value < 51_000) {
-  //     toast.error("Số tiền rút tối thiểu là 51.000đ");
-  //     return;
+  //     toast.error('Số tiền rút tối thiểu là 51.000đ')
+  //     return
   //   }
   //   try {
-  //     setSubmitting(true);
+  //     setSubmitting(true)
   //     await router.push(
   //       `/manager/transaction/withdraw?amount=${encodeURIComponent(
   //         String(value)
   //       )}`
-  //     );
+  //     )
   //   } catch {
-  //     toast.error("Có lỗi xảy ra, vui lòng thử lại");
+  //     toast.error('Có lỗi xảy ra, vui lòng thử lại')
   //   } finally {
-  //     setSubmitting(false);
+  //     setSubmitting(false)
   //   }
-  // };
+  // }
 
   // load shop options
   React.useEffect(() => {

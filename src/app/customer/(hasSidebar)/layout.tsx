@@ -1,9 +1,9 @@
-import { AppSidebar } from "../components/Sidebar";
-import { SidebarProvider } from "@/components/ui/sidebar";
+import { AppSidebar } from '../components/Sidebar'
+import { SidebarProvider } from '@/components/ui/sidebar'
 export default async function LayoutCustomerHasSicebar({
   children,
 }: {
-  children: React.ReactNode;
+  children: React.ReactNode
 }) {
   return (
     <div className="w-full bg-[#F5F5F5] h-full">
@@ -13,11 +13,9 @@ export default async function LayoutCustomerHasSicebar({
             <AppSidebar />
           </div>
 
-          <div className="flex-1  sticky top-28 pb-5  h-[calc(100vh-9rem)]   rounded-lg  ">
-            {children}
-          </div>
+          <div className="flex-1 rounded-lg pb-5 min-h-screen">{children}</div>
         </SidebarProvider>
       </div>
     </div>
-  );
+  )
 }

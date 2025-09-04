@@ -1,6 +1,7 @@
 "use client";
 import { Button } from "@/components/ui/button";
 import React, { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   CirclePlus,
   Edit,
@@ -57,6 +58,7 @@ import DialogUpdateStock from "./components/DialogUpdateStock";
 import { toast } from "sonner";
 
 function Page() {
+  const router = useRouter();
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [products, setProducts] = useState<Product[]>([]);
@@ -305,6 +307,7 @@ function Page() {
 
                     <TableHead className="font-semibold">Giá</TableHead>
                     <TableHead className="font-semibold">Kho hàng</TableHead>
+                    <TableHead className="font-semibold">Dự trữ</TableHead>
                     <TableHead className="font-semibold">Trạng thái</TableHead>
                     <TableHead className="font-semibold text-right w-24 pr-6">
                       Thao tác
@@ -489,6 +492,30 @@ function Page() {
                           </div>
                         </TableCell>
                         <TableCell className="align-top ">
+                          <div className="flex gap-8 ">
+                            <div>
+                              <div className="h-24 py-2 text-base">
+                                {product.reserveStock}
+                              </div>
+                              {productVariants[product.id]?.variants?.length >
+                                0 && (
+                                <div className="mt-1 text-sm  space-y-1 w-full text-gray-600 h-full">
+                                  {productVariants[product.id].variants.map(
+                                    (variant, idx) => (
+                                      <div
+                                        key={variant.variantId || idx}
+                                        className="flex flex-wrap gap-2"
+                                      >
+                                        {variant.stock}
+                                      </div>
+                                    )
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell className="align-top ">
                           <div className="flex w-full  justify-start h-24 py-2 items-start">
                             <span
                               className={`inline-flex items-center gap-2 px-2 py-1 rounded-full text-sm font-medium ${
@@ -520,7 +547,14 @@ function Page() {
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                              <DropdownMenuItem className="text-blue-600 flex justify-start">
+                              <DropdownMenuItem
+                                className="text-blue-600 flex justify-start cursor-pointer"
+                                onClick={() =>
+                                  router.push(
+                                    `/shop/manager-products/${product.id}`
+                                  )
+                                }
+                              >
                                 <Edit size={18} className="mr-2" />
                                 Cập nhật
                               </DropdownMenuItem>

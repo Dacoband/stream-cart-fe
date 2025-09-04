@@ -12,6 +12,7 @@ export interface DetailShopMembershipDTO {
   isDeleted: boolean
   maxProduct?: number
   commission?: number
+  name?: string | null
 }
 
 export interface ListShopMembershipDTO {

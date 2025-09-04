@@ -1,36 +1,48 @@
 "use client";
+
 import React, { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-// import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { getShopDetail, getShopMembers } from "@/services/api/shop/shop";
+import { toast } from "sonner";
+
+// services
+import { getShopDetail } from "@/services/api/shop/shop";
 import { getAddressByShopId } from "@/services/api/address/address";
 import { getUserById } from "@/services/api/auth/account";
 import { getPagedProducts } from "@/services/api/product/product";
-import { ShopInfo } from "@/app/manager/shops/[id]/components/ShopInfo";
-import { ShopProductList } from "@/app/manager/shops/[id]/components/ShopProduct";
-import { TransactionHistory } from "@/app/manager/shops/[id]/components/TransactionHistory";
-// import Image from 'next/image'
+import { filterWalletTransactions } from "@/services/api/wallet/walletTransaction";
+import { filterShopMembership } from "@/services/api/membership/shopMembership";
+import { getModeratorsByShop } from "@/services/api/auth/moderator";
+
+// components
+import ShopHeader from "./components/ShopHeader";
+import { ShopInfo } from "./components/ShopInfo";
+import { ShopProductList } from "./components/ShopProduct";
+import { ShopMembership } from "./components/ShopMembership";
+import { ShopOrderList } from "./components/ShopOrder";
+import { TransactionHistory } from "./components/TransactionHistory";
+
+// icons
 import {
-  // Star,
-  // ArrowLeft,
   Info,
   ShoppingCart,
-  // Activity,
   Boxes,
   CreditCard,
   CalendarClock,
 } from "lucide-react";
-import { toast } from "sonner";
-import type { Shop } from "@/types/shop/shop"; // adjust path if needed
-import type { Product } from "@/types/product/product"; // adjust path if needed
-import type { User } from "@/types/auth/user";
-import type { Address } from "@/types/address/address";
-import ShopHeader from "./components/ShopHeader";
-import { ShopMembership } from "./components/ShopMembership";
-import { ShopOrderList } from "./components/ShopOrder";
 
-type Transaction = {
+// types
+import type { Shop } from "@/types/shop/shop";
+import type { Product } from "@/types/product/product";
+import type { User, Moderator } from "@/types/auth/user";
+import type { Address } from "@/types/address/address";
+import type {
+  WalletTransactionDTO,
+  ListWalletTransactionDTO,
+} from "@/types/wallet/walletTransactionDTO";
+import type { DetailShopMembershipDTO } from "@/types/membership/shopMembership";
+
+type TransactionUI = {
   transactionId: string;
   type: "PAYMENT" | "REFUND" | "WITHDRAW" | "DEPOSIT";
   amount: number;
@@ -41,117 +53,211 @@ type Transaction = {
   refundId?: string;
 };
 
-type Membership = {
-  membershipId: string;
-  name: string;
-  description?: string;
-  price: number;
-  startDate: string;
-  endDate: string;
-  duration?: string;
-  maxProduct?: number;
-  maxLivestream?: number;
-  commission: number; // <-- ensure this is number, not boolean or optional
-  createdAt?: string;
-  updatedAt?: string;
-};
-type Order = {
-  orderId: string;
-  customerName: string;
-  totalAmount: number;
-  status: string;
-  createdAt: string;
-};
+// ===== Helpers map =====
+function mapType(t: WalletTransactionDTO["type"]): TransactionUI["type"] {
+  const v = String(t).toUpperCase();
+  if (v === "0" || v === "WITHDRAW") return "WITHDRAW";
+  if (v === "1" || v === "DEPOSIT") return "DEPOSIT";
+  if (v === "2" || v === "COMMISSION") return "PAYMENT";
+  if (v === "3" || v === "SYSTEM") return "PAYMENT";
+  return "PAYMENT";
+}
+function mapStatus(s: WalletTransactionDTO["status"]): TransactionUI["status"] {
+  const v = String(s).toUpperCase();
+  if (v === "0" || v === "SUCCESS" || v === "COMPLETED") return "COMPLETED";
+  if (v === "1" || v === "FAILED") return "FAILED";
+  return "PENDING";
+}
+function toDetailShopMembershipDTO(
+  m: Partial<DetailShopMembershipDTO>
+): DetailShopMembershipDTO {
+  const now = new Date();
+  const startRaw = m?.startDate ?? m?.createdAt ?? now;
+  const endRaw = m?.endDate ?? m?.modifiedAt ?? startRaw;
+  const startDate =
+    startRaw instanceof Date ? startRaw : new Date(startRaw as string);
+  const endDate = endRaw instanceof Date ? endRaw : new Date(endRaw as string);
+
+  const inferredStatus =
+    endDate.getTime() < now.getTime()
+      ? "Expired"
+      : (endDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24) <= 7
+      ? "ExpiringSoon"
+      : "Active";
+
+  return {
+    id: m?.id ?? "",
+    shopID: m?.shopID ?? "",
+    startDate,
+    endDate,
+    remainingLivestream:
+      typeof m?.remainingLivestream === "number" ? m.remainingLivestream : 0,
+    status: m?.status ?? inferredStatus,
+    createdBy: m?.createdBy,
+    createdAt:
+      m?.createdAt instanceof Date
+        ? m.createdAt
+        : new Date(m?.createdAt ?? startDate),
+    modifiedBy: m?.modifiedBy,
+    modifiedAt: m?.modifiedAt
+      ? m?.modifiedAt instanceof Date
+        ? m.modifiedAt
+        : new Date(m.modifiedAt as string)
+      : undefined,
+    isDeleted: Boolean(m?.isDeleted),
+    maxProduct: typeof m?.maxProduct === "number" ? m.maxProduct : undefined,
+    commission: typeof m?.commission === "number" ? m.commission : undefined,
+    name: m?.name ?? null,
+  };
+}
+
+// ===== Page component =====
 const ShopDetailPage = () => {
   const params = useParams();
-  // const router = useRouter();
+
   const [shop, setShop] = useState<Shop | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
-
-  const [loading, setLoading] = useState(true);
   const [seller, setSeller] = useState<User | null>(null);
   const [address, setAddress] = useState<Address | null>(null);
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [memberships, setMemberships] = useState<Membership[]>([]);
-  const [orders, setOrders] = useState<Order[]>([]);
   const [shopOwner, setShopOwner] = useState<User | null>(null);
-  const [moderators, setModerators] = useState<User[]>([]);
+  const [moderators, setModerators] = useState<Moderator[]>([]);
+  const [transactions, setTransactions] = useState<TransactionUI[]>([]);
+  const [memberships, setMemberships] = useState<DetailShopMembershipDTO[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let isMounted = true;
     const fetchAll = async () => {
       if (typeof params.id !== "string") {
         toast.error("Không tìm thấy ID shop");
         setLoading(false);
         return;
       }
+      const shopId = params.id;
 
       try {
-        const id = params.id;
+        setLoading(true);
 
-        // Fetch shop detail
-        const shopRes = await getShopDetail(id);
-        setShop(shopRes.data || shopRes);
+        // 1) Lấy thông tin shop trước để biết owner/accountId
+        const shopRes = await getShopDetail(shopId);
+        const shopData: Shop = (shopRes?.data || shopRes) as Shop;
+        if (!isMounted) return;
+        setShop(shopData);
 
-        // Fetch address
-        try {
-          const addressRes = await getAddressByShopId(id);
-          setAddress(addressRes);
-        } catch (error) {
-          console.error("Error fetching address:", error);
-          setAddress(null);
-        }
+        const ownerId = shopData?.accountId || shopData?.createdBy || null;
 
-        // Fetch shop owner and moderators
-        try {
-          const shopData = shopRes.data || shopRes;
-          if (shopData?.createdBy) {
-            const owner = await getUserById(shopData.createdBy);
-            setShopOwner(owner);
-          }
-        } catch (error) {
-          console.error("Error fetching shop owner:", error);
-        }
+        // 2) Chạy song song các API còn lại
+        const [
+          addressRes,
+          moderatorsRes,
+          ownerRes,
+          productsAgg,
+          membershipRes,
+          txRes,
+        ] = await Promise.all([
+          // Address
+          getAddressByShopId(shopId).catch(() => null),
 
-        try {
-          const members = await getShopMembers(id);
-          console.log("member", members);
-          setModerators(Array.isArray(members) ? members : []);
-        } catch (error) {
-          console.error("Error fetching moderators:", error);
-          setModerators([]);
-        }
+          // Moderators (fetch theo mẫu getModeratorsByShop)
+          getModeratorsByShop(shopId).catch(() => []),
 
-        // Fetch products for the shop
-        try {
-          const productsRes = await getPagedProducts({
-            shopId: id,
-            pageNumber: 1,
-            pageSize: 50,
-            activeOnly: false,
-            sortOption: null,
-            categoryId: null,
-            inStockOnly: false,
-          });
-          setProducts(Array.isArray(productsRes) ? productsRes : []);
-        } catch (error) {
-          console.error("Error fetching products:", error);
-          setProducts([]);
-        }
+          // Owner/seller (best-effort)
+          ownerId
+            ? getUserById(ownerId).catch(() => null)
+            : Promise.resolve(null),
 
-        // Set empty arrays for other data that doesn't have real APIs yet
-        setTransactions([]);
-        setSeller(null);
-        setMemberships([]);
-        setOrders([]);
-      } catch (error) {
-        console.log(error);
+          // Products: gom nhiều trang
+          (async () => {
+            const all: Product[] = [];
+            const PAGE_SIZE = 50;
+            for (let page = 1; page <= 200; page++) {
+              const pageData = await getPagedProducts({
+                shopId,
+                pageNumber: page,
+                pageSize: PAGE_SIZE,
+                activeOnly: false,
+                sortOption: null,
+                categoryId: null,
+                inStockOnly: false,
+              }).catch(() => []);
+              const items = Array.isArray(pageData) ? pageData : [];
+              all.push(...items);
+              if (items.length < PAGE_SIZE) break;
+            }
+            return all;
+          })(),
+
+          // Memberships
+          (async () => {
+            const page1 = await filterShopMembership({
+              shopId,
+              pageIndex: 1,
+              pageSize: 100,
+            }).catch(() => null);
+            const rawList: DetailShopMembershipDTO[] =
+              page1?.detailShopMembership ??
+              page1?.data?.detailShopMembership ??
+              page1?.items ??
+              page1 ??
+              [];
+            return rawList.map(toDetailShopMembershipDTO);
+          })(),
+
+          // Transactions (lấy gần đây)
+          (async () => {
+            const r: ListWalletTransactionDTO = await filterWalletTransactions({
+              ShopId: shopId,
+              Types: [0, 1, 2, 3],
+              PageIndex: 1,
+              PageSize: 100,
+            }).catch(
+              () =>
+                ({
+                  items: [],
+                  totalCount: 0,
+                  totalPage: 0,
+                } as ListWalletTransactionDTO)
+            );
+
+            return (r.items || []).map((d: WalletTransactionDTO) => ({
+              transactionId: d.transactionId || d.id,
+              type: mapType(d.type),
+              amount: d.amount,
+              description:
+                d.description ||
+                (mapType(d.type) === "WITHDRAW"
+                  ? `Rút tiền về ${d.bankAccount || "ngân hàng"}`
+                  : mapType(d.type) === "DEPOSIT"
+                  ? `Nạp tiền vào ví`
+                  : "Giao dịch ví"),
+              status: mapStatus(d.status),
+              createdAt: d.createdAt,
+              orderId: d.orderId || undefined,
+              refundId: d.refundId || undefined,
+            }));
+          })(),
+        ]);
+
+        if (!isMounted) return;
+        setAddress(addressRes || null);
+        setModerators(Array.isArray(moderatorsRes) ? moderatorsRes : []);
+        setSeller(ownerRes || null);
+        setShopOwner(ownerRes || null);
+        setProducts(Array.isArray(productsAgg) ? productsAgg : []);
+        setMemberships(Array.isArray(membershipRes) ? membershipRes : []);
+        setTransactions(Array.isArray(txRes) ? txRes : []);
+      } catch (err) {
+        console.error(err);
         toast.error("Không thể tải dữ liệu");
       } finally {
-        setLoading(false);
+        if (isMounted) setLoading(false);
       }
     };
 
     fetchAll();
+    return () => {
+      isMounted = false;
+    };
   }, [params.id]);
 
   if (loading) return <div className="p-8 text-center">Đang tải...</div>;
@@ -163,77 +269,65 @@ const ShopDetailPage = () => {
   return (
     <div className="max-w-6xl mx-auto p-6">
       <ShopHeader shop={shop} />
+
       <Tabs defaultValue="info" className="w-full">
         <TabsList className="grid grid-cols-5 w-full bg-gray-100 rounded-lg shadow mb-6 overflow-hidden h-12">
           <TabsTrigger
             value="info"
-            className="flex items-center justify-center gap-2 h-full px-4 text-sm md:text-base font-medium text-gray-700 leading-none transition-all duration-200 ease-in-out data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow"
+            className="flex items-center justify-center gap-2 h-full px-4 text-sm md:text-base font-medium text-gray-700 leading-none data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow"
           >
-            <Info className="w-4 h-4" />
-            Thông tin
+            <Info className="w-4 h-4" /> Thông tin
           </TabsTrigger>
           <TabsTrigger
             value="products"
-            className="flex items-center justify-center gap-2 h-full px-4 text-sm md:text-base font-medium text-gray-700 leading-none transition-all duration-200 ease-in-out data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow"
+            className="flex items-center justify-center gap-2 h-full px-4 text-sm md:text-base font-medium text-gray-700 leading-none data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow"
           >
-            <Boxes className="w-4 h-4" />
-            Sản phẩm
+            <Boxes className="w-4 h-4" /> Sản phẩm
           </TabsTrigger>
           <TabsTrigger
             value="transaction"
-            className="flex items-center justify-center gap-2 h-full px-4 text-sm md:text-base font-medium text-gray-700 leading-none transition-all duration-200 ease-in-out data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow"
+            className="flex items-center justify-center gap-2 h-full px-4 text-sm md:text-base font-medium text-gray-700 leading-none data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow"
           >
-            <CreditCard className="w-4 h-4" />
-            Giao dịch
+            <CreditCard className="w-4 h-4" /> Giao dịch
           </TabsTrigger>
           <TabsTrigger
             value="membership"
-            className="flex items-center justify-center gap-2 h-full px-4 text-sm md:text-base font-medium text-gray-700 leading-none transition-all duration-200 ease-in-out data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow"
+            className="flex items-center justify-center gap-2 h-full px-4 text-sm md:text-base font-medium text-gray-700 leading-none data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow"
           >
-            <CalendarClock className="w-4 h-4" />
-            Gói thành viên
+            <CalendarClock className="w-4 h-4" /> Gói thành viên
           </TabsTrigger>
           <TabsTrigger
             value="order"
-            className="flex items-center justify-center gap-2 h-full px-4 text-sm md:text-base font-medium text-gray-700 leading-none transition-all duration-200 ease-in-out data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow"
+            className="flex items-center justify-center gap-2 h-full px-4 text-sm md:text-base font-medium text-gray-700 leading-none data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow"
           >
-            <ShoppingCart className="w-4 h-4" />
-            Đơn hàng
+            <ShoppingCart className="w-4 h-4" /> Đơn hàng
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="info">
-          <div className="">
-            <ShopInfo
-              shop={shop}
-              seller={seller}
-              address={address}
-              shopOwner={shopOwner}
-              moderators={moderators}
-            />
-          </div>
+          <ShopInfo
+            shop={shop}
+            seller={seller}
+            address={address}
+            shopOwner={shopOwner}
+            moderators={moderators}
+          />
         </TabsContent>
 
         <TabsContent value="products">
-          <div className="">
-            <ShopProductList products={products} />
-          </div>
+          <ShopProductList products={products} />
         </TabsContent>
 
         <TabsContent value="transaction">
-          <div className="">
-            <TransactionHistory transactions={transactions} />
-          </div>
+          <TransactionHistory transactions={transactions} />
         </TabsContent>
+
         <TabsContent value="membership">
-          <div className="">
-            <ShopMembership list={memberships} />
-          </div>
+          <ShopMembership list={memberships} />
         </TabsContent>
+
         <TabsContent value="order">
-          <div className="">
-            <ShopOrderList orders={orders} />
-          </div>
+          {shop?.id && <ShopOrderList shopId={shop.id} />}
         </TabsContent>
       </Tabs>
     </div>

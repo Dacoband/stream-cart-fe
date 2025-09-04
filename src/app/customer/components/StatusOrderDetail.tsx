@@ -6,6 +6,7 @@ import { Order } from "@/types/order/order";
 import {
   AlertCircle,
   CheckCircle,
+  ClipboardList,
   Clock,
   Package,
   Truck,
@@ -26,82 +27,138 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { updateOrderStatus } from "@/services/api/order/order";
 import { DialogAddReview } from "./DialogAddReview";
+import { formatFullDateTimeVN } from "@/components/common/formatFullDateTimeVN";
 
 type Props = { order: Order };
 
-function getStatusInfo(status: number) {
-  const statusMap: Record<
-    number,
-    { label: string; color: string; icon: LucideIcon; description: string }
-  > = {
-    0: {
-      label: "Chờ thanh toán",
-      color: "bg-yellow-100 text-yellow-800 border-yellow-200",
-      icon: Clock,
-      description: "Bạn cần thanh toán để tiếp tục đơn hàng",
-    },
-    1: {
-      label: "Chờ xác nhận",
-      color: "bg-yellow-100 text-yellow-800 border-yellow-200",
-      icon: Clock,
-      description: "Đơn hàng đang chờ shop xác nhận",
-    },
-    2: {
-      label: "Đang chuẩn bị",
-      color: "bg-blue-100 text-blue-800 border-blue-200",
-      icon: CheckCircle,
-      description: "Shop đang đóng gói",
-    },
-    3: {
-      label: "Chờ lấy hàng",
-      color: "bg-purple-100 text-purple-800 border-purple-200",
-      icon: Package,
-      description: "Đơn vị vận chuyển đang đến lấy hàng",
-    },
-    7: {
-      label: "Đang giao hàng",
-      color: "bg-orange-100 text-orange-800 border-orange-200",
-      icon: Truck,
-      description: "Đơn hàng đang được vận chuyển",
-    },
-    4: {
-      label: "Đã giao hàng",
-      color: "bg-green-100 text-green-800 border-green-200",
-      icon: CheckCircle,
-      description: "Đơn hàng đã được giao thành công",
-    },
-    5: {
-      label: "Đã hủy",
-      color: "bg-red-100 text-red-800 border-red-200",
-      icon: CheckCircle,
-      description: "Đơn hàng đã bị hủy",
-    },
-    10: {
-      label: "Đã hoàn thành",
-      color: "bg-green-100 text-green-800 border-green-200",
-      icon: CheckCircle,
-      description: "Đơn hàng đã hoàn thành",
-    },
-  };
-
-  return (
-    statusMap[status] || {
-      label: "Không xác định",
-      color: "bg-gray-100 text-gray-800 border-gray-200",
-      icon: AlertCircle,
-      description: "Trạng thái không xác định",
-    }
-  );
-}
-
 const StatusOrderDetail: FC<Props> = ({ order }) => {
-  const statusInfo = getStatusInfo(order.orderStatus);
-  const StatusIcon = statusInfo.icon;
   const router = useRouter();
   const [cancelOpen, setCancelOpen] = useState(false);
   const [confirmReceiveOpen, setConfirmReceiveOpen] = useState(false);
   const [reviewDialogOpen, setReviewDialogOpen] = useState(false);
   const [updating, setUpdating] = useState(false);
+
+  const statusFlow = [1, 2, 3, 7, 4];
+  const displayConfig: Record<
+    number,
+    {
+      label: string;
+      icon: LucideIcon;
+      color: string;
+      bgColor: string;
+      textColor: string;
+      borderColor: string;
+      description: string;
+    }
+  > = {
+    0: {
+      label: "Chờ thanh toán",
+      icon: Clock,
+      color: "bg-yellow-500",
+      bgColor: "bg-yellow-50",
+      textColor: "text-yellow-700",
+      borderColor: "border-yellow-200",
+      description: "Bạn cần thanh toán để tiếp tục đơn hàng",
+    },
+    1: {
+      label: "Chờ xác nhận",
+      icon: AlertCircle,
+      color: "bg-orange-500",
+      bgColor: "bg-orange-50",
+      textColor: "text-orange-700",
+      borderColor: "border-orange-200",
+      description: "Đơn hàng đang chờ shop xác nhận",
+    },
+    2: {
+      label: "Đang chuẩn bị hàng",
+      icon: Clock,
+      color: "bg-blue-500",
+      bgColor: "bg-blue-50",
+      textColor: "text-blue-700",
+      borderColor: "border-blue-200",
+      description: "Shop đang đóng gói",
+    },
+    3: {
+      label: "Chờ lấy hàng",
+      icon: Package,
+      color: "bg-purple-500",
+      bgColor: "bg-purple-50",
+      textColor: "text-purple-700",
+      borderColor: "border-purple-200",
+      description: "Đơn vị vận chuyển đang đến lấy hàng",
+    },
+    7: {
+      label: "Đang giao hàng",
+      icon: Truck,
+      color: "bg-indigo-500",
+      bgColor: "bg-indigo-50",
+      textColor: "text-indigo-700",
+      borderColor: "border-indigo-200",
+      description: "Đơn hàng đang được vận chuyển",
+    },
+    4: {
+      label: "Giao thành công",
+      icon: CheckCircle,
+      color: "bg-green-500",
+      bgColor: "bg-green-50",
+      textColor: "text-green-700",
+      borderColor: "border-green-200",
+      description: "Đơn hàng đã giao thành công",
+    },
+    10: {
+      label: "Thành công",
+      icon: CheckCircle,
+      color: "bg-green-500",
+      bgColor: "bg-green-50",
+      textColor: "text-green-700",
+      borderColor: "border-green-200",
+      description: "Đơn hàng đã hoàn tất",
+    },
+    5: {
+      label: "Đã hủy",
+      icon: CheckCircle,
+      color: "bg-red-500",
+      bgColor: "bg-red-50",
+      textColor: "text-red-700",
+      borderColor: "border-red-200",
+      description: "Đơn hàng đã bị hủy",
+    },
+  };
+
+  const currentConfig = displayConfig[order.orderStatus] || {
+    label: "Không xác định",
+    icon: AlertCircle,
+    color: "bg-gray-400",
+    bgColor: "bg-gray-50",
+    textColor: "text-gray-700",
+    borderColor: "border-gray-200",
+    description: "Trạng thái đơn hàng chưa xác định",
+  };
+  // For timeline: treat 10 (completed) as 4 (delivered) so they share the same final step
+  const effectiveStatusForTimeline =
+    order.orderStatus === 10 ? 4 : order.orderStatus;
+  const currentIndex = Math.max(
+    0,
+    statusFlow.indexOf(effectiveStatusForTimeline)
+  );
+  const deadlineMessage =
+    order.orderStatus === 1
+      ? `Vui lòng chờ shop xác nhận trước ${
+          order.timeForShop ? formatFullDateTimeVN(order.timeForShop) : ""
+        }`
+      : order.orderStatus === 2
+      ? `Đơn hàng đang được chuẩn bị. Dự kiến đóng gói trước ${
+          order.timeForShop ? formatFullDateTimeVN(order.timeForShop) : ""
+        }`
+      : order.orderStatus === 3
+      ? `Đơn hàng sẵn sàng chờ đơn vị vận chuyển đến lấy`
+      : order.orderStatus === 4
+      ? `Đơn hàng giao thành công`
+      : order.orderStatus === 10
+      ? `Hoàn tất đơn hàng`
+      : order.orderStatus === 5
+      ? `Đơn hàng đã bị hủy`
+      : null;
 
   const cancelOrder = async () => {
     try {
@@ -130,70 +187,98 @@ const StatusOrderDetail: FC<Props> = ({ order }) => {
   };
   return (
     <Card className="overflow-hidden">
-      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 px-6 py-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="p-3 bg-white rounded-full shadow-sm">
-              <StatusIcon className="w-6 h-6 text-blue-600" />
+      {/* Status Timeline and Current Status (seller-like) */}
+      <CardContent>
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center space-x-3">
+            <div className="p-2 rounded-full bg-gradient-to-r from-lime-500 to-green-600">
+              <ClipboardList className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">
-                Đơn hàng #{order.orderCode}
-              </h1>
-              <p className="text-gray-600 mt-1">
-                Đặt hàng lúc {new Date(order.orderDate).toLocaleString("vi-VN")}
-              </p>
+              <h3 className="text-lg font-semibold text-gray-900">
+                Trạng thái đơn hàng
+              </h3>
+              <p className="text-sm text-gray-500">Mã đơn: {order.orderCode}</p>
             </div>
           </div>
-          <Badge
-            className={`px-4 py-2 text-sm font-medium ${statusInfo.color}`}
-          >
-            {statusInfo.label}
-          </Badge>
+          <div className="text-right">
+            <p className="text-sm text-gray-500">Ngày đặt</p>
+            <p className="text-sm font-medium text-gray-900">
+              {formatFullDateTimeVN(order.orderDate)}
+            </p>
+          </div>
         </div>
-        <p className="text-gray-700 mt-3 text-sm">{statusInfo.description}</p>
-      </div>
+        {order.orderStatus !== 5 && (
+          <div className="mb-6">
+            <div className="flex items-center justify-between relative">
+              {statusFlow.map((status, index) => {
+                const config = displayConfig[status];
+                const isCompleted = index < currentIndex;
+                const isCurrent = index === currentIndex;
 
-      {order.trackingCode && (
-        <CardContent className="border-t bg-blue-25">
-          <div className="flex items-center gap-4 p-4 bg-blue-50 rounded-lg">
-            <Truck className="w-8 h-8 text-blue-600" />
-            <div className="flex-1">
-              <h3 className="font-semibold text-gray-900">
-                Thông tin vận chuyển
-              </h3>
-              <div className="mt-2 space-y-1">
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600">Mã vận đơn:</span>
-                  <span className="font-mono text-sm font-medium">
-                    {order.trackingCode}
-                  </span>
-                </div>
-                {order.estimatedDeliveryDate && (
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">Dự kiến giao:</span>
-                    <span className="text-sm font-medium">
-                      {new Date(order.estimatedDeliveryDate).toLocaleDateString(
-                        "vi-VN"
-                      )}
-                    </span>
+                return (
+                  <div
+                    key={status}
+                    className="flex flex-col items-center flex-1 relative"
+                  >
+                    <div
+                      className={`w-14 h-14 rounded-full flex items-center justify-center mb-2 transition-all duration-300 ${
+                        isCompleted
+                          ? "bg-[#B0F847] text-black"
+                          : isCurrent
+                          ? `${config.color} text-white`
+                          : "bg-gray-200 text-gray-400"
+                      }`}
+                    >
+                      <config.icon className="w-7 h-7" />
+                    </div>
+                    <p
+                      className={`text-xs text-center ${
+                        isCurrent
+                          ? "font-medium text-gray-900"
+                          : "text-gray-500"
+                      }`}
+                    >
+                      {config.label}
+                    </p>
+                    {index < statusFlow.length - 1 && (
+                      <div
+                        className={`absolute top-4 left-1/2 w-full h-0.5 -z-10 ${
+                          isCompleted ? "bg-[#B0F847]" : "bg-gray-200"
+                        }`}
+                      />
+                    )}
                   </div>
-                )}
-                {order.actualDeliveryDate && (
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">Đã giao:</span>
-                    <span className="text-sm font-medium text-green-600">
-                      {new Date(order.actualDeliveryDate).toLocaleDateString(
-                        "vi-VN"
-                      )}
-                    </span>
-                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        <div
+          className={`p-4 rounded-xl ${currentConfig.bgColor} ${currentConfig.borderColor} border-2 mb-2`}
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <div className={`p-2 rounded-full ${currentConfig.color}`}>
+                <currentConfig.icon className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <Badge
+                  className={`${currentConfig.bgColor} ${currentConfig.textColor} border-0 font-medium`}
+                >
+                  {currentConfig.label}
+                </Badge>
+                {deadlineMessage && (
+                  <p className="text-sm text-gray-600 mt-1 flex items-center">
+                    {deadlineMessage}
+                  </p>
                 )}
               </div>
             </div>
           </div>
-        </CardContent>
-      )}
+        </div>
+      </CardContent>
 
       {/* Actions */}
       <CardContent>
@@ -246,7 +331,7 @@ const StatusOrderDetail: FC<Props> = ({ order }) => {
                 Hoàn trả hàng
               </Button>
               <Button
-                className="bg-black text-white hover:bg-black/90 cursor-pointer"
+                className="bg-[#B0F847] rounded-none text-black hover:bg-[#B0F847]/80 hover:text-black/80 cursor-pointer"
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();

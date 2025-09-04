@@ -1,6 +1,6 @@
-import { RegisterShop, FilterShop } from './../../../types/shop/shop'
-import rootApi from '../../rootApi'
 import type { ShopSearchResult } from '../../../types/shop/shop'
+import rootApi from '../../rootApi'
+import { FilterShop, RegisterShop } from './../../../types/shop/shop'
 
 // Register Shop
 export const registerShop = async (data: RegisterShop) => {
@@ -152,5 +152,33 @@ export const searchShops = async (query: string): Promise<ShopSearchResult[]> =>
   } catch (error) {
     console.error('Error searching shops:', error)
     throw error
+  }
+}
+
+export const updateMyShop = async (
+  shopId: string,
+  data: {
+    shopName: string
+    description: string
+    logoURL: string
+    coverImageURL: string
+  }
+) => {
+  try {
+    const token = localStorage.getItem('token')
+    if (!token) {
+      throw new Error('Not found token.')
+    }
+
+    const response = await rootApi.put(`shops/${shopId}`, data, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
+
+    return response.data
+  } catch (error) {
+    console.error('Error updating shop:', error)
+    throw new Error('Xảy ra lỗi trong quá trình cập nhật cửa hàng')
   }
 }

@@ -217,8 +217,8 @@ export default function LivestreamDetail({
               <TabProducts
                 products={products}
                 productsLoading={productsLoading}
-                bestSellingProducts={bestSellingProducts}
-                bestSellingLoading={bestSellingLoading}
+                bestSellingProducts={livestream?.status ? bestSellingProducts : []}
+                bestSellingLoading={livestream?.status ? bestSellingLoading : false}
               />
             </TabsContent>
           </Tabs>

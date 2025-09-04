@@ -44,7 +44,7 @@ export default function RootLayout({
           <CartProvider>{children} </CartProvider>
         </AuthProvider>
 
-        <Toaster />
+        <Toaster richColors />
       </body>
     </html>
   );

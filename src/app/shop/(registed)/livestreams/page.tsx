@@ -40,6 +40,7 @@ import {
 import { formatFullDateTimeVN } from "@/components/common/formatFullDateTimeVN";
 import AlertDelete from "./components/AlertDeleteLive";
 import { toast } from "sonner";
+import { AxiosError } from "axios";
 function LiveStreamPage() {
   const { user } = useAuth();
   const [loading, setLoading] = useState<boolean>(true);
@@ -90,8 +91,25 @@ function LiveStreamPage() {
         window.open(`/shop/livestream/SupportLive/${id}`, "_blank");
       }
       fetchLivestreams();
-    } catch (err) {
-      console.error("Error starting livestream:", err);
+    } catch (error: unknown) {
+      console.error("Start livefailed:", error);
+      const err = error as AxiosError<{ message?: string; errors?: string[] }>;
+      const message =
+        err?.response?.data?.errors?.[0] ||
+        err?.response?.data?.message ||
+        "Truy cập live thất bại!";
+
+      toast.error(message, {
+        action:
+          user?.role === 2
+            ? {
+                label: "Đăng ký",
+                onClick: () => {
+                  router.push("/shop/memberships");
+                },
+              }
+            : undefined,
+      });
     }
   };
 
@@ -105,7 +123,7 @@ function LiveStreamPage() {
       window.open(url, "_blank");
       fetchLivestreams();
     } catch (err) {
-      console.error("Error starting livestream:", err);
+      console.error(err);
     }
   };
   const filteredLivestreams = livestreams.filter((item) =>
@@ -130,12 +148,14 @@ function LiveStreamPage() {
     <div className="flex flex-col gap-5 min-h-full">
       <div className="bg-white sticky top-0 z-10 h-fit w-full py-4 px-8 shadow flex justify-between items-center">
         <h2 className="text-xl font-bold">LiveStream</h2>
-        <Link href="/shop/livestreams/new-livestream">
-          <Button className="bg-[#B0F847] text-black shadow flex gap-2 py-2 px-4 text-base cursor-pointer hover:bg-[#B0F847]/80 hover:text-black/80">
-            <CirclePlus />
-            Tạo Livestream
-          </Button>
-        </Link>
+        {user?.role == 2 && (
+          <Link href="/shop/livestreams/new-livestream">
+            <Button className="bg-[#B0F847] text-black shadow flex gap-2 py-2 px-4 text-base cursor-pointer hover:bg-[#B0F847]/80 hover:text-black/80">
+              <CirclePlus />
+              Tạo Livestream
+            </Button>
+          </Link>
+        )}
       </div>
       <div className="mx-5 mb-10">
         <Card className="bg-white py-5 px-8 min-h-[75vh]">
