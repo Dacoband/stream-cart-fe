@@ -1,28 +1,25 @@
-"use client";
+'use client'
 
-import React, { useEffect, useState } from "react";
-import Link from "next/link";
-import Image from "next/image";
-import { useParams, useRouter } from "next/navigation";
-import { toast } from "sonner";
+import React, { useEffect, useState } from 'react'
+import Link from 'next/link'
+import Image from 'next/image'
+import { useParams, useRouter } from 'next/navigation'
+import { toast } from 'sonner'
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Skeleton } from "@/components/ui/skeleton";
-import PriceTag from "@/components/common/PriceTag";
-import { formatFullDateTimeVN } from "@/components/common/formatFullDateTimeVN";
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Skeleton } from '@/components/ui/skeleton'
+import PriceTag from '@/components/common/PriceTag'
+import { formatFullDateTimeVN } from '@/components/common/formatFullDateTimeVN'
 
-import {
-  getRefundById,
-  updateRefundStatus,
-} from "@/services/api/refund/refund";
-import { getOrderById } from "@/services/api/order/order";
-import { getOrderProductByOrderId } from "@/services/api/order/ordersItem";
-import { getUserById } from "@/services/api/auth/account";
+import { getRefundById, updateRefundStatus } from '@/services/api/refund/refund'
+import { getOrderById } from '@/services/api/order/order'
+import { getOrderProductByOrderId } from '@/services/api/order/ordersItem'
+import { getUserById } from '@/services/api/auth/account'
 
-import { RefundRequestDto, RefundStatus } from "@/types/refund/refund";
-import { OrderItemResponse } from "@/types/order/order";
+import { RefundRequestDto, RefundStatus } from '@/types/refund/refund'
+import { OrderItemResponse } from '@/types/order/order'
 
 import {
   Breadcrumb,
@@ -31,7 +28,7 @@ import {
   BreadcrumbList,
   BreadcrumbPage,
   BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
+} from '@/components/ui/breadcrumb'
 
 import {
   ArrowLeft,
@@ -43,15 +40,14 @@ import {
   ClipboardList,
   Clock,
   ShieldCheck,
-} from "lucide-react";
-import { AxiosError } from "axios";
+} from 'lucide-react'
 
 const isEmptyGuid = (id?: string | null) =>
-  !id || id === "00000000-0000-0000-0000-000000000000";
+  !id || id === '00000000-0000-0000-0000-000000000000'
 
 const StatusBadge: React.FC<{ status: RefundStatus }> = ({ status }) => {
   const base =
-    "inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ring-1";
+    'inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ring-1'
   switch (status) {
     case RefundStatus.Created:
       return (
@@ -60,7 +56,7 @@ const StatusBadge: React.FC<{ status: RefundStatus }> = ({ status }) => {
         >
           Gửi yêu cầu
         </span>
-      );
+      )
     case RefundStatus.Confirmed:
     case RefundStatus.Packed:
     case RefundStatus.OnDelivery:
@@ -69,13 +65,13 @@ const StatusBadge: React.FC<{ status: RefundStatus }> = ({ status }) => {
         <span className={`${base} bg-blue-50 text-blue-800 ring-blue-200`}>
           Đang xử lý
         </span>
-      );
+      )
     case RefundStatus.Completed:
       return (
         <span className={`${base} bg-green-50 text-green-800 ring-green-200`}>
           Hoàn hàng thành công
         </span>
-      );
+      )
     case RefundStatus.Refunded:
       return (
         <span
@@ -83,111 +79,111 @@ const StatusBadge: React.FC<{ status: RefundStatus }> = ({ status }) => {
         >
           Hoàn tiền thành công
         </span>
-      );
+      )
     case RefundStatus.Rejected:
       return (
         <span className={`${base} bg-red-50 text-red-700 ring-red-200`}>
           Bị từ chối
         </span>
-      );
+      )
     default:
       return (
         <span className={`${base} bg-gray-50 text-gray-700 ring-gray-200`}>
           Không xác định
         </span>
-      );
+      )
   }
-};
+}
 
 type EnrichedDetail = {
-  productName?: string;
-  productImageUrl?: string;
-  quantity?: number;
-  totalPrice?: number;
-  reason?: string;
-  unitPrice?: number;
-  evidenceUrl?: string | null;
-};
+  productName?: string
+  productImageUrl?: string
+  quantity?: number
+  totalPrice?: number
+  reason?: string
+  unitPrice?: number
+  evidenceUrl?: string | null
+}
 
 export default function RefundDetailPage() {
-  const params = useParams();
-  const id = params.id as string;
+  const params = useParams()
+  const id = params.id as string
 
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [refund, setRefund] = useState<RefundRequestDto | null>(null);
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [refund, setRefund] = useState<RefundRequestDto | null>(null)
 
-  const [orderCode, setOrderCode] = useState<string | null>(null);
-  const [requestedByName, setRequestedByName] = useState<string | null>(null);
-  const [processedByName, setProcessedByName] = useState<string | null>(null);
-  const [items, setItems] = useState<OrderItemResponse[]>([]);
+  const [orderCode, setOrderCode] = useState<string | null>(null)
+  const [requestedByName, setRequestedByName] = useState<string | null>(null)
+  const [processedByName, setProcessedByName] = useState<string | null>(null)
+  const [items, setItems] = useState<OrderItemResponse[]>([])
   const [enrichedDetails, setEnrichedDetails] = useState<
     Record<string, EnrichedDetail>
-  >({});
+  >({})
 
   useEffect(() => {
     const fetchAll = async () => {
-      if (!id) return;
-      setLoading(true);
+      if (!id) return
+      setLoading(true)
 
       try {
-        const r = await getRefundById(id);
-        setRefund(r);
-        console.log("Processed by user:", r);
+        const r = await getRefundById(id)
+        setRefund(r)
+        console.log('Processed by user:', r)
         if (r?.orderId) {
           try {
-            const ord = await getOrderById(r.orderId);
+            const ord = await getOrderById(r.orderId)
             const code =
               ord?.data?.data?.orderCode ??
               ord?.data?.orderCode ??
-              ord?.orderCode;
-            if (code) setOrderCode(code);
+              ord?.orderCode
+            if (code) setOrderCode(code)
 
-            const itemsPayload = await getOrderProductByOrderId(r.orderId);
-            let orderItems: OrderItemResponse[] = [];
-            if (Array.isArray(itemsPayload)) orderItems = itemsPayload;
-            else if (itemsPayload?.items) orderItems = itemsPayload.items;
+            const itemsPayload = await getOrderProductByOrderId(r.orderId)
+            let orderItems: OrderItemResponse[] = []
+            if (Array.isArray(itemsPayload)) orderItems = itemsPayload
+            else if (itemsPayload?.items) orderItems = itemsPayload.items
             else if (itemsPayload?.data?.items)
-              orderItems = itemsPayload.data.items;
-            setItems(orderItems);
+              orderItems = itemsPayload.data.items
+            setItems(orderItems)
           } catch (e) {
-            console.warn("Order fetch warning:", e);
+            console.warn('Order fetch warning:', e)
           }
         }
 
         if (r?.requestedByUserId) {
           try {
-            const u = await getUserById(r.requestedByUserId);
+            const u = await getUserById(r.requestedByUserId)
             setRequestedByName(
               u?.fullname || u?.fullName || u?.username || null
-            );
+            )
           } catch {}
         }
         if (r?.lastModifiedBy && !isEmptyGuid(r.lastModifiedBy)) {
           try {
-            const u = await getUserById(r.lastModifiedBy);
+            const u = await getUserById(r.lastModifiedBy)
             setProcessedByName(
               u?.fullname || u?.fullName || u?.username || null
-            );
+            )
 
-            console.log("Processed by user:", u);
+            console.log('Processed by user:', u)
           } catch {}
         }
       } catch (e) {
-        console.error(e);
-        toast.error("Không thể tải chi tiết yêu cầu hoàn hàng");
+        console.error(e)
+        toast.error('Không thể tải chi tiết yêu cầu hoàn hàng')
       } finally {
-        setLoading(false);
+        setLoading(false)
       }
-    };
-    fetchAll();
-  }, [id]);
+    }
+    fetchAll()
+  }, [id])
 
   useEffect(() => {
-    if (!refund?.refundDetails || items.length === 0) return;
-    const map: Record<string, EnrichedDetail> = {};
+    if (!refund?.refundDetails || items.length === 0) return
+    const map: Record<string, EnrichedDetail> = {}
     for (const d of refund.refundDetails) {
-      const oi = items.find((i) => i.id === d.orderItemId);
+      const oi = items.find((i) => i.id === d.orderItemId)
       map[d.id] = {
         productName: oi?.productName,
         productImageUrl: oi?.productImageUrl,
@@ -196,78 +192,63 @@ export default function RefundDetailPage() {
         reason: d.reason,
         unitPrice: d.unitPrice,
         evidenceUrl: d.imageUrl ?? null,
-      };
+      }
     }
-    setEnrichedDetails(map);
-  }, [refund, items]);
+    setEnrichedDetails(map)
+  }, [refund, items])
 
-  const canApproveReject = refund?.status === RefundStatus.Created;
-  const canRefundMoney = refund?.status === RefundStatus.Completed;
+  const canApproveReject = refund?.status === RefundStatus.Created
+  const canRefundMoney = refund?.status === RefundStatus.Completed
 
   const handleApprove = async () => {
-    if (!refund) return;
+    if (!refund) return
     try {
-      setSaving(true);
+      setSaving(true)
       await updateRefundStatus({
         refundRequestId: refund.id,
         newStatus: RefundStatus.Confirmed,
-      });
-      toast.success("Đã phê duyệt yêu cầu");
+      })
+      toast.success('Đã phê duyệt yêu cầu')
       setRefund({
         ...refund,
         status: RefundStatus.Confirmed,
         processedAt: new Date().toISOString(),
-      });
-    } catch (error: unknown) {
-      console.error("Approve fail:", error);
-      const err = error as AxiosError<{ message?: string; errors?: string[] }>;
-      const message =
-        err?.response?.data?.errors?.[0] ||
-        err?.response?.data?.message ||
-        "Phê duyệt thất bại!";
-
-      toast.error(message);
-      toast.error("Phê duyệt thất bại");
+      })
+    } catch (e: any) {
+      toast.error(e?.message ?? 'Phê duyệt thất bại')
     } finally {
-      setSaving(false);
+      setSaving(false)
     }
-  };
+  }
 
   const handleReject = async () => {
-    if (!refund) return;
+    if (!refund) return
     try {
-      setSaving(true);
+      setSaving(true)
       await updateRefundStatus({
         refundRequestId: refund.id,
         newStatus: RefundStatus.Rejected,
-      });
-      toast.success("Đã từ chối yêu cầu");
+      })
+      toast.success('Đã từ chối yêu cầu')
       setRefund({
         ...refund,
         status: RefundStatus.Rejected,
         processedAt: new Date().toISOString(),
-      });
-    } catch (error: unknown) {
-      console.error("Reject fail:", error);
-      const err = error as AxiosError<{ message?: string; errors?: string[] }>;
-      const message =
-        err?.response?.data?.errors?.[0] ||
-        err?.response?.data?.message ||
-        "Từ chối bị thất bại!";
-
-      toast.error(message);
+      })
+    } catch (e: any) {
+      toast.error(e?.message ?? 'Từ chối thất bại')
     } finally {
-      setSaving(false);
+      setSaving(false)
     }
-  };
+  }
 
-  const router = useRouter();
+  const router = useRouter()
 
   const handleRefundMoney = () => {
-    if (!refund) return;
+    if (!refund) return
     // Chuyển sang trang payment để xử lý QR + polling
-    router.push(`/manager/refund/payment?id=${refund.id}`);
-  };
+    router.push(`/manager/refund/payment?id=${refund.id}`)
+  }
 
   if (loading) {
     return (
@@ -281,7 +262,7 @@ export default function RefundDetailPage() {
           <Skeleton className="h-32 w-full" />
         </div>
       </div>
-    );
+    )
   }
 
   if (!refund) {
@@ -300,11 +281,11 @@ export default function RefundDetailPage() {
           </Link>
         </div>
       </div>
-    );
+    )
   }
 
   // ✅ Không cộng phí vận chuyển vào Tổng hoàn lại
-  const totalRefundOnlyItems = refund.refundAmount;
+  const totalRefundOnlyItems = refund.refundAmount
 
   return (
     <div className="flex flex-col gap-5 min-h-full">
@@ -314,13 +295,13 @@ export default function RefundDetailPage() {
           <BreadcrumbList>
             <BreadcrumbItem className="font-medium text-lg cursor-pointer">
               <BreadcrumbLink asChild>
-                <Link href="/manager/refund">Yêu cầu hoàn hàng</Link>
+                <Link href="/refunds">Yêu cầu hoàn hàng</Link>
               </BreadcrumbLink>
             </BreadcrumbItem>
             <BreadcrumbSeparator />
             <BreadcrumbItem>
               <BreadcrumbPage className="font-medium text-lg">
-                {orderCode || "—"}
+                {orderCode || '—'}
               </BreadcrumbPage>
             </BreadcrumbItem>
           </BreadcrumbList>
@@ -371,67 +352,64 @@ export default function RefundDetailPage() {
               Tổng quan yêu cầu
             </CardTitle>
           </CardHeader>
-          <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-16">
+          <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
-              {/* Cột 1 */}
               <div className="flex justify-between">
-                <span className="text-gray-800">Mã đơn hàng:</span>
-                <span className="font-semibold">{orderCode || "—"}</span>
+                <span>Mã đơn hàng:</span>
+                <span className="font-semibold">{orderCode || '—'}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-800">Trạng thái:</span>
+                <span>Trạng thái:</span>
                 <span>
                   <StatusBadge status={refund.status} />
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-800">Ngày yêu cầu:</span>
+                <span>Ngày yêu cầu:</span>
                 <span>{formatFullDateTimeVN(refund.requestedAt)}</span>
               </div>
             </div>
 
-            <div className="space-y-2 md:border-l md:pl-6">
-              {/* Cột 2 */}
+            <div className="space-y-2">
               <div className="flex justify-between">
-                <span className="text-gray-800">Số tiền hoàn:</span>
+                <span>Số tiền hoàn:</span>
                 <span className="text-rose-600 font-semibold">
                   <PriceTag value={refund.refundAmount} />
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-800">Phí vận chuyển hoàn:</span>
+                <span>Phí vận chuyển hoàn:</span>
                 <span>
                   <PriceTag value={refund.shippingFee} />
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-800">Tổng hoàn lại:</span>
+                <span>Tổng hoàn lại:</span>
                 <span className="text-rose-600 font-semibold">
                   <PriceTag value={totalRefundOnlyItems} />
                 </span>
               </div>
             </div>
 
-            <div className="space-y-2 md:border-l md:pl-6">
-              {/* Cột 3 */}
+            <div className="space-y-2">
               <div className="flex justify-between">
-                <span className="text-gray-800">Người yêu cầu:</span>
-                <span className="font-medium">{requestedByName || "—"}</span>
+                <span>Người yêu cầu:</span>
+                <span className="font-medium">{requestedByName || '—'}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-800">Người xử lý:</span>
+                <span>Người xử lý:</span>
                 <span className="font-medium">
                   {isEmptyGuid(refund.lastModifiedBy)
-                    ? "—"
-                    : processedByName || "—"}
+                    ? '—'
+                    : processedByName || '—'}
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-800">Thời gian xử lý:</span>
+                <span>Thời gian xử lý:</span>
                 <span>
                   {refund.lastModifiedAt
                     ? formatFullDateTimeVN(refund.lastModifiedAt)
-                    : "—"}
+                    : '—'}
                 </span>
               </div>
             </div>
@@ -459,7 +437,7 @@ export default function RefundDetailPage() {
                 </div>
 
                 {refund.refundDetails.map((d, idx) => {
-                  const info = enrichedDetails[d.id] || {};
+                  const info = enrichedDetails[d.id] || {}
                   return (
                     <div
                       key={d.id}
@@ -470,8 +448,8 @@ export default function RefundDetailPage() {
                       </div>
                       <div className="col-span-7 flex gap-3">
                         <Image
-                          src={info.productImageUrl || "/assets/emptydata.png"}
-                          alt={info.productName || "product"}
+                          src={info.productImageUrl || '/assets/emptydata.png'}
+                          alt={info.productName || 'product'}
                           width={64}
                           height={64}
                           className="w-16 h-16 object-cover rounded"
@@ -482,7 +460,7 @@ export default function RefundDetailPage() {
                             className="font-medium text-gray-900 break-words whitespace-normal leading-snug"
                             title={info.productName}
                           >
-                            {info.productName || "—"}
+                            {info.productName || '—'}
                           </div>
                           {info.quantity !== undefined && (
                             <div className="text-xs text-gray-600 mt-0.5">
@@ -496,7 +474,7 @@ export default function RefundDetailPage() {
                       </div>
                       <div className="col-span-4 text-sm text-gray-700">
                         <div className="whitespace-pre-wrap break-words leading-snug">
-                          {d.reason || info.reason || "—"}
+                          {d.reason || info.reason || '—'}
                         </div>
                         {(d.imageUrl || info.evidenceUrl) && (
                           <a
@@ -512,7 +490,7 @@ export default function RefundDetailPage() {
                         <PriceTag value={info.totalPrice ?? d.unitPrice} />
                       </div>
                     </div>
-                  );
+                  )
                 })}
               </div>
             ) : (
@@ -540,7 +518,7 @@ export default function RefundDetailPage() {
                   <span className="font-medium">
                     {refund.createdAt
                       ? formatFullDateTimeVN(refund.createdAt)
-                      : "—"}
+                      : '—'}
                   </span>
                 </div>
                 <div className="text-sm text-gray-700">
@@ -548,7 +526,7 @@ export default function RefundDetailPage() {
                   <span className="font-medium">
                     {refund.lastModifiedAt
                       ? formatFullDateTimeVN(refund.lastModifiedAt)
-                      : "—"}
+                      : '—'}
                   </span>
                 </div>
               </div>
@@ -619,5 +597,5 @@ export default function RefundDetailPage() {
         </Card>
       </div>
     </div>
-  );
+  )
 }
