@@ -24,6 +24,7 @@ import {
 import type { Membership } from "@/types/membership/membership";
 import { toast } from "sonner";
 import { purchaseShopMembership } from "@/services/api/membership/shopMembership";
+import { AxiosError } from "axios";
 
 const formatCurrency = (v?: number) =>
   typeof v === "number" ? v.toLocaleString("vi-VN") + "đ" : "-";
@@ -48,9 +49,15 @@ export default function PurchaseDialog({
       await purchaseShopMembership(membership.membershipId);
       toast.success(`Đăng ký thành công gói ${membership.name}!`);
       onOpenChange(false);
-    } catch (error) {
-      console.error("Purchase error:", error);
-      toast.error("Không thể đăng ký gói thành viên. Vui lòng thử lại.");
+    } catch (error: unknown) {
+      console.error("Start livefailed:", error);
+      const err = error as AxiosError<{ message?: string; errors?: string[] }>;
+      const message =
+        err?.response?.data?.errors?.[0] ||
+        err?.response?.data?.message ||
+        "Truy cập live thất bại!";
+
+      toast.error(message);
     } finally {
       setLoading(false);
     }

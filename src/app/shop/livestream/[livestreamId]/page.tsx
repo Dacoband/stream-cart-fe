@@ -35,8 +35,6 @@ export default function SellerLiveStream() {
   const [isConnected, setIsConnected] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [devicesChecked, setDevicesChecked] = useState(false);
-  const [hasCamera, setHasCamera] = useState(true);
-  const [hasMic, setHasMic] = useState(true);
 
   useEffect(() => {
     const fetchLivestreamData = async () => {
@@ -63,24 +61,16 @@ export default function SellerLiveStream() {
           !navigator?.mediaDevices?.enumerateDevices
         ) {
           if (mounted) {
-            setHasCamera(true);
-            setHasMic(true);
             setDevicesChecked(true);
           }
           return;
         }
-        const devices = await navigator.mediaDevices.enumerateDevices();
-        const cams = devices.filter((d) => d.kind === "videoinput");
-        const mics = devices.filter((d) => d.kind === "audioinput");
+        await navigator.mediaDevices.enumerateDevices();
         if (mounted) {
-          setHasCamera(cams.length > 0);
-          setHasMic(mics.length > 0);
           setDevicesChecked(true);
         }
       } catch {
         if (mounted) {
-          setHasCamera(true);
-          setHasMic(true);
           setDevicesChecked(true);
         }
       }
@@ -111,6 +101,10 @@ export default function SellerLiveStream() {
     if (window.confirm("Bạn có chắc chắn muốn kết thúc buổi phát sóng?")) {
       try {
         await endLivestreamById(livestreamId);
+        try {
+          localStorage.removeItem("live_cam_on");
+          localStorage.removeItem("live_mic_on");
+        } catch {}
         router.push(`/shop/livestream/${livestreamId}/review-livestream`);
       } catch (err) {
         console.error("Error ending livestream:", err);
@@ -142,7 +136,6 @@ export default function SellerLiveStream() {
     <div className="w-full h-[92vh] flex bg-[#F5F5F5] ">
       <div className=" w-full h-full rounded-none overflow-hidden relative ">
         {livestream.joinToken ? (
-          // Wait until we check devices to decide initial audio/video flags
           devicesChecked && (
             <LiveKitRoom
               serverUrl="wss://livekitserver.dacoban.studio"
@@ -155,19 +148,9 @@ export default function SellerLiveStream() {
               onDisconnected={() => setIsConnected(false)}
               onError={(error) => {
                 console.error("LiveKit error:", error);
-                // Gracefully handle missing devices
-                const msg = String(error?.message || "");
-                if (
-                  msg.includes("Requested device not found") ||
-                  msg.includes("NotFoundError")
-                ) {
-                  // Turn off the missing device to avoid repeated errors
-                  setHasCamera((prev) => prev && false);
-                  setHasMic((prev) => prev && false);
-                }
               }}
-              audio={hasMic}
-              video={hasCamera}
+              audio={false}
+              video={false}
             >
               <div className="flex w-full bg-black  h-full">
                 {!isFullscreen && (
