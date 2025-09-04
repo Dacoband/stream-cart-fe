@@ -3,7 +3,6 @@ import { useEffect, useState, useCallback } from "react";
 import {
   getLivestreamByIdFromAPI,
   getLivestreamProducts,
-  getBestSellingProducts,
 } from "@/services/api/livestream/livestream";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Eye, Loader2, ShoppingBag } from "lucide-react";
@@ -32,12 +31,8 @@ export default function LivestreamDetail({
 }: LivestreamDetailProps) {
   const [livestream, setLivestream] = useState<Livestream | null>(null);
   const [products, setProducts] = useState<LivestreamProduct[]>([]);
-  const [bestSellingProducts, setBestSellingProducts] = useState<
-    LivestreamProduct[]
-  >([]);
   const [loading, setLoading] = useState(true);
   const [productsLoading, setProductsLoading] = useState(false);
-  const [bestSellingLoading, setBestSellingLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const fetchLivestream = useCallback(async () => {
@@ -68,29 +63,14 @@ export default function LivestreamDetail({
     }
   }, [livestreamId]);
 
-  const fetchBestSellingProducts = useCallback(async () => {
-    try {
-      setBestSellingLoading(true);
-      const data = await getBestSellingProducts(livestreamId, 4);
-      setBestSellingProducts(data || []);
-    } catch (e) {
-      console.error("Load best selling products error", e);
-      setBestSellingProducts([]);
-    } finally {
-      setBestSellingLoading(false);
-    }
-  }, [livestreamId]);
-
   const handleProductsUpdate = useCallback(() => {
     fetchProducts();
-    fetchBestSellingProducts();
-  }, [fetchProducts, fetchBestSellingProducts]);
+  }, [fetchProducts]);
 
   useEffect(() => {
     fetchLivestream();
     fetchProducts();
-    fetchBestSellingProducts();
-  }, [fetchLivestream, fetchProducts, fetchBestSellingProducts]);
+  }, [fetchLivestream, fetchProducts]);
 
   const getStatusBadge = (status: boolean, actualEndTime?: string | null) => {
     if (status) {
@@ -220,10 +200,9 @@ export default function LivestreamDetail({
 
             <TabsContent value="product" className="mt-0">
               <TabProducts
+                livestreamId={livestreamId}
                 products={products}
                 productsLoading={productsLoading}
-                bestSellingProducts={livestream?.status ? bestSellingProducts : []}
-                bestSellingLoading={livestream?.status ? bestSellingLoading : false}
                 onProductsUpdate={handleProductsUpdate}
               />
             </TabsContent>
