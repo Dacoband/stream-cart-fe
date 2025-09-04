@@ -4,14 +4,7 @@ import React, { useState, useEffect } from "react";
 import { Review } from "@/types/review/review";
 import { getProductReviews } from "@/services/api/review/review";
 import { ProductDetail } from "@/types/product/product";
-import {
-  Star,
-  ChevronLeft,
-  ChevronRight,
-  Filter,
-  User,
-  CheckCircle,
-} from "lucide-react";
+import { Star, ChevronLeft, ChevronRight, Filter, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -362,15 +355,6 @@ function ProductReview({ product, onRatingChange }: ProductReviewProps) {
                       <span className="font-medium text-gray-900">
                         {review.reviewerName || review.userName || "Người dùng"}
                       </span>
-                      {review.isVerifiedPurchase && (
-                        <Badge
-                          variant="secondary"
-                          className="text-xs flex items-center gap-1"
-                        >
-                          <CheckCircle size={12} />
-                          Đã mua hàng
-                        </Badge>
-                      )}
                     </div>
 
                     {/* Rating and Date */}
