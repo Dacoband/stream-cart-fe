@@ -1,17 +1,17 @@
-'use client'
+"use client";
 
-import React, { useMemo, useState } from 'react'
-import { format } from 'date-fns'
-import { vi } from 'date-fns/locale'
-import { CalendarClock, Eye } from 'lucide-react'
+import React, { useMemo, useState } from "react";
+import { format } from "date-fns";
+import { vi } from "date-fns/locale";
+import { CalendarClock, Eye } from "lucide-react";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '@/components/ui/dialog'
-import { Card } from '@/components/ui/card'
+} from "@/components/ui/dialog";
+import { Card } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -19,38 +19,38 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table'
-import { Button } from '@/components/ui/button'
-import { DatePicker } from '@/components/ui/datepicker'
+} from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import { DatePicker } from "@/components/ui/datepicker";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'
-import { Badge } from '@/components/ui/badge'
+} from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 
-import type { DetailShopMembershipDTO } from '@/types/membership/shopMembership'
+import type { DetailShopMembershipDTO } from "@/types/membership/shopMembership";
 const STATUS = {
-  Ongoing: 'Ongoing', // Đang hoạt động
-  Waiting: 'Waiting', // Chờ hoạt động
-  Cancelled: 'Canceled', // Đã hủy
-  Overdue: 'Overdue', // Hết hạn
-} as const
+  Ongoing: "Ongoing", // Đang hoạt động
+  Waiting: "Waiting", // Chờ hoạt động
+  Cancelled: "Canceled", // Đã hủy
+  Overdue: "Overdue", // Hết hạn
+} as const;
 const VI_LABEL: Record<string, string> = {
-  [STATUS.Ongoing]: 'Đang hoạt động',
-  [STATUS.Waiting]: 'Chờ hoạt động',
-  [STATUS.Cancelled]: 'Đã hủy',
-  [STATUS.Overdue]: 'Hết hạn',
-}
+  [STATUS.Ongoing]: "Đang hoạt động",
+  [STATUS.Waiting]: "Chờ hoạt động",
+  [STATUS.Cancelled]: "Đã hủy",
+  [STATUS.Overdue]: "Hết hạn",
+};
 const safeFormat = (d?: Date | string) => {
-  if (!d) return 'Không xác định'
-  const date = d instanceof Date ? d : new Date(d)
+  if (!d) return "Không xác định";
+  const date = d instanceof Date ? d : new Date(d);
   return !isNaN(date.getTime())
-    ? format(date, 'dd/MM/yyyy', { locale: vi })
-    : 'Không xác định'
-}
+    ? format(date, "dd/MM/yyyy", { locale: vi })
+    : "Không xác định";
+};
 
 const StatusBadge = ({ status }: { status: string }) => {
   switch (status) {
@@ -59,60 +59,60 @@ const StatusBadge = ({ status }: { status: string }) => {
         <Badge className="bg-emerald-100 text-emerald-800 border border-emerald-200">
           {VI_LABEL[status]}
         </Badge>
-      )
+      );
     case STATUS.Waiting:
       return (
         <Badge className="bg-amber-100 text-amber-800 border border-amber-200">
           {VI_LABEL[status]}
         </Badge>
-      )
+      );
     case STATUS.Overdue:
       return (
         <Badge className="bg-rose-100 text-rose-800 border border-rose-200">
           {VI_LABEL[status]}
         </Badge>
-      )
+      );
     case STATUS.Cancelled:
       return (
         <Badge className="bg-slate-100 text-slate-700 border border-slate-200">
           {VI_LABEL[status]}
         </Badge>
-      )
+      );
     default:
-      return <Badge variant="secondary">{status}</Badge>
+      return <Badge variant="secondary">{status}</Badge>;
   }
-}
+};
 
 export const ShopMembership = ({
   list,
 }: {
-  list: DetailShopMembershipDTO[]
+  list: DetailShopMembershipDTO[];
 }) => {
-  const [selected, setSelected] = useState<DetailShopMembershipDTO | null>(null)
-  const [startFilter, setStartFilter] = useState<Date | null>(null)
-  const [endFilter, setEndFilter] = useState<Date | null>(null)
-  const [statusFilter, setStatusFilter] = useState<string>('ALL')
+  // Removed unused 'selected' state
+  const [startFilter, setStartFilter] = useState<Date | null>(null);
+  const [endFilter, setEndFilter] = useState<Date | null>(null);
+  const [statusFilter, setStatusFilter] = useState<string>("ALL");
 
   // Gói hiện tại = gói có endDate > now & status Ongoing
-  const now = new Date()
-  const current = useMemo(
-    () =>
-      list.find(
-        (m) => new Date(m.endDate) > now && m.status === STATUS.Ongoing
-      ),
-    [list]
-  )
+  // const now = new Date()
+  // const current = useMemo(
+  //   () =>
+  //     list.find(
+  //       (m) => new Date(m.endDate) > now && m.status === STATUS.Ongoing
+  //     ),
+  //   [list]
+  // )
 
   // áp dụng filter
   const filteredList = useMemo(() => {
     return list.filter((m) => {
-      const s = new Date(m.startDate)
-      if (startFilter && s < startFilter) return false
-      if (endFilter && s > endFilter) return false
-      if (statusFilter !== 'ALL' && m.status !== statusFilter) return false
-      return true
-    })
-  }, [list, startFilter, endFilter, statusFilter])
+      const s = new Date(m.startDate);
+      if (startFilter && s < startFilter) return false;
+      if (endFilter && s > endFilter) return false;
+      if (statusFilter !== "ALL" && m.status !== statusFilter) return false;
+      return true;
+    });
+  }, [list, startFilter, endFilter, statusFilter]);
 
   return (
     <div className="space-y-6">
@@ -146,9 +146,9 @@ export const ShopMembership = ({
           <Button
             variant="outline"
             onClick={() => {
-              setStartFilter(null)
-              setEndFilter(null)
-              setStatusFilter('ALL')
+              setStartFilter(null);
+              setEndFilter(null);
+              setStatusFilter("ALL");
             }}
           >
             Xoá lọc
@@ -191,7 +191,7 @@ export const ShopMembership = ({
                   className="hover:bg-gray-50 transition-colors cursor-pointer"
                 >
                   <TableCell className="text-left">
-                    {m.name ?? 'Gói thành viên'}
+                    {m.name ?? "Gói thành viên"}
                   </TableCell>
                   <TableCell className="text-center">
                     {safeFormat(m.startDate)}
@@ -208,7 +208,7 @@ export const ShopMembership = ({
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => setSelected(m)}
+                          // onClick={() => setSelected(m)}
                         >
                           <Eye className="w-4 h-4" />
                           Xem
@@ -218,9 +218,9 @@ export const ShopMembership = ({
                         <DialogHeader>
                           <DialogTitle className="flex items-center gap-1 text-2xl">
                             <CalendarClock className="w-7 h-7 text-primary" />
-                            Chi tiết gói:{' '}
+                            Chi tiết gói:{" "}
                             <span className="text-primary">
-                              {m.name ?? 'Gói thành viên'}
+                              {m.name ?? "Gói thành viên"}
                             </span>
                           </DialogTitle>
                         </DialogHeader>
@@ -234,7 +234,7 @@ export const ShopMembership = ({
                                 Thời gian:
                               </span>
                               <span className="font-medium">
-                                {safeFormat(m.startDate)} →{' '}
+                                {safeFormat(m.startDate)} →{" "}
                                 {safeFormat(m.endDate)}
                               </span>
                             </div>
@@ -243,7 +243,7 @@ export const ShopMembership = ({
                                 Tối đa sản phẩm:
                               </span>
                               <span className="font-medium">
-                                {m.maxProduct ?? '—'}
+                                {m.maxProduct ?? "—"}
                               </span>
                             </div>
                             <div>
@@ -251,7 +251,7 @@ export const ShopMembership = ({
                                 Livestream còn lại:
                               </span>
                               <span className="font-medium">
-                                {m.remainingLivestream ?? '—'}
+                                {m.remainingLivestream ?? "—"}
                               </span>
                             </div>
                             <div>
@@ -259,9 +259,9 @@ export const ShopMembership = ({
                                 Chiết khấu:
                               </span>
                               <span className="font-medium">
-                                {typeof m.commission === 'number'
+                                {typeof m.commission === "number"
                                   ? `${m.commission}%`
-                                  : 'Không áp dụng'}
+                                  : "Không áp dụng"}
                               </span>
                             </div>
                           </div>
@@ -276,5 +276,5 @@ export const ShopMembership = ({
         )}
       </Card>
     </div>
-  )
-}
+  );
+};

@@ -4,16 +4,24 @@ import React, { useState, useEffect } from "react";
 import { Review } from "@/types/review/review";
 import { getProductReviews } from "@/services/api/review/review";
 import { ProductDetail } from "@/types/product/product";
-import { Star, ChevronLeft, ChevronRight, Filter, User, CheckCircle } from "lucide-react";
+import { Star, ChevronLeft, ChevronRight, Filter, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import Image from "next/image";
 import { toast } from "sonner";
 
 interface ProductReviewProps {
   product: ProductDetail;
+  // Notify parent about average rating and total reviews so other components (e.g., OperationProduct) can display it
+  onRatingChange?: (average: number, total: number) => void;
 }
 
 interface ReviewFilters {
@@ -26,7 +34,7 @@ interface ReviewFilters {
   ascending?: boolean;
 }
 
-function ProductReview({ product }: ProductReviewProps) {
+function ProductReview({ product, onRatingChange }: ProductReviewProps) {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
   const [totalReviews, setTotalReviews] = useState(0);
@@ -44,45 +52,61 @@ function ProductReview({ product }: ProductReviewProps) {
   useEffect(() => {
     const fetchReviews = async () => {
       if (!product.productId) return;
-      
+
       try {
         setLoading(true);
         const response = await getProductReviews(product.productId, filters);
-        
+
         // Handle different response structures
         let reviewsData: Review[] = [];
         let totalCount = 0;
-        
+
         if (response?.data) {
           reviewsData = response.data.items || response.data || [];
           totalCount = response.data.totalCount || response.data.length || 0;
-          setTotalPages(response.data.totalPages || Math.ceil((response.data.totalCount || 0) / filters.pageSize));
+          setTotalPages(
+            response.data.totalPages ||
+              Math.ceil((response.data.totalCount || 0) / filters.pageSize)
+          );
         } else if (Array.isArray(response)) {
           reviewsData = response;
           totalCount = response.length;
           setTotalPages(Math.ceil(response.length / filters.pageSize));
         }
-        
+
         setReviews(reviewsData);
         setTotalReviews(totalCount);
-        
+
         // Calculate average rating and rating counts from reviews data
         if (reviewsData.length > 0) {
-          const totalRating = reviewsData.reduce((sum, review) => sum + review.rating, 0);
+          const totalRating = reviewsData.reduce(
+            (sum, review) => sum + review.rating,
+            0
+          );
           const avgRating = totalRating / reviewsData.length;
           setAverageRating(avgRating);
-          
+
           // Calculate rating counts
-          const counts: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
-          reviewsData.forEach(review => {
+          const counts: Record<number, number> = {
+            1: 0,
+            2: 0,
+            3: 0,
+            4: 0,
+            5: 0,
+          };
+          reviewsData.forEach((review) => {
             if (review.rating >= 1 && review.rating <= 5) {
               counts[review.rating] = (counts[review.rating] || 0) + 1;
             }
           });
           setRatingCounts(counts);
+
+          // Inform parent about the rating
+          onRatingChange?.(avgRating, totalCount);
         } else {
           setAverageRating(0);
           setRatingCounts({ 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 });
+          onRatingChange?.(0, 0);
         }
       } catch (error) {
         console.error("Error fetching product reviews:", error);
@@ -92,17 +116,18 @@ function ProductReview({ product }: ProductReviewProps) {
         setTotalPages(0);
         setAverageRating(0);
         setRatingCounts({ 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 });
+        onRatingChange?.(0, 0);
       } finally {
         setLoading(false);
       }
     };
 
     fetchReviews();
-  }, [product.productId, filters]);
+  }, [product.productId, filters, onRatingChange]);
 
   // Update filters
   const updateFilters = (newFilters: Partial<ReviewFilters>) => {
-    setFilters(prev => ({
+    setFilters((prev) => ({
       ...prev,
       ...newFilters,
       pageNumber: newFilters.pageNumber || 1, // Reset to page 1 when changing filters
@@ -169,9 +194,7 @@ function ProductReview({ product }: ProductReviewProps) {
           <span className="text-2xl font-medium text-gray-800">
             Đánh Giá Sản Phẩm
           </span>
-          <Badge variant="secondary">
-            {totalReviews} đánh giá
-          </Badge>
+          <Badge variant="secondary">{totalReviews} đánh giá</Badge>
         </div>
       </div>
 
@@ -184,11 +207,12 @@ function ProductReview({ product }: ProductReviewProps) {
               {totalReviews > 0 ? averageRating.toFixed(1) : "0.0"}
             </div>
             <div className="mb-2">
-              {renderStars(totalReviews > 0 ? Math.round(averageRating) : 0, 20)}
+              {renderStars(
+                totalReviews > 0 ? Math.round(averageRating) : 0,
+                20
+              )}
             </div>
-            <div className="text-gray-600">
-              {totalReviews} đánh giá
-            </div>
+            <div className="text-gray-600">{totalReviews} đánh giá</div>
           </div>
 
           {/* Rating Breakdown */}
@@ -221,8 +245,8 @@ function ProductReview({ product }: ProductReviewProps) {
           </div>
 
           {/* Rating Filter */}
-          <Select 
-            value={filters.minRating?.toString() || "all"} 
+          <Select
+            value={filters.minRating?.toString() || "all"}
             onValueChange={(value) => {
               if (value === "all") {
                 updateFilters({ minRating: undefined, maxRating: undefined });
@@ -246,11 +270,11 @@ function ProductReview({ product }: ProductReviewProps) {
           </Select>
 
           {/* Verified Only */}
-          <Select 
-            value={filters.verifiedOnly?.toString() || "all"} 
+          <Select
+            value={filters.verifiedOnly?.toString() || "all"}
             onValueChange={(value) => {
-              updateFilters({ 
-                verifiedOnly: value === "true" ? true : undefined 
+              updateFilters({
+                verifiedOnly: value === "true" ? true : undefined,
               });
             }}
           >
@@ -264,13 +288,13 @@ function ProductReview({ product }: ProductReviewProps) {
           </Select>
 
           {/* Sort By */}
-          <Select 
-            value={`${filters.sortBy}-${filters.ascending}`} 
+          <Select
+            value={`${filters.sortBy}-${filters.ascending}`}
             onValueChange={(value) => {
-              const [sortBy, ascending] = value.split('-');
-              updateFilters({ 
-                sortBy, 
-                ascending: ascending === 'true' 
+              const [sortBy, ascending] = value.split("-");
+              updateFilters({
+                sortBy,
+                ascending: ascending === "true",
               });
             }}
           >
@@ -303,7 +327,10 @@ function ProductReview({ product }: ProductReviewProps) {
             </div>
           ) : (
             reviews.map((review) => (
-              <div key={review.id} className="border-b border-gray-200 pb-6 last:border-b-0">
+              <div
+                key={review.id}
+                className="border-b border-gray-200 pb-6 last:border-b-0"
+              >
                 <div className="flex items-start gap-4">
                   {/* Avatar */}
                   <div className="flex-shrink-0">
@@ -328,12 +355,6 @@ function ProductReview({ product }: ProductReviewProps) {
                       <span className="font-medium text-gray-900">
                         {review.reviewerName || review.userName || "Người dùng"}
                       </span>
-                      {review.isVerifiedPurchase && (
-                        <Badge variant="secondary" className="text-xs flex items-center gap-1">
-                          <CheckCircle size={12} />
-                          Đã mua hàng
-                        </Badge>
-                      )}
                     </div>
 
                     {/* Rating and Date */}
@@ -355,17 +376,26 @@ function ProductReview({ product }: ProductReviewProps) {
                     {review.imageUrls && review.imageUrls.length > 0 && (
                       <div className="flex gap-2 mb-3">
                         {review.imageUrls
-                          .filter(url => url && typeof url === 'string' && url.trim() !== '')
+                          .filter(
+                            (url) =>
+                              url &&
+                              typeof url === "string" &&
+                              url.trim() !== ""
+                          )
                           .map((url, index) => (
-                          <Image
-                            key={index}
-                            src={url.startsWith('http') ? url : '/assets/emptyData.png'}
-                            alt={`Review image ${index + 1}`}
-                            width={80}
-                            height={80}
-                            className="w-20 h-20 object-cover rounded border hover:opacity-75 transition-opacity cursor-pointer"
-                          />
-                        ))}
+                            <Image
+                              key={index}
+                              src={
+                                url.startsWith("http")
+                                  ? url
+                                  : "/assets/emptyData.png"
+                              }
+                              alt={`Review image ${index + 1}`}
+                              width={80}
+                              height={80}
+                              className="w-20 h-20 object-cover rounded border hover:opacity-75 transition-opacity cursor-pointer"
+                            />
+                          ))}
                       </div>
                     )}
 
@@ -386,30 +416,36 @@ function ProductReview({ product }: ProductReviewProps) {
         {totalPages > 1 && (
           <div className="flex items-center justify-between pt-6">
             <div className="text-sm text-gray-600">
-              Hiển thị {((filters.pageNumber - 1) * filters.pageSize) + 1} - {Math.min(filters.pageNumber * filters.pageSize, totalReviews)} trong {totalReviews} đánh giá
+              Hiển thị {(filters.pageNumber - 1) * filters.pageSize + 1} -{" "}
+              {Math.min(filters.pageNumber * filters.pageSize, totalReviews)}{" "}
+              trong {totalReviews} đánh giá
             </div>
-            
+
             <div className="flex items-center gap-2">
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => updateFilters({ pageNumber: filters.pageNumber - 1 })}
+                onClick={() =>
+                  updateFilters({ pageNumber: filters.pageNumber - 1 })
+                }
                 disabled={filters.pageNumber <= 1}
               >
                 <ChevronLeft size={16} />
                 Trước
               </Button>
-              
+
               {/* Page Numbers */}
               <div className="flex gap-1">
                 {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
                   const page = Math.max(1, filters.pageNumber - 2) + i;
                   if (page > totalPages) return null;
-                  
+
                   return (
                     <Button
                       key={page}
-                      variant={page === filters.pageNumber ? "default" : "outline"}
+                      variant={
+                        page === filters.pageNumber ? "default" : "outline"
+                      }
                       size="sm"
                       onClick={() => updateFilters({ pageNumber: page })}
                       className="w-10"
@@ -419,11 +455,13 @@ function ProductReview({ product }: ProductReviewProps) {
                   );
                 })}
               </div>
-              
+
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => updateFilters({ pageNumber: filters.pageNumber + 1 })}
+                onClick={() =>
+                  updateFilters({ pageNumber: filters.pageNumber + 1 })
+                }
                 disabled={filters.pageNumber >= totalPages}
               >
                 Sau

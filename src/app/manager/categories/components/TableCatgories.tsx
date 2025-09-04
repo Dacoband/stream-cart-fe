@@ -48,7 +48,14 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 type Props = {
   categories: Category[];
   loading: boolean;
@@ -63,6 +70,10 @@ type Props = {
 
 const TableCatgories: React.FC<Props> = ({
   categories,
+  loading,
+  page,
+  setPage,
+  totalPages,
 
   onSearch,
   onRefresh,
@@ -77,7 +88,7 @@ const TableCatgories: React.FC<Props> = ({
     isDeleted: boolean;
   } | null>(null);
 
-  const [loadingDetail, setLoadingDetail] = useState(false);
+  // Removed local detail loading state; list loading is driven by parent `loading` prop
 
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -95,7 +106,6 @@ const TableCatgories: React.FC<Props> = ({
   }, [searchValue, onSearch]);
 
   const handleViewDetail = async (categoryId: string) => {
-    setLoadingDetail(true);
     try {
       const detail = await getDetailCategory(categoryId);
       console.log(detail);
@@ -108,7 +118,7 @@ const TableCatgories: React.FC<Props> = ({
         "Không thể tải thông tin chi tiết danh mục. Vui lòng thử lại!"
       );
     } finally {
-      setLoadingDetail(false);
+      // no-op
     }
   };
   // const handleDetailModalClose = () => {
@@ -194,6 +204,14 @@ const TableCatgories: React.FC<Props> = ({
     if (typeof raw !== "string" || raw.trim() === "") return null;
     return raw;
   };
+
+  // Pagination helpers
+  const pages = Array.from(
+    { length: Math.max(totalPages || 0, 0) },
+    (_, i) => i + 1
+  );
+  const canPrev = (page || 1) > 1;
+  const canNext = (page || 1) < (totalPages || 1);
   return (
     <>
       <AlertDialog open={showConfirmModal} onOpenChange={setShowConfirmModal}>
@@ -314,7 +332,7 @@ const TableCatgories: React.FC<Props> = ({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {loadingDetail ? (
+              {loading ? (
                 Array.from({ length: 4 }).map((_, i) => (
                   <TableRow key={`sk-${i}`}>
                     <TableCell className="px-5">
@@ -513,6 +531,48 @@ const TableCatgories: React.FC<Props> = ({
             </TableBody>
           </Table>
         </div>
+        {totalPages > 1 && (
+          <div className="w-full mt-4 flex items-center justify-center">
+            <Pagination>
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious
+                    href="#"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      if (canPrev) setPage(page - 1);
+                    }}
+                    className={!canPrev ? "pointer-events-none opacity-50" : ""}
+                  />
+                </PaginationItem>
+                {pages.map((p) => (
+                  <PaginationItem key={p}>
+                    <PaginationLink
+                      href="#"
+                      isActive={p === page}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        if (p !== page) setPage(p);
+                      }}
+                    >
+                      {p}
+                    </PaginationLink>
+                  </PaginationItem>
+                ))}
+                <PaginationItem>
+                  <PaginationNext
+                    href="#"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      if (canNext) setPage(page + 1);
+                    }}
+                    className={!canNext ? "pointer-events-none opacity-50" : ""}
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
+          </div>
+        )}
       </Card>
     </>
   );

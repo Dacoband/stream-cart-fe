@@ -217,7 +217,9 @@ export function TableMemberShip({
                 Thông tin gói
               </TableHead>
               <TableHead className="font-semibold">Giá</TableHead>
-              <TableHead className="font-semibold">Giới hạn</TableHead>
+              <TableHead className="font-semibold">
+                Giới hạn thời gian
+              </TableHead>
               <TableHead className="font-semibold">Hoa hồng(%)</TableHead>
               <TableHead className="font-semibold">Cập nhật</TableHead>
               <TableHead className="font-semibold">Trạng thái</TableHead>
@@ -307,8 +309,8 @@ export function TableMemberShip({
                           {(() => {
                             const raw = String(m.type ?? "");
                             const t = raw.toLowerCase();
-                            if (t === "1" || t === "new") return "New";
-                            if (t === "0" || t === "renewal") return "Renewal";
+                            if (t === "1" || t === "new") return "Gói chính";
+                            if (t === "0" || t === "renewal") return "Gói phụ";
                             return raw;
                           })()}{" "}
                           • {m.description}
@@ -320,16 +322,18 @@ export function TableMemberShip({
                     <PriceTag value={m.price} />
                   </TableCell>
                   <TableCell>
-                    <div className="text-sm text-gray-700">
-                      <p>Số lượng nhân viên: {m.maxModerator}</p>{" "}
-                      <p>Số Live: {m.maxLivestream}</p>
-                      <p>Thời gian một phiên Live: {m.duration} giờ</p>
+                    <div className="text-sm text-gray-700 space-y-1">
+                      {m.maxLivestream} phút
                     </div>
                   </TableCell>
                   <TableCell>{m.commission}</TableCell>
                   <TableCell>
                     <div className="flex gap-2 items-baseline">
-                      {formatDateVN(m.updatedAt as unknown as string)}
+                      {m.updatedAt ? (
+                        <p>{formatDateVN(m.updatedAt as unknown as string)}</p>
+                      ) : (
+                        <p> {formatDateVN(m.createdAt as unknown as string)}</p>
+                      )}
                     </div>
                   </TableCell>
                   <TableCell>

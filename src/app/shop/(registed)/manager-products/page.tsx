@@ -490,6 +490,7 @@ function Page() {
                             </button>
                           </div>
                         </TableCell>
+
                         <TableCell className="align-top ">
                           <div className="flex w-full  justify-start h-24 py-2 items-start">
                             <span
@@ -524,7 +525,11 @@ function Page() {
                             <DropdownMenuContent align="end">
                               <DropdownMenuItem
                                 className="text-blue-600 flex justify-start cursor-pointer"
-                                onClick={() => router.push(`/shop/manager-products/${product.id}`)}
+                                onClick={() =>
+                                  router.push(
+                                    `/shop/manager-products/${product.id}`
+                                  )
+                                }
                               >
                                 <Edit size={18} className="mr-2" />
                                 Cập nhật

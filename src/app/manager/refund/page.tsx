@@ -1,86 +1,89 @@
-'use client'
+"use client";
 
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useState } from "react";
 
-import { Input } from '@/components/ui/input'
-import { toast } from 'sonner'
-import { useRouter } from 'next/navigation'
+import { Input } from "@/components/ui/input";
+import { toast } from "sonner";
+// import { useRouter } from "next/navigation";
 
 // services
 import {
   getShopRefunds,
   updateRefundStatus,
-} from '@/services/api/refund/refund'
-import { getOrderById } from '@/services/api/order/order'
-import { getUserById } from '@/services/api/auth/account'
+} from "@/services/api/refund/refund";
+import { getOrderById } from "@/services/api/order/order";
+import { getUserById } from "@/services/api/auth/account";
 
 // types
-import { RefundRequestDto, RefundStatus } from '@/types/refund/refund'
-import { RefundRequestTable } from './components/RefundRequestTable'
-import { Card } from '@/components/ui/card'
+import { RefundRequestDto, RefundStatus } from "@/types/refund/refund";
+import { RefundRequestTable } from "./components/RefundRequestTable";
+import { Card } from "@/components/ui/card";
+import { AxiosError } from "axios";
 
 type EnrichedRefund = RefundRequestDto & {
-  orderCode?: string
-  processedByName?: string
-}
+  orderCode?: string;
+  processedByName?: string;
+};
 
-const API_PAGE_SIZE = 200
-const MAX_API_PAGES = 200
+const API_PAGE_SIZE = 200;
+const MAX_API_PAGES = 200;
 
 export default function RefundRequestsPage() {
-  const [loading, setLoading] = useState(false)
-  const [allRefunds, setAllRefunds] = useState<EnrichedRefund[]>([])
-  const [error, setError] = useState<string | null>(null)
+  const [loading, setLoading] = useState(false);
+  const [allRefunds, setAllRefunds] = useState<EnrichedRefund[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
   // Date range filter (client-side)
-  const [fromDate, setFromDate] = useState<string>('') // yyyy-MM-dd
-  const [toDate, setToDate] = useState<string>('') // yyyy-MM-dd
+  const [fromDate, setFromDate] = useState<string>(""); // yyyy-MM-dd
+  const [toDate, setToDate] = useState<string>(""); // yyyy-MM-dd
 
   // Per-action loading maps
-  const [approvingIds, setApprovingIds] = useState<Record<string, boolean>>({})
-  const [rejectingIds, setRejectingIds] = useState<Record<string, boolean>>({})
-  const [refundingIds, setRefundingIds] = useState<Record<string, boolean>>({})
-  const router = useRouter()
+  const [approvingIds, setApprovingIds] = useState<Record<string, boolean>>({});
+  const [rejectingIds, setRejectingIds] = useState<Record<string, boolean>>({});
+  const [refundingIds, setRefundingIds] = useState<Record<string, boolean>>({});
+  // const router = useRouter()
   useEffect(() => {
-    let cancelled = false
+    let cancelled = false;
 
     const fetchAll = async () => {
-      setLoading(true)
-      setError(null)
+      setLoading(true);
+      setError(null);
       try {
-        const aggregated: RefundRequestDto[] = []
+        const aggregated: RefundRequestDto[] = [];
         for (let pageNumber = 1; pageNumber <= MAX_API_PAGES; pageNumber++) {
           // lấy tất cả, không filter status - filter ở client
           const res = await getShopRefunds({
             pageNumber,
             pageSize: API_PAGE_SIZE,
-          })
-          const items = res?.items ?? []
-          aggregated.push(...items)
-          if (items.length < API_PAGE_SIZE) break
+          });
+          const items = res?.items ?? [];
+          aggregated.push(...items);
+          if (items.length < API_PAGE_SIZE) break;
         }
 
         // Enrich: orderCode + processedByName
-        const orderCodeCache = new Map<string, string>()
-        const userNameCache = new Map<string, string>()
+        const orderCodeCache = new Map<string, string>();
+        const userNameCache = new Map<string, string>();
 
-        const enriched: EnrichedRefund[] = []
+        const enriched: EnrichedRefund[] = [];
         for (const r of aggregated) {
           // orderCode
-          let orderCode: string | undefined = (r as any).orderCode
+          let orderCode: string | undefined = (
+            r as Partial<RefundRequestDto> & { orderCode?: string }
+          ).orderCode;
           if (!orderCode && r.orderId) {
             if (orderCodeCache.has(r.orderId)) {
-              orderCode = orderCodeCache.get(r.orderId)!
+              orderCode = orderCodeCache.get(r.orderId)!;
             } else {
               try {
-                const ord = await getOrderById(r.orderId)
+                const ord = await getOrderById(r.orderId);
                 const code =
                   ord?.data?.data?.orderCode ??
                   ord?.data?.orderCode ??
-                  ord?.orderCode
+                  ord?.orderCode;
                 if (code) {
-                  orderCode = code
-                  orderCodeCache.set(r.orderId, code)
+                  orderCode = code;
+                  orderCodeCache.set(r.orderId, code);
                 }
               } catch {
                 // ignore
@@ -89,67 +92,77 @@ export default function RefundRequestsPage() {
           }
 
           // processedByName
-          let processedByName: string | undefined = undefined
-          const emptyGuid = '00000000-0000-0000-0000-000000000000'
+          let processedByName: string | undefined = undefined;
+          const emptyGuid = "00000000-0000-0000-0000-000000000000";
           if (r.lastModifiedBy && r.lastModifiedAt !== emptyGuid) {
             if (userNameCache.has(r.lastModifiedBy)) {
-              processedByName = userNameCache.get(r.lastModifiedBy)!
+              processedByName = userNameCache.get(r.lastModifiedBy)!;
             } else {
               try {
-                const u = await getUserById(r.lastModifiedBy)
+                const u = await getUserById(r.lastModifiedBy);
                 const name =
                   u?.fullname ||
                   u?.fullName ||
                   u?.username ||
                   u?.email ||
-                  r.lastModifiedBy
-                processedByName = name
-                userNameCache.set(r.lastModifiedBy, name)
+                  r.lastModifiedBy;
+                processedByName = name;
+                userNameCache.set(r.lastModifiedBy, name);
               } catch {
-                processedByName = r.lastModifiedBy
+                processedByName = r.lastModifiedBy;
               }
             }
           }
 
-          enriched.push({ ...r, orderCode, processedByName })
+          enriched.push({ ...r, orderCode, processedByName });
         }
 
-        if (!cancelled) setAllRefunds(enriched)
-      } catch (e: any) {
-        if (!cancelled) setError(e?.message ?? 'Lỗi tải dữ liệu hoàn hàng')
-      } finally {
-        if (!cancelled) setLoading(false)
-      }
-    }
+        if (!cancelled) setAllRefunds(enriched);
+      } catch (error: unknown) {
+        console.error("failed load :", error);
+        const err = error as AxiosError<{
+          message?: string;
+          errors?: string[];
+        }>;
+        const message =
+          err?.response?.data?.errors?.[0] ||
+          err?.response?.data?.message ||
+          "Lỗi tải dữ liệu !";
 
-    fetchAll()
+        toast.error(message);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+
+    fetchAll();
     return () => {
-      cancelled = true
-    }
-  }, [])
+      cancelled = true;
+    };
+  }, []);
 
   // Filter theo từ ngày — đến ngày (client)
   const filteredByDate = useMemo(() => {
-    if (!fromDate && !toDate) return allRefunds
-    const from = fromDate ? new Date(fromDate + 'T00:00:00') : null
-    const to = toDate ? new Date(toDate + 'T23:59:59.999') : null
+    if (!fromDate && !toDate) return allRefunds;
+    const from = fromDate ? new Date(fromDate + "T00:00:00") : null;
+    const to = toDate ? new Date(toDate + "T23:59:59.999") : null;
     return allRefunds.filter((r) => {
-      const t = new Date(r.requestedAt)
-      if (from && t < from) return false
-      if (to && t > to) return false
-      return true
-    })
-  }, [allRefunds, fromDate, toDate])
+      const t = new Date(r.requestedAt);
+      if (from && t < from) return false;
+      if (to && t > to) return false;
+      return true;
+    });
+  }, [allRefunds, fromDate, toDate]);
 
   // ===== Actions =====
   const handleApprove = async (refundId: string) => {
     try {
-      setApprovingIds((m) => ({ ...m, [refundId]: true }))
+      setApprovingIds((m) => ({ ...m, [refundId]: true }));
       await updateRefundStatus({
         refundRequestId: refundId,
         newStatus: RefundStatus.Confirmed, // 1
-      })
-      toast.success('Đã phê duyệt yêu cầu hoàn hàng')
+      });
+      toast.success("Đã phê duyệt yêu cầu hoàn hàng");
       setAllRefunds((prev) =>
         prev.map((r) =>
           r.id === refundId
@@ -160,22 +173,29 @@ export default function RefundRequestsPage() {
               }
             : r
         )
-      )
-    } catch (e: any) {
-      toast.error(e?.message ?? 'Phê duyệt thất bại')
+      );
+    } catch (error: unknown) {
+      console.error("Confirm refund fail :", error);
+      const err = error as AxiosError<{ message?: string; errors?: string[] }>;
+      const message =
+        err?.response?.data?.errors?.[0] ||
+        err?.response?.data?.message ||
+        "Phê duyệt thất bại!";
+
+      toast.error(message);
     } finally {
-      setApprovingIds((m) => ({ ...m, [refundId]: false }))
+      setApprovingIds((m) => ({ ...m, [refundId]: false }));
     }
-  }
+  };
 
   const handleReject = async (refundId: string) => {
     try {
-      setRejectingIds((m) => ({ ...m, [refundId]: true }))
+      setRejectingIds((m) => ({ ...m, [refundId]: true }));
       await updateRefundStatus({
         refundRequestId: refundId,
         newStatus: RefundStatus.Rejected, // 7
-      })
-      toast.success('Đã từ chối yêu cầu hoàn hàng')
+      });
+      toast.success("Đã từ chối yêu cầu hoàn hàng");
       setAllRefunds((prev) =>
         prev.map((r) =>
           r.id === refundId
@@ -186,22 +206,29 @@ export default function RefundRequestsPage() {
               }
             : r
         )
-      )
-    } catch (e: any) {
-      toast.error(e?.message ?? 'Từ chối thất bại')
+      );
+    } catch (error: unknown) {
+      console.error("Reject refund fail:", error);
+      const err = error as AxiosError<{ message?: string; errors?: string[] }>;
+      const message =
+        err?.response?.data?.errors?.[0] ||
+        err?.response?.data?.message ||
+        "Từ chối yêu cầu thất bại!";
+
+      toast.error(message);
     } finally {
-      setRejectingIds((m) => ({ ...m, [refundId]: false }))
+      setRejectingIds((m) => ({ ...m, [refundId]: false }));
     }
-  }
+  };
 
   const handleRefundMoney = async (refundId: string) => {
     try {
-      setRefundingIds((m) => ({ ...m, [refundId]: true }))
+      setRefundingIds((m) => ({ ...m, [refundId]: true }));
       await updateRefundStatus({
         refundRequestId: refundId,
         newStatus: RefundStatus.Refunded, // 6
-      })
-      toast.success('Đã chuyển trạng thái Hoàn tiền thành công')
+      });
+      toast.success("Đã chuyển trạng thái Hoàn tiền thành công");
       setAllRefunds((prev) =>
         prev.map((r) =>
           r.id === refundId
@@ -212,13 +239,20 @@ export default function RefundRequestsPage() {
               }
             : r
         )
-      )
-    } catch (e: any) {
-      toast.error(e?.message ?? 'Cập nhật hoàn tiền thất bại')
+      );
+    } catch (error: unknown) {
+      console.error("failed update order:", error);
+      const err = error as AxiosError<{ message?: string; errors?: string[] }>;
+      const message =
+        err?.response?.data?.errors?.[0] ||
+        err?.response?.data?.message ||
+        "Cập nhật trạng thái thất bại!";
+
+      toast.error(message);
     } finally {
-      setRefundingIds((m) => ({ ...m, [refundId]: false }))
+      setRefundingIds((m) => ({ ...m, [refundId]: false }));
     }
-  }
+  };
 
   return (
     <div className="container mx-auto py-6">
@@ -260,5 +294,5 @@ export default function RefundRequestsPage() {
         refundingIds={refundingIds}
       />
     </div>
-  )
+  );
 }

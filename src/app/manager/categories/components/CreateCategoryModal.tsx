@@ -100,7 +100,7 @@ const CreateCategoryModal: React.FC<CreateCategoryModalProps> = ({
       // setTotalPages(res.totalPages || 1)
     } catch (err) {
       console.log(err);
-      toast.error("Không thể tải danh mục");
+      // toast.error("Không thể tải danh mục");
       console.error("Failed to fetch categories:", err);
     } finally {
     }

@@ -89,12 +89,14 @@ function ProductsLive({ livestreamId }: { livestreamId: string }) {
 
                     <div className="flex items-end justify-between my-2">
                       <div className="flex items-end gap-2">
-                        <p className="text-red-600 font-semibold ">
+                        <p className="text-red-500 font-semibold mt-2">
                           <PriceTag value={product.price} />
                         </p>
-                        <p className="text-gray-600 font-semibold text-sm line-through">
-                          <PriceTag value={product.price} />
-                        </p>
+                        {product.originalPrice !== product.price && (
+                          <p className="text-gray-500 font-semibold mt-2 line-through">
+                            <PriceTag value={product.originalPrice} />
+                          </p>
+                        )}
                       </div>
                       <p className="text-sm text-gray-500">
                         Còn: {product.stock}
@@ -103,10 +105,33 @@ function ProductsLive({ livestreamId }: { livestreamId: string }) {
                     <div className="flex justify-end ">
                       <Button
                         size="sm"
-                        className="text-[12px] py-1 cursor-pointer px-2 rounded-none h-fit bg-gradient-to-r from-orange-500 to-red-500  font-semibold text-white"
+                        disabled={inCart} // khi đã mua thì disable luôn
+                        className={`text-[12px] py-1 cursor-pointer px-2 rounded-none h-fit font-semibold 
+    ${
+      inCart
+        ? "bg-green-500 border border-green-600 text-white" // giống nút kế bên
+        : "bg-gradient-to-r from-orange-500 to-red-500 text-white"
+    }`}
+                        onClick={async () => {
+                          try {
+                            await addOne(product.id);
+                            toast.success("Đã thêm vào giỏ hàng", {
+                              position: "bottom-center",
+                            });
+                          } catch (e) {
+                            console.error("[UI] Add to cart failed", {
+                              livestreamProductId: product.id,
+                              error: e,
+                            });
+                            toast.error("Không thể thêm vào giỏ hàng", {
+                              position: "bottom-center",
+                            });
+                          }
+                        }}
                       >
-                        Mua ngay
+                        {inCart ? "Đã mua" : "Thêm giỏ hàng"}
                       </Button>
+
                       <Button
                         size="sm"
                         className={`py-1 cursor-pointer px-5 rounded-none hover:bg-white h-full border font-semibold ${

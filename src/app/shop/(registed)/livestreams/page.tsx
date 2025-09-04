@@ -40,6 +40,7 @@ import {
 import { formatFullDateTimeVN } from "@/components/common/formatFullDateTimeVN";
 import AlertDelete from "./components/AlertDeleteLive";
 import { toast } from "sonner";
+import { AxiosError } from "axios";
 function LiveStreamPage() {
   const { user } = useAuth();
   const [loading, setLoading] = useState<boolean>(true);
@@ -90,8 +91,25 @@ function LiveStreamPage() {
         window.open(`/shop/livestream/SupportLive/${id}`, "_blank");
       }
       fetchLivestreams();
-    } catch (err) {
-      console.error("Error starting livestream:", err);
+    } catch (error: unknown) {
+      console.error("Start livefailed:", error);
+      const err = error as AxiosError<{ message?: string; errors?: string[] }>;
+      const message =
+        err?.response?.data?.errors?.[0] ||
+        err?.response?.data?.message ||
+        "Truy cập live thất bại!";
+
+      toast.error(message, {
+        action:
+          user?.role === 2
+            ? {
+                label: "Đăng ký",
+                onClick: () => {
+                  router.push("/shop/memberships");
+                },
+              }
+            : undefined,
+      });
     }
   };
 
@@ -105,7 +123,7 @@ function LiveStreamPage() {
       window.open(url, "_blank");
       fetchLivestreams();
     } catch (err) {
-      console.error("Error starting livestream:", err);
+      console.error(err);
     }
   };
   const filteredLivestreams = livestreams.filter((item) =>
@@ -130,12 +148,14 @@ function LiveStreamPage() {
     <div className="flex flex-col gap-5 min-h-full">
       <div className="bg-white sticky top-0 z-10 h-fit w-full py-4 px-8 shadow flex justify-between items-center">
         <h2 className="text-xl font-bold">LiveStream</h2>
-        <Link href="/shop/livestreams/new-livestream">
-          <Button className="bg-[#B0F847] text-black shadow flex gap-2 py-2 px-4 text-base cursor-pointer hover:bg-[#B0F847]/80 hover:text-black/80">
-            <CirclePlus />
-            Tạo Livestream
-          </Button>
-        </Link>
+        {user?.role == 2 && (
+          <Link href="/shop/livestreams/new-livestream">
+            <Button className="bg-[#B0F847] text-black shadow flex gap-2 py-2 px-4 text-base cursor-pointer hover:bg-[#B0F847]/80 hover:text-black/80">
+              <CirclePlus />
+              Tạo Livestream
+            </Button>
+          </Link>
+        )}
       </div>
       <div className="mx-5 mb-10">
         <Card className="bg-white py-5 px-8 min-h-[75vh]">
@@ -277,18 +297,42 @@ function LiveStreamPage() {
                           const scheduled = new Date(
                             livestream.scheduledStartTime
                           );
-                          const isScheduledUpcoming =
-                            scheduled > now && !livestream.actualStartTime;
+                          const scheduledMs = scheduled.getTime();
+                          const isValidScheduled = !Number.isNaN(scheduledMs);
+                          const isFuture = isValidScheduled && scheduled > now;
+                          const notStarted = !livestream.actualStartTime;
+                          const timeUntilStartMs = isValidScheduled
+                            ? scheduledMs - now.getTime()
+                            : 0;
+                          const fiveMinutesMs = 5 * 60 * 1000;
 
-                          if (isScheduledUpcoming) {
+                          // If future and not started yet, gate by 5-minute rule
+                          if (isFuture && notStarted) {
+                            // Too early (> 5 minutes before scheduled): show warning, disabled
+                            if (timeUntilStartMs > fiveMinutesMs) {
+                              return (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  disabled
+                                  className="text-orange-700 border-orange-500 bg-white cursor-not-allowed"
+                                  title="Không được mở sớm hơn thời gian hẹn 5 phút"
+                                >
+                                  Không thể mở sớm hơn 5 phút
+                                </Button>
+                              );
+                            }
+                            // Within 5 minutes window: allow starting
                             return (
                               <Button
                                 size="sm"
                                 variant="outline"
-                                disabled
-                                className="text-orange-700 border-orange-500 bg-white cursor-not-allowed"
+                                className="text-blue-600 border-blue-600 cursor-pointer hover:text-blue-400 hover:border-blue-400 hover:bg-white bg-white"
+                                onClick={() =>
+                                  handleStartLivestream(livestream.id)
+                                }
                               >
-                                Sắp diễn ra
+                                {getActionLabel(livestream)}
                               </Button>
                             );
                           }

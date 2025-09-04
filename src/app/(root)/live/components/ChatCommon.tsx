@@ -23,6 +23,7 @@ const ChatCommon: React.FC<ChatCommonProps> = ({ livestreamId }) => {
   );
   const [loading, setLoading] = React.useState(false);
   const [sellerId, setSellerId] = React.useState<string | null>(null);
+  const reloadedRef = React.useRef<boolean>(false);
 
   const listRef = React.useRef<HTMLDivElement | null>(null);
   const seenKeysRef = React.useRef<Set<string>>(new Set());
@@ -91,24 +92,47 @@ const ChatCommon: React.FC<ChatCommonProps> = ({ livestreamId }) => {
           // seed dedupe
           const seen = seenKeysRef.current;
           for (const m of mapped) {
-            try { seen.add(makeKey(m)); } catch { /* ignore */ }
+            try {
+              seen.add(makeKey(m));
+            } catch {
+              /* ignore */
+            }
           }
         }
         await chatHubService.ensureStarted();
         // Mark this client as an active viewer for stats
         await chatHubService.startViewingLivestream(livestreamId);
         await chatHubService.joinLivestream(livestreamId);
-        chatHubService.onReceiveLivestreamMessage((payload) => {
+        chatHubService.onReceiveLivestreamMessage(async (payload) => {
           try {
             const key = makeKey(payload);
             if (seenKeysRef.current.has(key)) return;
             seenKeysRef.current.add(key);
-          } catch { /* ignore */ }
+          } catch {
+            /* ignore */
+          }
           setMessages((prev) => [...prev, payload]);
           requestAnimationFrame(() => {
             if (listRef.current)
               listRef.current.scrollTop = listRef.current.scrollHeight;
           });
+
+          // If system (zero-GUID) sender warns, check status and reload once if ended
+          try {
+            const isZeroGuid =
+              (payload.senderId || "").toLowerCase() ===
+              "00000000-0000-0000-0000-000000000000";
+            if (isZeroGuid && !reloadedRef.current) {
+              const live = await getLivestreamById(livestreamId);
+              const status = (live as unknown as { status?: boolean })?.status;
+              if (status === false) {
+                reloadedRef.current = true;
+                window.location.reload();
+              }
+            }
+          } catch {
+            // ignore
+          }
         });
       } catch (e) {
         console.error("Chat init error", e);
@@ -166,6 +190,7 @@ const ChatCommon: React.FC<ChatCommonProps> = ({ livestreamId }) => {
               <div key={idx} className="flex items-start gap-2">
                 {/* Avatar / Icon */}
                 {m.senderType === "Shop" ||
+                m.senderType === "Moderator" ||
                 (sellerId && m.senderId === sellerId) ? (
                   <div className="h-6 w-6 flex items-center justify-center rounded-full bg-lime-100 overflow-hidden shrink-0">
                     <Store className="h-4 w-4 text-lime-500" />

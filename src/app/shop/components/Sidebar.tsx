@@ -67,7 +67,7 @@ const items = [
     icon: UsersRound,
   },
   {
-    title: "Gói thành viên",
+    title: "Đăng kí gói",
     url: "/shop/memberships",
     icon: Crown,
   },
@@ -80,11 +80,6 @@ const items = [
     title: "Cập nhật Shop",
     url: "/shop/profile-shop",
     icon: Store,
-  },
-  {
-    title: "Cập nhật cá nhân",
-    url: "/shop/my-profile",
-    icon: UsersRound,
   },
 ];
 

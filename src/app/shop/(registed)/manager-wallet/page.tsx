@@ -185,8 +185,13 @@ export default function Page() {
         setWallet(walletData);
 
         const items: WalletTransactionDTO[] =
+          (resList as { data?: { items?: WalletTransactionDTO[] } }).data
+            ?.items ??
+          (resList as { items?: WalletTransactionDTO[] }).items ??
           (resList as { data?: WalletTransactionDTO[] }).data ??
-          (Array.isArray(resList) ? resList : []) ??
+          (Array.isArray(resList)
+            ? (resList as unknown as WalletTransactionDTO[])
+            : []) ??
           [];
 
         if (activeTab === "orders") {

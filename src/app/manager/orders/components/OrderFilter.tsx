@@ -1,42 +1,37 @@
-'use client'
+"use client";
 
-import React from 'react'
-import { Button } from '@/components/ui/button'
-import { Label } from '@/components/ui/label'
-import { Calendar } from '@/components/ui/calendar'
-import { CalendarIcon, ChevronDown } from 'lucide-react'
+import React from "react";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Calendar } from "@/components/ui/calendar";
+import { CalendarIcon } from "lucide-react";
 import {
   Popover,
   PopoverTrigger,
   PopoverContent,
-} from '@/components/ui/popover'
+} from "@/components/ui/popover";
 import {
   Select,
   SelectTrigger,
   SelectValue,
   SelectContent,
   SelectItem,
-} from '@/components/ui/select'
-import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuItem,
-} from '@/components/ui/dropdown-menu'
-import { format } from 'date-fns'
-import { vi } from 'date-fns/locale'
+} from "@/components/ui/select";
+
+import { format } from "date-fns";
+import { vi } from "date-fns/locale";
 
 type Props = {
-  shops: { id: string; shopName: string }[]
+  shops: { id: string; shopName: string }[];
   filters: {
-    shopId: string | null
-    startDate: Date | null
-    endDate: Date | null
-    statuses: number[] | null
-  }
-  onChange: (filters: Props['filters']) => void
-  onReset: () => void
-}
+    shopId: string | null;
+    startDate: Date | null;
+    endDate: Date | null;
+    statuses: number[] | null;
+  };
+  onChange: (filters: Props["filters"]) => void;
+  onReset: () => void;
+};
 
 export const AllOrderFilters: React.FC<Props> = ({
   shops,
@@ -50,9 +45,9 @@ export const AllOrderFilters: React.FC<Props> = ({
       <div>
         <Label className="pb-2">Cửa hàng</Label>
         <Select
-          value={filters.shopId ?? 'ALL'}
+          value={filters.shopId ?? "ALL"}
           onValueChange={(v) =>
-            onChange({ ...filters, shopId: v === 'ALL' ? null : v })
+            onChange({ ...filters, shopId: v === "ALL" ? null : v })
           }
         >
           <SelectTrigger className="w-full">
@@ -80,8 +75,8 @@ export const AllOrderFilters: React.FC<Props> = ({
             >
               <CalendarIcon className="mr-2 h-4 w-4" />
               {filters.startDate
-                ? format(filters.startDate, 'dd/MM/yyyy', { locale: vi })
-                : 'Chọn ngày'}
+                ? format(filters.startDate, "dd/MM/yyyy", { locale: vi })
+                : "Chọn ngày"}
             </Button>
           </PopoverTrigger>
           <PopoverContent>
@@ -105,8 +100,8 @@ export const AllOrderFilters: React.FC<Props> = ({
             >
               <CalendarIcon className="mr-2 h-4 w-4" />
               {filters.endDate
-                ? format(filters.endDate, 'dd/MM/yyyy', { locale: vi })
-                : 'Chọn ngày'}
+                ? format(filters.endDate, "dd/MM/yyyy", { locale: vi })
+                : "Chọn ngày"}
             </Button>
           </PopoverTrigger>
           <PopoverContent>
@@ -126,5 +121,5 @@ export const AllOrderFilters: React.FC<Props> = ({
         </Button>
       </div>
     </div>
-  )
-}
+  );
+};

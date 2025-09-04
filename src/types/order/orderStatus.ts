@@ -13,11 +13,8 @@ export enum OrderStatus {
   Completed = 10,  // Hoàn thành
 }
 
-// UI Tab Values
-// Combined values are represented as hyphen-joined strings, e.g., '3-7' for shipping, '4-10' for success
 export type OrderTabValue = 'all' | '0' | '1' | '2' | '3-7' | '4-10' | '5' | '8-9';
 
-// Mapping functions
 export const getStatusesForTab = (tabValue: OrderTabValue): OrderStatus[] => {
   switch (tabValue) {
     case 'all':

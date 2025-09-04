@@ -7,7 +7,7 @@ import { toast } from "sonner";
 
 import {
   membershipSchema,
-  type MembershipSchema,
+  type MembershipFormValues,
 } from "@/components/schema/membership_schema";
 import { Membership } from "@/types/membership/membership";
 import {
@@ -70,7 +70,7 @@ export default function DialogUpdateMemberShip({
     isControlled ? onOpenChange?.(v) : setInternalOpen(v);
   const [submitting, setSubmitting] = React.useState(false);
 
-  const form = useForm<MembershipSchema>({
+  const form = useForm<MembershipFormValues>({
     resolver: zodResolver(membershipSchema),
     defaultValues: {
       name: "",
@@ -78,6 +78,8 @@ export default function DialogUpdateMemberShip({
       description: "",
     },
   });
+  // Disable some fields when type is renewal (0)
+  const isRenewal = Number(form.watch("type")) === 0;
 
   React.useEffect(() => {
     if (!dialogOpen) return;
@@ -89,45 +91,32 @@ export default function DialogUpdateMemberShip({
           if (typeof raw === "number") return raw === 1 ? 1 : 0;
           if (typeof raw === "string") {
             const t = raw.trim().toLowerCase();
-            if (
-              t === "1" ||
-              t === "new" ||
-              t === "gói chính" ||
-              t === "goi chinh"
-            )
-              return 1;
-            if (
-              t === "0" ||
-              t === "renewal" ||
-              t === "gói phụ" ||
-              t === "goi phu"
-            )
-              return 0;
+            if (t === "1" || t === "new") return 1;
+            if (t === "0" || t === "renewal") return 0;
           }
           return 0;
         })(),
         description: initial.description || "",
         price: initial.price,
         duration: initial.duration,
-        maxModerator: initial.maxModerator,
         maxLivestream: initial.maxLivestream,
         commission: initial.commission,
       });
     } else {
       form.reset({
         name: "",
-        type: 0,
+        type: 1,
         description: "",
         price: undefined,
         duration: undefined,
-        maxModerator: undefined,
+
         maxLivestream: undefined,
         commission: undefined,
       });
     }
   }, [dialogOpen, mode, initial, form]);
 
-  const onSubmit = async (values: MembershipSchema) => {
+  const onSubmit = async (values: MembershipFormValues) => {
     setSubmitting(true);
     try {
       if (mode === "create") {
@@ -203,8 +192,8 @@ export default function DialogUpdateMemberShip({
                           <SelectValue placeholder="Chọn phân loại" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="1">New</SelectItem>
-                          <SelectItem value="0">Renewal</SelectItem>
+                          <SelectItem value="1">Gói chính</SelectItem>
+                          <SelectItem value="0">Gói phụ</SelectItem>
                         </SelectContent>
                       </Select>
                     </FormControl>
@@ -242,36 +231,38 @@ export default function DialogUpdateMemberShip({
                   </FormItem>
                 )}
               />
+              {/* {!isRenewal && (
+                <FormField
+                  control={form.control}
+                  name="duration"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Thời hạn áp dụng(ngày) *</FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <Input
+                            type="number"
+                            disabled={isRenewal}
+                            value={field.value ?? ""}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              field.onChange(
+                                val === "" ? undefined : Number(val)
+                              );
+                            }}
+                          />
+                          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-500">
+                            Ngày
+                          </span>
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )} */}
 
-              <FormField
-                control={form.control}
-                name="duration"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Thời lượng live tối đa (giờ) *</FormLabel>
-                    <FormControl>
-                      <div className="relative">
-                        <Input
-                          type="number"
-                          value={field.value ?? ""}
-                          onChange={(e) => {
-                            const val = e.target.value;
-                            field.onChange(
-                              val === "" ? undefined : Number(val)
-                            );
-                          }}
-                        />
-                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-500">
-                          Giờ
-                        </span>
-                      </div>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
+              {/* <FormField
                 control={form.control}
                 name="maxModerator"
                 render={({ field }) => (
@@ -297,14 +288,14 @@ export default function DialogUpdateMemberShip({
                     <FormMessage />
                   </FormItem>
                 )}
-              />
+              /> */}
 
               <FormField
                 control={form.control}
                 name="maxLivestream"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Số livestream tối đa *</FormLabel>
+                    <FormLabel>Tổng thời lượng live (phút) *</FormLabel>
                     <FormControl>
                       <Input
                         type="number"
@@ -319,27 +310,31 @@ export default function DialogUpdateMemberShip({
                   </FormItem>
                 )}
               />
-
-              <FormField
-                control={form.control}
-                name="commission"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Hoa hồng (%) *</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        value={field.value ?? ""}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          field.onChange(val === "" ? undefined : Number(val));
-                        }}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              {!isRenewal && (
+                <FormField
+                  control={form.control}
+                  name="commission"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Hoa hồng (%) *</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          disabled={isRenewal}
+                          value={field.value ?? ""}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            field.onChange(
+                              val === "" ? undefined : Number(val)
+                            );
+                          }}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
 
               <FormField
                 control={form.control}

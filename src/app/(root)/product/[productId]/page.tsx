@@ -21,6 +21,8 @@ export default function ProductPage() {
   const [loading, setLoading] = useState(true);
   const [openBot, setOpenBot] = useState(false);
   const [openShop, setOpenShop] = useState(false);
+  const [averageRating, setAverageRating] = useState(0);
+  const [totalReviews, setTotalReviews] = useState(0);
 
   // Khi mở cái này thì đóng cái kia
   const handleOpenBot = () => {
@@ -70,7 +72,7 @@ export default function ProductPage() {
       </div>
       <div className="flex flex-col gap-5 w-full">
         <div className="bg-white py-8 rounded-sm w-full mx-auto shadow">
-          <OperationProduct product={product} />
+          <OperationProduct product={product} averageRating={averageRating} totalReviews={totalReviews} />
         </div>
         <div className="bg-white py-5 rounded-sm w-full mx-auto shadow">
           <InforShop
@@ -83,7 +85,13 @@ export default function ProductPage() {
           <DescriptionProduct product={product} />
         </div>
         <div className="bg-white py-8 rounded-sm w-full mx-auto shadow">
-          <ProductReview product={product} />
+          <ProductReview
+            product={product}
+            onRatingChange={(avg, total) => {
+              setAverageRating(avg || 0);
+              setTotalReviews(total || 0);
+            }}
+          />
         </div>
       </div>
       <ChatBot open={openBot} setOpen={handleOpenBot} />

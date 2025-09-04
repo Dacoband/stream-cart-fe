@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { getLivestreamById } from "@/services/api/livestream/livestream";
 import { Livestream } from "@/types/livestream/livestream";
 import { createReview } from "@/services/api/review/review";
@@ -15,6 +15,7 @@ import {
   Eye,
   Star,
   UserCircle,
+  ArrowLeft,
 } from "lucide-react";
 import { toast } from "sonner";
 import Image from "next/image";
@@ -22,6 +23,7 @@ import { formatFullDateTimeVN } from "@/components/common/formatFullDateTimeVN";
 
 export default function Page() {
   const { livestreamId } = useParams<{ livestreamId: string }>();
+  const router = useRouter();
 
   const [live, setLive] = React.useState<Livestream | null>(null);
   const [loading, setLoading] = React.useState(true);
@@ -79,8 +81,24 @@ export default function Page() {
     }
   };
 
+  const handleBackToLivestream = () => {
+    router.push(`/shop/livestreams/${livestreamId}`);
+  };
+
   return (
     <div className="mx-auto">
+      {/* Header with back button */}
+      <div className="flex items-center justify-between mb-6">
+        <Button
+          variant="outline"
+          onClick={handleBackToLivestream}
+          className="flex items-center gap-2"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Quay lại Livestream
+        </Button>
+      </div>
+
       <h1 className="text-2xl md:text-2xl mt-4 font-bold text-gray-900 text-center">
         Đánh giá buổi Livestream
       </h1>
@@ -241,19 +259,38 @@ export default function Page() {
         </div>
         {error && <p className="text-sm text-red-500 mt-2">{error}</p>}
 
-        <div className="mt-6 flex justify-end">
+        <div className="mt-6 flex justify-between items-center">
           {!submitted ? (
-            <Button
-              className="bg-[#B0F847] hover:bg-[#B0F847]/80 text-black"
-              disabled={submitting}
-              onClick={onSubmit}
-            >
-              {submitting ? "Đang gửi..." : "Gửi đánh giá"}
-            </Button>
+            <>
+              <Button
+                variant="outline"
+                onClick={handleBackToLivestream}
+                className="flex items-center gap-2"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                Quay lại
+              </Button>
+              <Button
+                className="bg-[#B0F847] hover:bg-[#B0F847]/80 text-black"
+                disabled={submitting}
+                onClick={onSubmit}
+              >
+                {submitting ? "Đang gửi..." : "Gửi đánh giá"}
+              </Button>
+            </>
           ) : (
-            <span className="text-green-600 font-medium">
-              Cảm ơn bạn đã gửi đánh giá.
-            </span>
+            <div className="w-full flex flex-col items-center gap-4">
+              <span className="text-green-600 font-medium">
+                Cảm ơn bạn đã gửi đánh giá.
+              </span>
+              <Button
+                onClick={handleBackToLivestream}
+                className="bg-[#B0F847] hover:bg-[#B0F847]/80 text-black flex items-center gap-2"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                Quay lại Livestream
+              </Button>
+            </div>
           )}
         </div>
       </Card>

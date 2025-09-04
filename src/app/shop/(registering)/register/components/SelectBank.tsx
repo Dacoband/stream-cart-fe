@@ -100,7 +100,7 @@ function SelectBank({ setValue, watch }: SelectBankProps) {
           <div className="max-h-80 overflow-y-auto">
             {filteredBanks.length > 0 ? (
               filteredBanks.map((bank) => (
-                <SelectItem key={bank.id} value={bank.id.toString()}>
+                <SelectItem key={bank.id} value={bank.name.toString()}>
                   <div className="flex items-center gap-3 h-fit">
                     {bank.logo && (
                       <Image
