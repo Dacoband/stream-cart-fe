@@ -30,6 +30,8 @@ import { uploadImage } from '@/services/api/uploadImage'
 
 import type { OrderItemResponse } from '@/types/order/order'
 import type { Bank } from '@/types/listbank/listbank'
+import { Product, ProductDetail } from '@/types/product/product'
+import { Variant } from '@/types/product/product'
 
 type VariantAttrs = Record<string, string>
 type Selected = { selected: boolean; reason: string; imageUrl?: string }
@@ -81,7 +83,7 @@ export default function RefundRequestModal({ open, onClose, orderId }: Props) {
             try {
               const detail = await getProductDetailById(it.productId)
               const v = detail?.variants?.find(
-                (vv: any) => vv.variantId === it.variantId
+                (vv: Variant) => vv.variantId === it.variantId
               )
               if (v?.attributeValues) vmap[it.id] = v.attributeValues
             } catch {}

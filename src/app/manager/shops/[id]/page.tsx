@@ -220,7 +220,7 @@ const ShopDetailPage = () => {
             )
 
             return (r.items || []).map((d: WalletTransactionDTO) => ({
-              transactionId: (d as any).transactionId || d.id,
+              transactionId: d.transactionId || d.id,
               type: mapType(d.type),
               amount: d.amount,
               description:
@@ -232,8 +232,8 @@ const ShopDetailPage = () => {
                   : 'Giao dịch ví'),
               status: mapStatus(d.status),
               createdAt: d.createdAt,
-              orderId: (d as any).orderId || undefined,
-              refundId: (d as any).refundId || undefined,
+              orderId: d.orderId || undefined,
+              refundId: d.refundId || undefined,
             }))
           })(),
         ])

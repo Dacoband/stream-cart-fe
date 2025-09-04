@@ -214,8 +214,8 @@ export default function RefundDetailPage() {
         status: RefundStatus.Confirmed,
         processedAt: new Date().toISOString(),
       })
-    } catch (e: any) {
-      toast.error(e?.message ?? 'Phê duyệt thất bại')
+    } catch (e) {
+      toast.error('Phê duyệt thất bại')
     } finally {
       setSaving(false)
     }
@@ -235,8 +235,8 @@ export default function RefundDetailPage() {
         status: RefundStatus.Rejected,
         processedAt: new Date().toISOString(),
       })
-    } catch (e: any) {
-      toast.error(e?.message ?? 'Từ chối thất bại')
+    } catch (e) {
+      toast.error('Từ chối thất bại')
     } finally {
       setSaving(false)
     }

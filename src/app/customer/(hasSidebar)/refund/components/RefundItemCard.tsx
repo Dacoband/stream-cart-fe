@@ -13,6 +13,8 @@ import { getOrderById } from '@/services/api/order/order'
 import { updateRefundStatus } from '@/services/api/refund/refund'
 import { BadgeCheck, PackageSearch, Truck, Barcode } from 'lucide-react'
 import { formatFullDateTimeVN } from '@/components/common/formatFullDateTimeVN'
+import { OrderItemResponse } from '@/types/order/order'
+import { Variant } from '@/types/product/product'
 
 type Props = {
   refund: RefundRequestDto
@@ -83,7 +85,7 @@ export function ShopRefundItemCard({ refund, onChanged }: Props) {
               : orderItemsPayload?.items ?? orderItemsPayload?.data?.items ?? []
 
             const oi = orderItems.find(
-              (x: any) => x.id === firstDetail.orderItemId
+              (x: OrderItemResponse) => x.id === firstDetail.orderItemId
             )
             if (oi) {
               let attrsText = ''
@@ -91,7 +93,7 @@ export function ShopRefundItemCard({ refund, onChanged }: Props) {
                 if (oi.productId && oi.variantId) {
                   const detail = await getProductDetailById(oi.productId)
                   const v = detail?.variants?.find(
-                    (vv: any) => vv.variantId === oi.variantId
+                    (vv: Variant) => vv.variantId === oi.variantId
                   )
                   if (v?.attributeValues) {
                     attrsText = Object.entries(v.attributeValues)
@@ -134,8 +136,8 @@ export function ShopRefundItemCard({ refund, onChanged }: Props) {
       })
       toast.success('Đã cập nhật: Đã chuẩn bị/đóng gói')
       onChanged?.()
-    } catch (e: any) {
-      toast.error(e?.message ?? 'Cập nhật thất bại')
+    } catch (e) {
+      toast.error('Cập nhật thất bại')
     } finally {
       setUpdating(false)
     }
