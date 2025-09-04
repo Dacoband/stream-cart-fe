@@ -81,6 +81,11 @@ export default function LivestreamDetail({
     }
   }, [livestreamId]);
 
+  const handleProductsUpdate = useCallback(() => {
+    fetchProducts();
+    fetchBestSellingProducts();
+  }, [fetchProducts, fetchBestSellingProducts]);
+
   useEffect(() => {
     fetchLivestream();
     fetchProducts();
@@ -219,6 +224,7 @@ export default function LivestreamDetail({
                 productsLoading={productsLoading}
                 bestSellingProducts={livestream?.status ? bestSellingProducts : []}
                 bestSellingLoading={livestream?.status ? bestSellingLoading : false}
+                onProductsUpdate={handleProductsUpdate}
               />
             </TabsContent>
           </Tabs>

@@ -1,6 +1,8 @@
 "use client";
+import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Crown,
   Loader2,
@@ -8,15 +10,18 @@ import {
   Star,
   Award,
   TrendingUp,
+  Edit,
 } from "lucide-react";
 import Image from "next/image";
 import type { LivestreamProduct } from "@/types/livestream/livestream";
+import UpdateStockModal from "./UpdateStockModal";
 
 interface TabProductsProps {
   products: LivestreamProduct[];
   productsLoading: boolean;
   bestSellingProducts: LivestreamProduct[];
   bestSellingLoading: boolean;
+  onProductsUpdate?: () => void;
 }
 
 function formatPrice(price: number) {
@@ -31,7 +36,19 @@ export default function TabProducts({
   productsLoading,
   bestSellingProducts,
   bestSellingLoading,
+  onProductsUpdate,
 }: TabProductsProps) {
+  const [selectedProduct, setSelectedProduct] = useState<LivestreamProduct | null>(null);
+  const [isStockModalOpen, setIsStockModalOpen] = useState(false);
+
+  const handleEditStock = (product: LivestreamProduct) => {
+    setSelectedProduct(product);
+    setIsStockModalOpen(true);
+  };
+
+  const handleStockUpdateSuccess = () => {
+    onProductsUpdate?.();
+  };
   return (
     <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
       {/* Best Selling Products - 1/4 */}
@@ -179,10 +196,18 @@ export default function TabProducts({
                         </Badge>
                       </div>
                     )}
-                    <div className="absolute top-3 right-3">
+                    <div className="absolute top-3 right-3 flex gap-2">
                       <div className="bg-black/50 backdrop-blur-sm text-white px-2 py-1 rounded-full text-xs">
                         {product.stock ?? 0}
                       </div>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleEditStock(product)}
+                        className="w-8 h-8 p-0 bg-white/90 hover:bg-white border-gray-300 shadow-sm"
+                      >
+                        <Edit className="w-3 h-3 text-gray-600" />
+                      </Button>
                     </div>
                   </div>
 
@@ -254,6 +279,14 @@ export default function TabProducts({
           )}
         </Card>
       </div>
+
+      {/* Update Stock Modal */}
+      <UpdateStockModal
+        open={isStockModalOpen}
+        product={selectedProduct}
+        onClose={() => setIsStockModalOpen(false)}
+        onSuccess={handleStockUpdateSuccess}
+      />
     </div>
   );
 }
