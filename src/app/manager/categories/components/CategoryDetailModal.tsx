@@ -118,7 +118,7 @@ const CreateCategoryModal: React.FC<CreateCategoryModalProps> = ({
       setCategories(res.data.categories);
     } catch (error) {
       console.error("Fetch Error get All Categories:", error);
-      toast.error("Không thể tải danh mục");
+      // toast.error("Không thể tải danh mục");
     } finally {
       setLoadingCategories(false);
     }
@@ -164,7 +164,7 @@ const CreateCategoryModal: React.FC<CreateCategoryModalProps> = ({
         shouldDirty: true,
         shouldTouch: true,
       });
-      toast.success(res.message || "Tải ảnh lên thành công");
+      // toast.success(res.message || "Tải ảnh lên thành công");
     } catch (error) {
       const err = error as AxiosError<{ message?: string; errors?: string[] }>;
       const message =

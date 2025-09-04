@@ -109,7 +109,7 @@ export default function LoginForm() {
         ĐĂNG NHẬP
       </div>
       <div className="text-lg font-medium text-center p-0 mb-14 mt-4 text-slate-200">
-        Chào mừng bạn trở lại với <strong>Streame Card</strong>
+        Chào mừng bạn trở lại với <strong>Stream Cart</strong>
       </div>
       <form onSubmit={handleSubmit(onSubmit)} className="w-full mx-auto">
         <div className="grid gap-6">

@@ -7,7 +7,7 @@ import { toast } from "sonner";
 
 import {
   membershipSchema,
-  type MembershipSchema,
+  type MembershipFormValues,
 } from "@/components/schema/membership_schema";
 import { Membership } from "@/types/membership/membership";
 import {
@@ -70,7 +70,7 @@ export default function DialogUpdateMemberShip({
     isControlled ? onOpenChange?.(v) : setInternalOpen(v);
   const [submitting, setSubmitting] = React.useState(false);
 
-  const form = useForm<MembershipSchema>({
+  const form = useForm<MembershipFormValues>({
     resolver: zodResolver(membershipSchema),
     defaultValues: {
       name: "",
@@ -116,7 +116,7 @@ export default function DialogUpdateMemberShip({
     }
   }, [dialogOpen, mode, initial, form]);
 
-  const onSubmit = async (values: MembershipSchema) => {
+  const onSubmit = async (values: MembershipFormValues) => {
     setSubmitting(true);
     try {
       if (mode === "create") {
@@ -193,7 +193,7 @@ export default function DialogUpdateMemberShip({
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="1">Gói chính</SelectItem>
-                          <SelectItem value="0">Gói gia hạn</SelectItem>
+                          <SelectItem value="0">Gói phụ</SelectItem>
                         </SelectContent>
                       </Select>
                     </FormControl>

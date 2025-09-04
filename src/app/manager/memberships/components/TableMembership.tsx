@@ -310,8 +310,7 @@ export function TableMemberShip({
                             const raw = String(m.type ?? "");
                             const t = raw.toLowerCase();
                             if (t === "1" || t === "new") return "Gói chính";
-                            if (t === "0" || t === "renewal")
-                              return "Gói gia hạn";
+                            if (t === "0" || t === "renewal") return "Gói phụ";
                             return raw;
                           })()}{" "}
                           • {m.description}
