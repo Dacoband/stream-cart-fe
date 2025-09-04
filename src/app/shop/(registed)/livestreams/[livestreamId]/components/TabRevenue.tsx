@@ -238,8 +238,7 @@ export default function TabRevenue({ livestreamId }: TabRevenueProps) {
                         </Badge>
                       </div>
                     </div>
-
-                    {/* Revenue */}
+ 
                     <div className="flex-shrink-0 text-right">
                       <div className="text-lg font-bold text-green-600">
                         {formatPrice(product.revenue)}
