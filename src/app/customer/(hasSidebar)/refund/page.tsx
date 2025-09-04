@@ -1,50 +1,50 @@
-'use client'
+"use client";
 
-import React, { useState } from 'react'
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
-import { RefundStatus } from '@/types/refund/refund'
-import { ShopRefundList } from './components/RefundList'
+import React, { useState } from "react";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { RefundStatus } from "@/types/refund/refund";
+import { ShopRefundList } from "./components/RefundList";
 
 type TabValue =
-  | 'created'
-  | 'confirmed'
-  | 'processing'
-  | 'completed'
-  | 'refunded'
-  | 'rejected'
+  | "created"
+  | "confirmed"
+  | "processing"
+  | "completed"
+  | "refunded"
+  | "rejected";
 
 const TABS: { label: string; value: TabValue }[] = [
-  { label: 'Gửi yêu cầu', value: 'created' }, // 0
-  { label: 'Đã xác nhận', value: 'confirmed' }, // 1
-  { label: 'Đang xử lý', value: 'processing' }, // 2,3,4
-  { label: 'Hoàn hàng thành công', value: 'completed' }, // 5
-  { label: 'Hoàn tiền thành công', value: 'refunded' }, // 6
-  { label: 'Bị từ chối', value: 'rejected' }, // 7
-]
+  { label: "Gửi yêu cầu", value: "created" }, // 0
+  { label: "Đã xác nhận", value: "confirmed" }, // 1
+  { label: "Đang xử lý", value: "processing" }, // 2,3,4
+  { label: "Hoàn hàng thành công", value: "completed" }, // 5
+  { label: "Hoàn tiền thành công", value: "refunded" }, // 6
+  { label: "Bị từ chối", value: "rejected" }, // 7
+];
 
 function getStatusesForTab(tab: TabValue): RefundStatus[] {
   switch (tab) {
-    case 'created':
-      return [RefundStatus.Created] // 0
-    case 'confirmed':
-      return [RefundStatus.Confirmed] // 1
-    case 'processing':
+    case "created":
+      return [RefundStatus.Created]; // 0
+    case "confirmed":
+      return [RefundStatus.Confirmed]; // 1
+    case "processing":
       return [
         RefundStatus.Packed,
         RefundStatus.OnDelivery,
         RefundStatus.Delivered,
-      ] // 2,3,4
-    case 'completed':
-      return [RefundStatus.Completed] // 5
-    case 'refunded':
-      return [RefundStatus.Refunded] // 6
-    case 'rejected':
-      return [RefundStatus.Rejected] // 7
+      ]; // 2,3,4
+    case "completed":
+      return [RefundStatus.Completed]; // 5
+    case "refunded":
+      return [RefundStatus.Refunded]; // 6
+    case "rejected":
+      return [RefundStatus.Rejected]; // 7
   }
 }
 
 export default function ManageShopRefundsPage() {
-  const [tab, setTab] = useState<TabValue>('created')
+  const [tab, setTab] = useState<TabValue>("created");
 
   return (
     <div className="container mx-auto px-4 py-6 h-[calc(100vh-9rem)] flex flex-col">
@@ -88,5 +88,5 @@ export default function ManageShopRefundsPage() {
         </div>
       </Tabs>
     </div>
-  )
+  );
 }
