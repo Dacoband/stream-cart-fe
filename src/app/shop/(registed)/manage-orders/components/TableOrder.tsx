@@ -12,7 +12,7 @@ import { getProductDetailById } from "@/services/api/product/product";
 import PriceTag from "@/components/common/PriceTag";
 import Link from "next/link";
 import { formatFullDateTimeVN } from "@/components/common/formatFullDateTimeVN";
-type TabValue = "all" | "0" | "1,2" | "3" | "4,10" | "5,8,9";
+type TabValue = "all" | "1,2" | "3" | "7" | "4,10" | "5,8,9";
 
 const parseStatusesFromTab = (tab: TabValue): number[] | undefined => {
   if (tab === "all") return undefined;
@@ -163,9 +163,9 @@ function TableOrder() {
           <TabsPrimitive.List className="flex gap-2 mb-4 border-b">
             {[
               { value: "all", label: "Tất Cả" },
-              { value: "1", label: "Chờ xác nhận" },
-              { value: "2", label: "Chờ lấy hàng" },
-              { value: "3", label: "Đang giao" },
+              { value: "1,2", label: "Chờ xác nhận" },
+              { value: "3", label: "Chờ lấy hàng" },
+              { value: "7", label: "Đang giao" },
               { value: "4,10", label: "Đã giao" },
               { value: "5,8,9", label: "Trả hàng/Hủy" },
             ].map((tab) => (
@@ -325,7 +325,7 @@ function TableOrder() {
                           : order.orderStatus === 3
                           ? "Chờ lấy hàng"
                           : order.orderStatus === 7
-                          ? "Chờ giao hàng"
+                          ? "Đang giao hàng"
                           : order.orderStatus === 4
                           ? "Giao hàng thành công"
                           : order.orderStatus === 5
