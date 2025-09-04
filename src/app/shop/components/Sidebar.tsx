@@ -41,7 +41,7 @@ const items = [
   },
 
   {
-    title: "Livestrems",
+    title: "Livestreams",
     url: "/shop/livestreams",
     icon: Video,
   },

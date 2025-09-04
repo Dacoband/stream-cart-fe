@@ -140,7 +140,7 @@ export default function TabRevenue({ livestreamId }: TabRevenueProps) {
                   {revenueData?.productsWithOrders?.length || 0}
                 </p>
                 <p className="text-xs text-purple-600 mt-1">
-                  {revenueData?.productsWithOrders?.reduce((sum, p) => sum + p.quantity, 0) || 0} sản phẩm
+                  {revenueData?.productsWithOrders?.reduce((sum, p) => sum + p.quantitySold, 0) || 0} sản phẩm
                 </p>
               </div>
               <div className="bg-purple-200 p-3 rounded-full">
@@ -232,12 +232,9 @@ export default function TabRevenue({ livestreamId }: TabRevenueProps) {
                         </p>
                       )}
                       <div className="flex items-center gap-3 text-sm">
-                        <span className="text-gray-600">
-                          Giá: {formatPrice(product.price)}
-                        </span>
                         <Badge variant="outline" className="text-blue-600">
                           <Eye className="w-3 h-3 mr-1" />
-                          SL: {product.quantity}
+                          SL: {product.quantitySold}
                         </Badge>
                       </div>
                     </div>
@@ -245,10 +242,10 @@ export default function TabRevenue({ livestreamId }: TabRevenueProps) {
                     {/* Revenue */}
                     <div className="flex-shrink-0 text-right">
                       <div className="text-lg font-bold text-green-600">
-                        {formatPrice(product.totalAmount)}
+                        {formatPrice(product.revenue)}
                       </div>
                       <div className="text-xs text-gray-500">
-                        Doanh thu
+                        Giá
                       </div>
                     </div>
                   </div>

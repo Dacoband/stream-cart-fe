@@ -3,10 +3,11 @@ import rootApi from "@/services/rootApi";
 export interface LivestreamRevenueProduct {
   productId: string;
   productName: string;
+  variantId?: string;
   variantName?: string;
-  price: number;
-  quantity: number;
-  totalAmount: number;
+  unitPrice: number;
+  quantitySold: number;
+  revenue: number;
   productImageUrl?: string;
 }
 
