@@ -297,18 +297,42 @@ function LiveStreamPage() {
                           const scheduled = new Date(
                             livestream.scheduledStartTime
                           );
-                          const isScheduledUpcoming =
-                            scheduled > now && !livestream.actualStartTime;
+                          const scheduledMs = scheduled.getTime();
+                          const isValidScheduled = !Number.isNaN(scheduledMs);
+                          const isFuture = isValidScheduled && scheduled > now;
+                          const notStarted = !livestream.actualStartTime;
+                          const timeUntilStartMs = isValidScheduled
+                            ? scheduledMs - now.getTime()
+                            : 0;
+                          const fiveMinutesMs = 5 * 60 * 1000;
 
-                          if (isScheduledUpcoming) {
+                          // If future and not started yet, gate by 5-minute rule
+                          if (isFuture && notStarted) {
+                            // Too early (> 5 minutes before scheduled): show warning, disabled
+                            if (timeUntilStartMs > fiveMinutesMs) {
+                              return (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  disabled
+                                  className="text-orange-700 border-orange-500 bg-white cursor-not-allowed"
+                                  title="Không được mở sớm hơn thời gian hẹn 5 phút"
+                                >
+                                  Không thể mở sớm hơn 5 phút
+                                </Button>
+                              );
+                            }
+                            // Within 5 minutes window: allow starting
                             return (
                               <Button
                                 size="sm"
                                 variant="outline"
-                                disabled
-                                className="text-orange-700 border-orange-500 bg-white cursor-not-allowed"
+                                className="text-blue-600 border-blue-600 cursor-pointer hover:text-blue-400 hover:border-blue-400 hover:bg-white bg-white"
+                                onClick={() =>
+                                  handleStartLivestream(livestream.id)
+                                }
                               >
-                                Sắp diễn ra
+                                {getActionLabel(livestream)}
                               </Button>
                             );
                           }

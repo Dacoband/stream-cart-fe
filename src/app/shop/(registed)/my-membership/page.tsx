@@ -15,47 +15,30 @@ import { Input } from "@/components/ui/input";
 import {
   Crown,
   Clock,
-  Users,
   Video,
-  Package,
   Filter,
   CheckCircle,
   XCircle,
+  Box,
 } from "lucide-react";
-import {
-  filterShopMembership,
-  deactivateShopMembership,
-} from "@/services/api/membership/shopMembership";
+import { filterShopMembership } from "@/services/api/membership/shopMembership";
 import {
   DetailShopMembershipDTO,
   FilterShopMembership,
 } from "@/types/membership/shopMembership";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/AuthContext";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { AxiosError } from "axios";
 
 const STATUS = {
   Ongoing: "Ongoing", // Đang hoạt động
-  Waiting: "Waiting", // Chờ hoạt động
+
   Cancelled: "Canceled", // Đã hủy
-  Overdue: "Overdue", // Hết hạn
 } as const;
 
 const VI_LABEL: Record<string, string> = {
   [STATUS.Ongoing]: "Đang hoạt động",
-  [STATUS.Waiting]: "Chờ hoạt động",
+
   [STATUS.Cancelled]: "Đã hủy",
-  [STATUS.Overdue]: "Hết hạn",
 };
 
 const fmtDate = (d: Date | string) =>
@@ -69,10 +52,7 @@ const statusAccent = (s: string) => {
   switch (s) {
     case STATUS.Ongoing:
       return "bg-emerald-500";
-    case STATUS.Waiting:
-      return "bg-amber-500";
-    case STATUS.Overdue:
-      return "bg-rose-500";
+
     case STATUS.Cancelled:
       return "bg-slate-400";
     default:
@@ -88,18 +68,7 @@ const StatusBadge = ({ status }: { status: string }) => {
           {VI_LABEL[status]}
         </Badge>
       );
-    case STATUS.Waiting:
-      return (
-        <Badge className="bg-amber-100 text-amber-800 border border-amber-200">
-          {VI_LABEL[status]}
-        </Badge>
-      );
-    case STATUS.Overdue:
-      return (
-        <Badge className="bg-rose-100 text-rose-800 border border-rose-200">
-          {VI_LABEL[status]}
-        </Badge>
-      );
+
     case STATUS.Cancelled:
       return (
         <Badge className="bg-slate-100 text-slate-700 border border-slate-200">
@@ -115,10 +84,7 @@ const StatusIcon = ({ status }: { status: string }) => {
   switch (status) {
     case STATUS.Ongoing:
       return <CheckCircle className="h-4 w-4 text-emerald-600" />;
-    case STATUS.Waiting:
-      return <Clock className="h-4 w-4 text-amber-600" />;
-    case STATUS.Overdue:
-      return <XCircle className="h-4 w-4 text-rose-600" />;
+
     case STATUS.Cancelled:
       return <XCircle className="h-4 w-4 text-slate-500" />;
     default:
@@ -135,13 +101,9 @@ export default function MyMembershipPage() {
   // UI/state
   const [mounted, setMounted] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [confirmOpen, setConfirmOpen] = useState(false);
-  const [deleting, setDeleting] = useState(false);
 
   // Data
   const [items, setItems] = useState<DetailShopMembershipDTO[]>([]);
-  const [pendingItem, setPendingItem] =
-    useState<DetailShopMembershipDTO | null>(null);
 
   // Filters
   const [activeTab, setActiveTab] = useState<string>(STATUS.Ongoing); // trạng thái = tab
@@ -205,46 +167,6 @@ export default function MyMembershipPage() {
     fetchMemberships();
   }, [activeTab, mounted, authLoading, user?.shopId, fetchMemberships]);
 
-  // đếm (lưu ý: vì fetch theo tab nên chỉ có số của tab hiện tại)
-  // const counts = useMemo(
-  //   () => ({
-  //     Ongoing: activeTab === STATUS.Ongoing ? items.length : 0,
-  //     Waiting: activeTab === STATUS.Waiting ? items.length : 0,
-  //     Overdue: activeTab === STATUS.Overdue ? items.length : 0,
-  //     Cancelled: activeTab === STATUS.Cancelled ? items.length : 0,
-  //   }),
-  //   [activeTab, items.length]
-  // )
-
-  // Hủy gói (Ongoing/Waiting)
-  const handleCancel = (m: DetailShopMembershipDTO) => {
-    setPendingItem(m);
-    setConfirmOpen(true);
-  };
-
-  const confirmCancel = async () => {
-    if (!pendingItem) return;
-    try {
-      setDeleting(true);
-      await deactivateShopMembership(pendingItem.id);
-      toast.success("Đã hủy gói thành viên thành công");
-      // Refetch to ensure consistency
-      lastParamsKey.current = "";
-      await fetchMemberships();
-      setConfirmOpen(false);
-      setPendingItem(null);
-    } catch (error) {
-      console.error(error);
-      const err = error as AxiosError<{ message?: string; errors?: string[] }>;
-      const message =
-        err?.response?.data?.errors?.[0] ||
-        "Hủy gói thất bại. Vui lòng thử lại.";
-      toast.error(message);
-    } finally {
-      setDeleting(false);
-    }
-  };
-
   const renderGrid = (list: DetailShopMembershipDTO[]) => {
     if (loading) {
       return (
@@ -286,14 +208,11 @@ export default function MyMembershipPage() {
         {list.map((m) => (
           <Card
             key={m.id}
-            className="border border-gray-200 flex h-full flex-col"
+            className="border border-gray-200 pt-0 flex h-full flex-col overflow-hidden"
           >
-            <div
-              className={`h-[3px] w-full rounded-t-lg ${statusAccent(
-                m.status
-              )}`}
-            />
-            <CardHeader className="pb-0">
+            <CardHeader
+              className={`py-1.5 px-5 ${statusAccent(m.status)} text-white`}
+            >
               <div className="flex items-center justify-between">
                 <CardTitle className="text-lg flex items-center gap-2">
                   <StatusIcon status={m.status} />
@@ -302,8 +221,8 @@ export default function MyMembershipPage() {
                 <StatusBadge status={m.status} />
               </div>
             </CardHeader>
-
             <CardContent className="flex h-full flex-col gap-4 pt-4">
+              {/* Dates */}
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
                   <p className="text-gray-600">Ngày bắt đầu</p>
@@ -314,38 +233,22 @@ export default function MyMembershipPage() {
                   <p className="font-medium">{fmtDate(m.endDate)}</p>
                 </div>
               </div>
-
+              {/* Features */}
               <div className="grid grid-cols-1 gap-2 text-sm">
                 <div className="flex items-center gap-2">
                   <Video className="h-4 w-4 text-gray-500" />
-                  <span>Còn lại: {m.remainingLivestream} livestream</span>
+                  <span>
+                    Thời gian live còn lại: {m.remainingLivestream} phút
+                  </span>
                 </div>
-                {!!m.maxProduct && (
-                  <div className="flex items-center gap-2">
-                    <Package className="h-4 w-4 text-gray-500" />
-                    <span>Tối đa: {m.maxProduct} nhân viên</span>
-                  </div>
-                )}
+
                 {!!m.commission && (
                   <div className="flex items-center gap-2">
-                    <Users className="h-4 w-4 text-gray-500" />
-                    <span>Hoa hồng: {m.commission}%</span>
+                    <Box className="h-4 w-4 text-gray-500" />
+                    <span>Hoa hồng trong 1 đơn hàng: {m.commission}%</span>
                   </div>
                 )}
               </div>
-
-              {(m.status === STATUS.Ongoing || m.status === STATUS.Waiting) && (
-                <div className="mt-auto flex justify-end">
-                  <Button
-                    onClick={() => handleCancel(m)}
-                    variant="destructive"
-                    className="bg-red-600 hover:bg-red-500 text-white shadow-sm"
-                  >
-                    <XCircle className="h-4 w-4 mr-2" />
-                    Hủy gói
-                  </Button>
-                </div>
-              )}
             </CardContent>
           </Card>
         ))}
@@ -458,27 +361,13 @@ export default function MyMembershipPage() {
         }}
         className="space-y-6"
       >
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger
             value={STATUS.Ongoing}
             className="flex items-center gap-2"
           >
             <CheckCircle className="h-4 w-4" />
             {VI_LABEL[STATUS.Ongoing]}
-          </TabsTrigger>
-          <TabsTrigger
-            value={STATUS.Waiting}
-            className="flex items-center gap-2"
-          >
-            <Clock className="h-4 w-4" />
-            {VI_LABEL[STATUS.Waiting]}
-          </TabsTrigger>
-          <TabsTrigger
-            value={STATUS.Overdue}
-            className="flex items-center gap-2"
-          >
-            <XCircle className="h-4 w-4" />
-            {VI_LABEL[STATUS.Overdue]}
           </TabsTrigger>
           <TabsTrigger
             value={STATUS.Cancelled}
@@ -490,36 +379,12 @@ export default function MyMembershipPage() {
         </TabsList>
 
         {/* Nội dung mỗi tab dùng cùng 1 renderer vì data đã lọc theo API bằng status */}
-        {[STATUS.Ongoing, STATUS.Waiting, STATUS.Overdue, STATUS.Cancelled].map(
-          (key) => (
-            <TabsContent key={key} value={key} className="space-y-4">
-              {renderGrid(items)}
-            </TabsContent>
-          )
-        )}
+        {[STATUS.Ongoing, STATUS.Cancelled].map((key) => (
+          <TabsContent key={key} value={key} className="space-y-4">
+            {renderGrid(items)}
+          </TabsContent>
+        ))}
       </Tabs>
-      {/* Confirm cancel dialog */}
-      <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Xác nhận hủy gói</AlertDialogTitle>
-            <AlertDialogDescription>
-              Bạn có chắc muốn hủy gói thành viên này? Việc hủy gói sẽ không
-              được hoàn lại tiền hay hoàn tác
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={deleting}>Không</AlertDialogCancel>
-            <AlertDialogAction
-              className="bg-red-600 hover:bg-red-500 text-white"
-              onClick={confirmCancel}
-              disabled={deleting}
-            >
-              {deleting ? "Đang hủy..." : "Hủy gói"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 }

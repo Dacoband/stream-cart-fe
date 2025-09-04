@@ -234,7 +234,7 @@ class ChatHubService {
     setTimeout(async () => {
       console.log('[DEBUG]  Checking if viewer is properly in group after 2 seconds...');
       try {
-        await this.invokeWhenConnected('VerifyGroupMembership', livestreamId);
+        await this.invokeWhenConnected('StartViewingLivestream', livestreamId);
       } catch (error) {
         console.log('[DEBUG]  Group membership verification failed:', error);
       }

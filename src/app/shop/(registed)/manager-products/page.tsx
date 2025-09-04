@@ -307,7 +307,6 @@ function Page() {
 
                     <TableHead className="font-semibold">Giá</TableHead>
                     <TableHead className="font-semibold">Kho hàng</TableHead>
-                    <TableHead className="font-semibold">Dự trữ</TableHead>
                     <TableHead className="font-semibold">Trạng thái</TableHead>
                     <TableHead className="font-semibold text-right w-24 pr-6">
                       Thao tác
@@ -491,30 +490,7 @@ function Page() {
                             </button>
                           </div>
                         </TableCell>
-                        <TableCell className="align-top ">
-                          <div className="flex gap-8 ">
-                            <div>
-                              <div className="h-24 py-2 text-base">
-                                {product.reserveStock}
-                              </div>
-                              {productVariants[product.id]?.variants?.length >
-                                0 && (
-                                <div className="mt-1 text-sm  space-y-1 w-full text-gray-600 h-full">
-                                  {productVariants[product.id].variants.map(
-                                    (variant, idx) => (
-                                      <div
-                                        key={variant.variantId || idx}
-                                        className="flex flex-wrap gap-2"
-                                      >
-                                        {variant.stock}
-                                      </div>
-                                    )
-                                  )}
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        </TableCell>
+
                         <TableCell className="align-top ">
                           <div className="flex w-full  justify-start h-24 py-2 items-start">
                             <span

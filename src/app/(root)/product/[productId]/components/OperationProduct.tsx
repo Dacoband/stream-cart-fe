@@ -32,9 +32,15 @@ import AutoCloseDialog from "./DialogSuccsess";
 
 interface OperationProductPops {
   product: ProductDetail;
+  averageRating?: number;
+  totalReviews?: number;
 }
 
-export default function OperationProduct({ product }: OperationProductPops) {
+export default function OperationProduct({
+  product,
+  averageRating = 0,
+  totalReviews = 0,
+}: OperationProductPops) {
   const { refreshCart } = useCart();
   const [imageProduct, setImageProduct] = useState<ProductImage[]>();
   const [selectedImage, setSelectedImage] = useState(0);
@@ -228,14 +234,16 @@ export default function OperationProduct({ product }: OperationProductPops) {
                       <Star
                         key={i}
                         className={`w-5 h-5 ${
-                          i < Math.floor(4.2)
+                          i < Math.round(averageRating)
                             ? "text-yellow-400 fill-current"
                             : "text-gray-300"
                         }`}
                       />
                     ))}
                   </div>
-                  <span className="font-bold text-gray-900">4.2</span>
+                  <span className="font-bold text-gray-900">
+                    {averageRating.toFixed(1)}
+                  </span>
                 </div>
                 {/* <span className="text-gray-600">
                   ({product.reviews.toLocaleString()} đánh giá)
@@ -243,6 +251,11 @@ export default function OperationProduct({ product }: OperationProductPops) {
                 <span className="text-gray-600">
                   Đã bán {product.quantitySold}
                 </span>
+                {totalReviews > 0 && (
+                  <span className="text-gray-600">
+                    | {totalReviews} đánh giá
+                  </span>
+                )}
               </div>
             </div>
           </div>
