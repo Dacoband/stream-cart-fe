@@ -23,14 +23,8 @@ import TableTransaction, {
   type TxStatus,
 } from "./components/tableTransaction";
 
-import {
-  filterWalletTransactions,
-  createWalletTransaction,
-} from "@/services/api/wallet/walletTransaction";
-import {
-  WalletTransactionDTO,
-  WalletTransactionType,
-} from "@/types/wallet/walletTransactionDTO";
+import { filterWalletTransactions } from "@/services/api/wallet/walletTransaction";
+import { WalletTransactionDTO } from "@/types/wallet/walletTransactionDTO";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -117,7 +111,7 @@ export default function Page() {
   const [withdrawOpen, setWithdrawOpen] = React.useState(false);
   const [depositOpen, setDepositOpen] = React.useState(false);
   const [txAmount, setTxAmount] = React.useState("");
-  const [submitting, setSubmitting] = React.useState(false);
+  const [submitting] = React.useState(false);
 
   const [bankOpen, setBankOpen] = React.useState(false);
   const [bankSubmitting, setBankSubmitting] = React.useState(false);
@@ -535,7 +529,7 @@ export default function Page() {
                 <AlertDialogAction
                   className="bg-blue-600 hover:bg-blue-700 text-white"
                   disabled={submitting}
-                  onClick={async () => {
+                  onClick={() => {
                     const value = Number(txAmount);
                     if (!Number.isFinite(value) || value <= 0) {
                       toast.error("Số tiền phải lớn hơn 0");
@@ -545,25 +539,13 @@ export default function Page() {
                       toast.error("Số tiền rút tối thiểu là 51.000đ");
                       return;
                     }
-                    if (!user?.shopId) {
-                      toast.error("Thiếu ShopId");
-                      return;
-                    }
-                    try {
-                      setSubmitting(true);
-                      await createWalletTransaction({
-                        type: WalletTransactionType.Withdraw,
-                        amount: value,
-                      });
-                      toast.success("Tạo yêu cầu rút tiền thành công");
-                      refetch();
-                      setWithdrawOpen(false);
-                      setTxAmount("");
-                    } catch {
-                      toast.error("Tạo yêu cầu rút tiền thất bại");
-                    } finally {
-                      setSubmitting(false);
-                    }
+                    setWithdrawOpen(false);
+                    setTxAmount("");
+                    router.push(
+                      `/shop/manager-wallet/withdraw?amount=${encodeURIComponent(
+                        String(value)
+                      )}`
+                    );
                   }}
                 >
                   Xác nhận

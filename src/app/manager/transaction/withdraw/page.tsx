@@ -19,6 +19,7 @@ import {
 } from "@/types/wallet/walletTransactionDTO";
 import { createWithdrawalApproval } from "@/services/api/payment/payment";
 import { WithdrawalApprovalResponse } from "@/types/payment/payment";
+
 type TxStatus = "PENDING" | "SUCCESS" | "FAILED";
 
 export default function WithdrawPage() {
@@ -34,7 +35,6 @@ export default function WithdrawPage() {
   const [approval, setApproval] = useState<WithdrawalApprovalResponse | null>(
     null
   );
-  // const [walletTxId, setWalletTxId] = useState<string | null>(null);
 
   const amountParam = searchParams.get("amount");
   const amount = useMemo(() => {
@@ -42,7 +42,7 @@ export default function WithdrawPage() {
     return Number.isFinite(v) ? v : NaN;
   }, [amountParam]);
 
-  // 1) Tạo transaction rút + approve để lấy QR
+  // 1) Tạo wallet transaction + approval -> QR
   useEffect(() => {
     if (!amountParam) {
       setError("Thiếu số tiền rút.");
@@ -63,20 +63,17 @@ export default function WithdrawPage() {
         setError(null);
         setStatus("PENDING");
 
-        // a) tạo wallet transaction Withdraw
         const tx: WalletTransactionDTO = await createWalletTransaction({
           type: WalletTransactionType.Withdraw,
           amount,
         });
-        // setWalletTxId(tx.id);
 
-        // b) approve để lấy QR/paymentId
         const appr = await createWithdrawalApproval({
           walletTransactionId: tx.id,
         });
         setApproval(appr);
-      } catch (error) {
-        console.error(error);
+      } catch (err) {
+        console.error(err);
         setError("Không thể tạo yêu cầu rút tiền.");
         setStatus("FAILED");
       } finally {
@@ -87,31 +84,48 @@ export default function WithdrawPage() {
     run();
   }, [amount, amountParam, user?.shopId]);
 
-  // 2) Poll trạng thái theo paymentId (giống deposit: filterWalletTransactions)
+  // 2) Poll trạng thái giống deposit
   useEffect(() => {
     if (!approval || !user?.shopId) return;
 
-    const paymentId = approval.paymentId;
     const createdAt = new Date(approval.createdAt);
-    const fromTime = new Date(createdAt.getTime() - 60 * 1000).toISOString();
+    const fromTime = new Date(
+      createdAt.getTime() - 60 * 60 * 1000
+    ).toISOString();
+    const toTime = new Date(createdAt.getTime() + 60 * 60 * 1000).toISOString();
 
     const poll = async () => {
       try {
         const list = await filterWalletTransactions({
           ShopId: user.shopId,
-          Types: [WalletTransactionType.Withdraw], // 0 = Withdraw
+          Types: [WalletTransactionType.Withdraw],
           FromTime: fromTime,
-          ToTime: new Date().toISOString(),
+          ToTime: toTime,
           PageIndex: 1,
           PageSize: 50,
         });
 
-        const match = (list.items ?? []).find(
-          (it) => it.transactionId === paymentId
+        const items: WalletTransactionDTO[] = Array.isArray(list?.items)
+          ? (list.items as WalletTransactionDTO[])
+          : [];
+
+        const candidates = items.filter(
+          (it) =>
+            Number(it.amount) === Number(approval.amount) &&
+            (!approval.description ||
+              (it.description || "")
+                .toLowerCase()
+                .includes(approval.description.toLowerCase()))
         );
 
+        const match = candidates
+          .map((it) => ({
+            it,
+            d: Math.abs(new Date(it.createdAt).getTime() - createdAt.getTime()),
+          }))
+          .sort((a, b) => a.d - b.d)[0]?.it;
+
         if (match) {
-          // match.status có thể là number hoặc string -> normalize
           const raw = match.status;
           const done =
             raw === WalletTransactionStatus.Success ||
@@ -170,7 +184,6 @@ export default function WithdrawPage() {
                 <Image
                   width={288}
                   height={288}
-                  // BE trả base64 hoặc URL; nếu là base64 thì giữ nguyên, nếu là "xxx|meta" như deposit thì tách:
                   src={
                     approval.qrCode.includes("|")
                       ? approval.qrCode.split("|")[0]

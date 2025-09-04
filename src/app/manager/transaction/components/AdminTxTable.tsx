@@ -1,8 +1,8 @@
-'use client'
+"use client";
 
-import React from 'react'
-import { Button } from '@/components/ui/button'
-import { Eye } from 'lucide-react'
+import React from "react";
+import { Button } from "@/components/ui/button";
+import { Eye } from "lucide-react";
 import {
   Table,
   TableHeader,
@@ -10,37 +10,38 @@ import {
   TableHead,
   TableBody,
   TableCell,
-} from '@/components/ui/table'
+} from "@/components/ui/table";
 
-type BaseRow = {
-  id: string
-  shopId: string
-  shopName?: string
-  ownerName?: string
-  type: number | string
-  amount: number
-  status: string
-  createdAt: string
-  processedAt?: string | null
-  transactionId?: string | null
-  bankName?: string
-  bankNumber?: string
-}
+export type BaseRow = {
+  id: string;
+  shopId: string;
+  shopName?: string;
+  ownerName?: string;
+  type: number | string;
+  amount: number;
+  status: string;
+  createdAt: string;
+  processedAt?: string | null;
+  transactionId?: string | null;
+  bankName?: string;
+  bankNumber?: string;
+};
 
 type Props<T extends BaseRow> = {
-  rows: T[]
-  loading: boolean
-  showConfirm: boolean
-  onConfirm: (id: string) => void
-  onDetails: (tx: T) => void | Promise<void>
-  renderType: (t: T['type']) => React.ReactNode
-  renderStatus: (s: T['status']) => React.ReactNode
+  rows: T[];
+  loading: boolean;
+  showConfirm: boolean;
+  // ⬇️ đổi: trả về cả row để lấy amount / shopId
+  onConfirm: (row: T) => void | Promise<void>;
+  onDetails: (tx: T) => void | Promise<void>;
+  renderType: (t: T["type"]) => React.ReactNode;
+  renderStatus: (s: T["status"]) => React.ReactNode;
   renderDate: (
     createdAt: string,
     processedAt?: string | null
-  ) => React.ReactNode
-  renderAmount: (t: T['type'], n: number) => React.ReactNode
-}
+  ) => React.ReactNode;
+  renderAmount: (t: T["type"], n: number) => React.ReactNode;
+};
 
 export default function AdminTxTable<T extends BaseRow>({
   rows,
@@ -101,17 +102,17 @@ export default function AdminTxTable<T extends BaseRow>({
             </TableRow>
           ) : (
             rows.map((r) => {
-              const st = String(r.status).toUpperCase()
+              const st = String(r.status).toUpperCase();
               return (
                 <TableRow key={r.id} className="align-middle">
-                  {/* Shop (first column) */}
+                  {/* Shop */}
                   <TableCell className="pl-6 py-3">
                     <div className="flex flex-col">
                       <span className="font-medium truncate">
-                        {r.shopName ?? '—'}
+                        {r.shopName ?? "—"}
                       </span>
                       <span className="text-xs text-muted-foreground truncate">
-                        {r.ownerName ?? ''}
+                        {r.ownerName ?? ""}
                       </span>
                     </div>
                   </TableCell>
@@ -134,16 +135,16 @@ export default function AdminTxTable<T extends BaseRow>({
                   {/* Ngân hàng */}
                   <TableCell className="px-4 py-3">
                     <div className="flex flex-col">
-                      <span className="truncate">{r.bankName ?? '—'}</span>
+                      <span className="truncate">{r.bankName ?? "—"}</span>
                       <span className="text-xs text-muted-foreground truncate">
-                        {r.bankNumber ?? '—'}
+                        {r.bankNumber ?? "—"}
                       </span>
                     </div>
                   </TableCell>
 
                   {/* Mã GD */}
                   <TableCell className="px-4 py-3 truncate">
-                    {r.transactionId ?? '—'}
+                    {r.transactionId ?? "—"}
                   </TableCell>
 
                   {/* Thời gian */}
@@ -151,11 +152,11 @@ export default function AdminTxTable<T extends BaseRow>({
                     {renderDate(r.createdAt, r.processedAt ?? null)}
                   </TableCell>
 
-                  {/* Hành động: icon mắt, compact */}
+                  {/* Hành động */}
                   <TableCell className="text-right pr-6 py-3">
                     <div className="flex items-center justify-end gap-2">
-                      {showConfirm && (st === 'PENDING' || st === 'RETRY') && (
-                        <Button size="sm" onClick={() => onConfirm(r.id)}>
+                      {showConfirm && (st === "PENDING" || st === "RETRY") && (
+                        <Button size="sm" onClick={() => onConfirm(r)}>
                           Xác nhận
                         </Button>
                       )}
@@ -171,11 +172,11 @@ export default function AdminTxTable<T extends BaseRow>({
                     </div>
                   </TableCell>
                 </TableRow>
-              )
+              );
             })
           )}
         </TableBody>
       </Table>
     </div>
-  )
+  );
 }
