@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,15 +8,8 @@ import { Button } from "@/components/ui/button";
 import { CheckCircle, XCircle, Loader2 } from "lucide-react";
 import { useAuth } from "@/lib/AuthContext";
 
-import {
-  createWalletTransaction,
-  filterWalletTransactions,
-} from "@/services/api/wallet/walletTransaction";
-import {
-  WalletTransactionType,
-  WalletTransactionDTO,
-  WalletTransactionStatus,
-} from "@/types/wallet/walletTransactionDTO";
+import { getWalletTransactionById } from "@/services/api/wallet/walletTransaction";
+import { WalletTransactionStatus } from "@/types/wallet/walletTransactionDTO";
 import { createWithdrawalApproval } from "@/services/api/payment/payment";
 import { WithdrawalApprovalResponse } from "@/types/payment/payment";
 type TxStatus = "PENDING" | "SUCCESS" | "FAILED";
@@ -36,24 +29,12 @@ export default function WithdrawPage() {
   );
   // const [walletTxId, setWalletTxId] = useState<string | null>(null);
 
-  const amountParam = searchParams.get("amount");
-  const amount = useMemo(() => {
-    const v = Number(amountParam);
-    return Number.isFinite(v) ? v : NaN;
-  }, [amountParam]);
+  const txId = searchParams.get("id");
 
-  // 1) Tạo transaction rút + approve để lấy QR
+  // 1) Dùng id giao dịch ví từ param để tạo approval (lấy QR)
   useEffect(() => {
-    if (!amountParam) {
-      setError("Thiếu số tiền rút.");
-      return;
-    }
-    if (!Number.isFinite(amount) || amount <= 0) {
-      setError("Số tiền rút không hợp lệ.");
-      return;
-    }
-    if (!user?.shopId) {
-      setError("Thiếu ShopId.");
+    if (!txId) {
+      setError("Thiếu id giao dịch.");
       return;
     }
 
@@ -63,16 +44,9 @@ export default function WithdrawPage() {
         setError(null);
         setStatus("PENDING");
 
-        // a) tạo wallet transaction Withdraw
-        const tx: WalletTransactionDTO = await createWalletTransaction({
-          type: WalletTransactionType.Withdraw,
-          amount,
-        });
-        // setWalletTxId(tx.id);
-
-        // b) approve để lấy QR/paymentId
+        // Gọi approve để lấy QR/paymentId bằng id giao dịch đã có
         const appr = await createWithdrawalApproval({
-          walletTransactionId: tx.id,
+          walletTransactionId: txId,
         });
         setApproval(appr);
       } catch (error) {
@@ -85,53 +59,55 @@ export default function WithdrawPage() {
     };
 
     run();
-  }, [amount, amountParam, user?.shopId]);
+  }, [txId, user?.shopId]);
 
-  // 2) Poll trạng thái theo paymentId (giống deposit: filterWalletTransactions)
+  // 2) Poll trạng thái theo paymentId bằng cách truy vấn 1 giao dịch theo id
   useEffect(() => {
-    if (!approval || !user?.shopId) return;
+    if (!approval || !txId) return;
 
     const paymentId = approval.paymentId;
-    const createdAt = new Date(approval.createdAt);
-    const fromTime = new Date(createdAt.getTime() - 60 * 1000).toISOString();
 
     const poll = async () => {
       try {
-        const list = await filterWalletTransactions({
-          ShopId: user.shopId,
-          Types: [WalletTransactionType.Withdraw], // 0 = Withdraw
-          FromTime: fromTime,
-          ToTime: new Date().toISOString(),
-          PageIndex: 1,
-          PageSize: 50,
-        });
+        const resp = await getWalletTransactionById(txId);
+        const tx = (
+          typeof (resp as { data?: unknown })?.data !== "undefined"
+            ? (resp as { data?: unknown }).data
+            : resp
+        ) as {
+          status?: number | string;
+          transactionId?: string | null;
+        } | null;
+        if (!tx) return;
 
-        const match = (list.items ?? []).find(
-          (it) => it.transactionId === paymentId
-        );
+        // Nếu backend có trả transactionId, đảm bảo khớp với approval
+        if (
+          typeof tx.transactionId === "string" &&
+          typeof paymentId === "string" &&
+          tx.transactionId !== paymentId
+        ) {
+          return;
+        }
 
-        if (match) {
-          // match.status có thể là number hoặc string -> normalize
-          const raw = match.status;
-          const done =
-            raw === WalletTransactionStatus.Success ||
-            String(raw).toLowerCase() === "success";
-          const failed =
-            raw === WalletTransactionStatus.Failed ||
-            String(raw).toLowerCase() === "failed";
-          const canceled =
-            raw === WalletTransactionStatus.Canceled ||
-            String(raw).toLowerCase() === "canceled" ||
-            String(raw).toLowerCase() === "cancelled";
+        const raw = tx.status;
+        const done =
+          raw === WalletTransactionStatus.Success ||
+          String(raw).toLowerCase() === "success";
+        const failed =
+          raw === WalletTransactionStatus.Failed ||
+          String(raw).toLowerCase() === "failed";
+        const canceled =
+          raw === WalletTransactionStatus.Canceled ||
+          String(raw).toLowerCase() === "canceled" ||
+          String(raw).toLowerCase() === "cancelled";
 
-          if (done) {
-            setStatus("SUCCESS");
-            return;
-          }
-          if (failed || canceled) {
-            setStatus("FAILED");
-            return;
-          }
+        if (done) {
+          setStatus("SUCCESS");
+          return;
+        }
+        if (failed || canceled) {
+          setStatus("FAILED");
+          return;
         }
       } catch (e) {
         console.warn("Polling withdraw status failed", e);
@@ -143,7 +119,7 @@ export default function WithdrawPage() {
       if (pollTimerRef.current) clearInterval(pollTimerRef.current);
       pollTimerRef.current = null;
     };
-  }, [approval, user?.shopId]);
+  }, [approval, txId]);
 
   return (
     <div className="max-w-xl mx-auto px-4 py-10">
@@ -211,7 +187,7 @@ export default function WithdrawPage() {
                 </p>
                 <Button
                   className="mt-2 bg-green-600 hover:bg-green-700"
-                  onClick={() => router.push("/shop/manager-wallet")}
+                  onClick={() => router.push("/manager/transaction")}
                 >
                   Quay về ví
                 </Button>
@@ -228,7 +204,7 @@ export default function WithdrawPage() {
                 </p>
                 <Button
                   className="mt-2 bg-red-600 hover:bg-red-700"
-                  onClick={() => router.push("/shop/manager-wallet")}
+                  onClick={() => router.push("/manager/transaction")}
                 >
                   Quay về ví
                 </Button>
