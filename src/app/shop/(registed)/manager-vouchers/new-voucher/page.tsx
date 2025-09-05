@@ -36,6 +36,7 @@ import BreadcrumNewVoucher from "../components/BreadcrumNewVoucher";
 export default function VoucherPage() {
   const { user } = useAuth();
   const router = useRouter();
+
   const form = useForm<CreateVoucherSchema>({
     resolver: zodResolver(
       createVoucherSchema
@@ -65,8 +66,8 @@ export default function VoucherPage() {
       const payload = {
         ...data,
         maxValue: data.type === 1 ? data.maxValue : undefined,
-        startDate: new Date(data.startDate).toISOString(),
-        endDate: new Date(data.endDate).toISOString(),
+        startDate: data.startDate,
+        endDate: data.endDate,
       };
       await createVoucher(payload);
       toast.success("Tạo voucher thành công");

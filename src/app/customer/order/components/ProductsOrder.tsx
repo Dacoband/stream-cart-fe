@@ -193,8 +193,19 @@ function ProductsOrder({
                   </div>
                   <div className="text-center ">
                     <div className="flex gap-4 justify-center items-center">
-                      <span className="font-medium ">
+                      <span className="font-medium">
                         <PriceTag value={product.priceData.currentPrice} />
+                      </span>
+
+                      <span
+                        className={`font-medium ${
+                          product.priceData.originalPrice >
+                          product.priceData.currentPrice
+                            ? "line-through text-gray-600"
+                            : ""
+                        }`}
+                      >
+                        <PriceTag value={product.priceData.originalPrice} />
                       </span>
                     </div>
                   </div>
@@ -205,7 +216,7 @@ function ProductsOrder({
                   </div>
                   <div className="text-center text-rose-500 font-medium ">
                     <PriceTag
-                      value={product.quantity * product.priceData.originalPrice}
+                      value={product.quantity * product.priceData.currentPrice}
                     />
                   </div>
                 </div>
