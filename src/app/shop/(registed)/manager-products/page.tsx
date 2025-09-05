@@ -303,7 +303,7 @@ function Page() {
                       Sản phẩm
                     </TableHead>
                     <TableHead className="font-semibold ">Danh mục</TableHead>
-                    <TableHead className="font-semibold ">Doanh thu</TableHead>
+                    <TableHead className="font-semibold ">Đã bán</TableHead>
 
                     <TableHead className="font-semibold">Giá</TableHead>
                     <TableHead className="font-semibold">Kho hàng</TableHead>
