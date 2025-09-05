@@ -11,6 +11,18 @@ interface ViewerCountProps {
 
 export function ViewerCount({ livestreamId }: ViewerCountProps) {
   const [stats, setStats] = React.useState<ViewerStatsPayload | null>(null);
+  // Debug flag (set NEXT_PUBLIC_LIVESTREAM_DEBUG=true in .env.local to enable)
+  const DEBUG =
+    typeof process !== "undefined" &&
+    (process.env.NEXT_PUBLIC_LIVESTREAM_DEBUG === "true" ||
+      process.env.NEXT_PUBLIC_LIVESTREAM_DEBUG === "1");
+  const dbg = React.useCallback(
+    (...args: unknown[]) => {
+      if (!DEBUG) return;
+      console.log("[ViewerCount][debug]", ...args); // intentional debug log
+    },
+    [DEBUG]
+  );
 
   // Chỉ tính Customer viewers
   const viewerCount = React.useMemo(() => {
@@ -21,61 +33,83 @@ export function ViewerCount({ livestreamId }: ViewerCountProps) {
       typeof stats.customerViewers === "number" &&
       Number.isFinite(stats.customerViewers)
     ) {
-      return stats.customerViewers;
+      const val = stats.customerViewers;
+      dbg("Using customerViewers direct field", val, stats);
+      return val;
     }
-
-    // // Nếu không, fallback sang ViewersByRole
-    // const roleMap = stats.viewersByRole || {};
-    // for (const [role, count] of Object.entries(roleMap)) {
-    //   if (String(role).toLowerCase() === "customer") {
-    //     return Number(count) || 0;
-    //   }
-    // }
-
-    return 0;
-  }, [stats]);
+    // Fallback: duyệt viewersByRole để tìm role Customer
+    const roleMap = stats.viewersByRole || {};
+    const customerKey = Object.keys(roleMap).find(
+      (k) => k.toLowerCase() === "customer"
+    );
+    if (customerKey) {
+      const val = Number(roleMap[customerKey]);
+      if (Number.isFinite(val)) {
+        dbg("Derived customer count from viewersByRole", val, roleMap);
+        return val;
+      }
+    }
+    return 0; // mặc định
+  }, [stats, dbg]);
 
   // Lắng nghe viewer stats từ SignalR
   React.useEffect(() => {
     if (!livestreamId) return;
     let mounted = true;
+    dbg("Mount effect start", { livestreamId });
 
     (async () => {
       try {
         await chatHubService.ensureStarted();
+        dbg("SignalR ensured started");
         // Tham gia nhóm viewers để nhận thống kê chính xác
         try {
           await chatHubService.startViewingLivestream(livestreamId);
-        } catch {}
+          dbg("Invoked startViewingLivestream" , livestreamId);
+        } catch (e) {
+          dbg("startViewingLivestream failed", e);
+        }
         // Optional: cũng join phòng chat nếu server phát cùng nhóm
         try {
           await chatHubService.joinLivestream(livestreamId);
-        } catch {}
+          dbg("Joined chat room", livestreamId);
+        } catch (e) {
+          dbg("joinLivestream failed", e);
+        }
 
         chatHubService.onViewerStats((payload) => {
           if (!mounted) return;
           if (
             payload.livestreamId?.toLowerCase?.() === livestreamId.toLowerCase()
           ) {
+            dbg("Received viewer stats payload", payload);
             setStats(payload);
           }
         });
       } catch {
         // ignore errors
+        dbg("Init sequence error (suppressed)");
       }
     })();
 
     return () => {
       mounted = false;
+      dbg("Unmount cleanup", { livestreamId });
       // Rời nhóm viewers để tránh rò rỉ sự kiện
       try {
         chatHubService.stopViewingLivestream(livestreamId);
-      } catch {}
+        dbg("Called stopViewingLivestream");
+      } catch (e) {
+        dbg("stopViewingLivestream error", e);
+      }
       try {
         chatHubService.leaveLivestream(livestreamId);
-      } catch {}
+        dbg("Called leaveLivestream");
+      } catch (e) {
+        dbg("leaveLivestream error", e);
+      }
     };
-  }, [livestreamId]);
+  }, [livestreamId, dbg]);
 
   return (
     <div className="flex ml-2">
@@ -87,7 +121,7 @@ export function ViewerCount({ livestreamId }: ViewerCountProps) {
         Live
       </Button>
 
-      <Button className="rounded-none flex items-center gap-1">
+      <Button className="rounded-none flex items-center gap-1" title="Số khách hàng đang xem">
         <UserRound className="w-4 h-4" />
         {viewerCount}
       </Button>
