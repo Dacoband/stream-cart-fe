@@ -16,12 +16,11 @@ export const loginApi = async (request: LoginRequest) => {
         role: data.account.role,
         isActive: data.account.isActive,
         isVerified: data.account.isVerified,
-        shopId: data.account.shopId,
-        avatarURL:data.account.avatarURL,
-        fullname:data.account.fullname,
-        phoneNumber:data.account.phoneNumber,
-                 email:data.account.email,
-
+        shopId: data.account.shopId || null,
+        avatarURL: data.account.avatarURL,
+        fullname: data.account.fullname,
+        phoneNumber: data.account.phoneNumber,
+        email: data.account.email,
       };
 
       localStorage.setItem("token", data.token);
@@ -39,20 +38,9 @@ export const loginApi = async (request: LoginRequest) => {
 //Get user login
 export const getMe = async () => {
   try {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      throw new Error("Không tìm thấy token.");
-    }
-
-    const response = await rootApi.get("auth/me", {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-
+    const response = await rootApi.get("auth/me");
     return response.data.data;
   } catch (error) {
-    console.error("Error fetching:", error);
     throw error;
   }
 };
@@ -104,13 +92,13 @@ export const refreshToken = async () => {
   try {
     const refresh = localStorage.getItem("refreshToken"); 
 
-if (!refresh) throw new Error("Not refresh token");
-  const response = await rootApi.post("/auth/refresh-token", {
-    refreshToken: refresh,
-  });
+    if (!refresh) throw new Error("No refresh token");
+    
+    const response = await rootApi.post("auth/refresh-token", {
+      refreshToken: refresh,
+    });
 
-
- const data = response.data?.data;
+    const data = response.data?.data;
  
     if (data && data.token && data.account) {
       const userData: UserLocal = {      
@@ -119,22 +107,25 @@ if (!refresh) throw new Error("Not refresh token");
         role: data.account.role,
         isActive: data.account.isActive,
         isVerified: data.account.isVerified,
-        shopId: data.account.shopId,
-        avatarURL:data.account.avatarURL,
-        fullname:data.account.fullname,
-        phoneNumber:data.account.phoneNumber,
-         email:data.account.email,
-              
-
+        shopId: data.account.shopId || null,
+        avatarURL: data.account.avatarURL,
+        fullname: data.account.fullname,
+        phoneNumber: data.account.phoneNumber,
+        email: data.account.email,
       };
+      
       localStorage.setItem("refreshToken", data.refreshToken);
       localStorage.setItem("token", data.token);
       localStorage.setItem("userData", JSON.stringify(userData));
     }
-      console.log(`Fetching sucsses`,response.data)
-return response} catch (error) {
-    console.error(`Error fetching`, error);
+    
+    console.log(`Refresh token success`, response.data);
+    return response;
+  } catch (error) {
+    console.error(`Error refreshing token`, error);
+    localStorage.removeItem("token");
+    localStorage.removeItem("refreshToken");
+    localStorage.removeItem("userData");
     throw error; 
   }
 };
-
