@@ -247,7 +247,7 @@ function OrderPageInner() {
             <div className="flex w-full justify-end py-8 gap-16 text-gray-600 border-b">
               {(() => {
                 const shippingTotal = deliveryInfo?.totalAmount || 0;
-                const productsTotal = orderProduct?.subTotal || 0;
+                const productsTotal = orderProduct?.totalAmount || 0;
                 const vouchersTotal = Object.values(
                   selectedVouchersByShop
                 ).reduce((sum, v) => sum + (v?.discountAmount || 0), 0);
