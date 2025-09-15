@@ -36,7 +36,6 @@ export interface ProductDetail {
   finalPrice: number
   stockQuantity: number
   quantitySold: number
-  // Average rating for this product (0-5). Optional in case backend omits it.
   averageRating?: number
   weight: number
   length: number

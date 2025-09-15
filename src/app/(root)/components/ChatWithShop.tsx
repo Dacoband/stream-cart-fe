@@ -34,7 +34,6 @@ function ChatWithShopInner({
   const [text, setText] = useState("");
   const listRef = useRef<HTMLDivElement | null>(null);
 
-  // Sidebar state
   type ChatRoom = {
     id: string;
     shopId: string;
@@ -60,9 +59,8 @@ function ChatWithShopInner({
   const [searchText, setSearchText] = useState("");
   const [loadingRooms, setLoadingRooms] = useState(false);
 
-  // Load chat rooms (shops user has chatted with)
   useEffect(() => {
-    if (!open) return;
+    if (!open || rooms.length > 0) return;
     let mounted = true;
     setLoadingRooms(true);
     (async () => {
@@ -129,9 +127,8 @@ function ChatWithShopInner({
     return () => {
       mounted = false;
     };
-  }, [open]);
+  }, [open, rooms.length]);
 
-  // Khi shopId prop thay đổi, chọn shopId đó
   useEffect(() => {
     if (shopId) setSelectedShopId(shopId);
   }, [shopId]);
@@ -279,15 +276,6 @@ function ChatWithShopInner({
                         setSelectedShopId(room.shopId);
                       }}
                     >
-                      {/* <div>
-                        <Image
-                          alt="avatar"
-                          src={room.lastMessage?.senderAvatarUrl || ""}
-                          width={32}
-                          height={32}
-                          className="w-8 h-8 rounded-full object-cover"
-                        />
-                      </div> */}
                       <div className="font-medium truncate">
                         {room.shopName}
                       </div>
@@ -427,11 +415,14 @@ function ChatWithShopInner({
 }
 
 const ChatWithShop: React.FC<ChatWithShopProps> = (props) => {
-  // Lift selected shopId into wrapper so ChatProvider can re-init when user selects a room
   const [activeShopId, setActiveShopId] = useState<string>(props.shopId ?? "");
-
+  useEffect(() => {
+    if (props.shopId && props.shopId !== activeShopId) {
+      setActiveShopId(props.shopId);
+    }
+  }, [props.shopId, activeShopId]);
   return (
-    <ChatProvider shopId={activeShopId || undefined}>
+    <ChatProvider shopId={activeShopId || ""}>
       <ChatWithShopInner
         {...props}
         setSelectedShopId={setActiveShopId}
