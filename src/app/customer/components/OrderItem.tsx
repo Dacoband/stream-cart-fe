@@ -1,20 +1,20 @@
-'use client'
+"use client";
 
-import React, { useEffect, useState } from 'react'
-import { FormatDate } from '@/components/common/FormatDate'
-import PriceTag from '@/components/common/PriceTag'
-import { Card, CardContent } from '@/components/ui/card'
-import { Order } from '@/types/order/order'
-import { getStatusText, OrderStatus } from '@/types/order/orderStatus'
-import Image from 'next/image'
-import { getProductDetailById } from '@/services/api/product/product'
-import { getshopById } from '@/services/api/shop/shop'
-import { Shop } from '@/types/shop/shop'
-import { Store } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { useRouter } from 'next/navigation'
-import { updateOrderStatus } from '@/services/api/order/order'
-import { toast } from 'sonner'
+import React, { useEffect, useState } from "react";
+import { FormatDate } from "@/components/common/FormatDate";
+import PriceTag from "@/components/common/PriceTag";
+import { Card, CardContent } from "@/components/ui/card";
+import { Order } from "@/types/order/order";
+import { getStatusText, OrderStatus } from "@/types/order/orderStatus";
+import Image from "next/image";
+import { getProductDetailById } from "@/services/api/product/product";
+import { getshopById } from "@/services/api/shop/shop";
+import { Shop } from "@/types/shop/shop";
+import { Store } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useRouter } from "next/navigation";
+import { updateOrderStatus } from "@/services/api/order/order";
+import { toast } from "sonner";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -24,113 +24,113 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/components/ui/alert-dialog'
-import { DialogAddReview } from './DialogAddReview'
-import RefundRequestModal from '../(hasSidebar)/manage-orders/components/RefundRequestModal'
+} from "@/components/ui/alert-dialog";
+import { DialogAddReview } from "./DialogAddReview";
+import RefundRequestModal from "../(hasSidebar)/manage-orders/components/RefundRequestModal";
 
 interface OrderItemProps {
-  order: Order
+  order: Order;
 }
 
 export function OrderItem({ order }: OrderItemProps) {
-  const statusText = getStatusText(order.orderStatus as OrderStatus)
-  const [shop, setShop] = useState<Shop | null>(null)
-  const router = useRouter()
+  const statusText = getStatusText(order.orderStatus as OrderStatus);
+  const [shop, setShop] = useState<Shop | null>(null);
+  const router = useRouter();
   const [itemAttributes, setItemAttributes] = useState<
     Record<string, Record<string, string>>
-  >({})
-  const [cancelOpen, setCancelOpen] = useState(false)
-  const [confirmReceiveOpen, setConfirmReceiveOpen] = useState(false)
-  const [reviewDialogOpen, setReviewDialogOpen] = useState(false)
-  const [updating, setUpdating] = useState(false)
-  const [refundModalOpen, setRefundModalOpen] = useState(false)
+  >({});
+  const [cancelOpen, setCancelOpen] = useState(false);
+  const [confirmReceiveOpen, setConfirmReceiveOpen] = useState(false);
+  const [reviewDialogOpen, setReviewDialogOpen] = useState(false);
+  const [updating, setUpdating] = useState(false);
+  const [refundModalOpen, setRefundModalOpen] = useState(false);
 
   useEffect(() => {
-    let cancelled = false
+    let cancelled = false;
     const fetchShop = async () => {
-      if (!order.shopId) return
+      if (!order.shopId) return;
       try {
-        const res = await getshopById(order.shopId)
-        if (!cancelled) setShop(res || null)
+        const res = await getshopById(order.shopId);
+        if (!cancelled) setShop(res || null);
       } catch {
-        if (!cancelled) setShop(null)
+        if (!cancelled) setShop(null);
       }
-    }
-    fetchShop()
+    };
+    fetchShop();
     return () => {
-      cancelled = true
-    }
-  }, [order.shopId])
+      cancelled = true;
+    };
+  }, [order.shopId]);
 
   useEffect(() => {
-    let cancelled = false
+    let cancelled = false;
     const fetchAttributes = async () => {
-      const attrMap: Record<string, Record<string, string>> = {}
-      const items = order.items || []
+      const attrMap: Record<string, Record<string, string>> = {};
+      const items = order.items || [];
       if (!items.length) {
-        if (!cancelled) setItemAttributes({})
-        return
+        if (!cancelled) setItemAttributes({});
+        return;
       }
       await Promise.all(
         items.map(async (item) => {
           try {
             if (item.productId && item.variantId) {
-              const detail = await getProductDetailById(item.productId)
+              const detail = await getProductDetailById(item.productId);
               const variant = detail?.variants?.find(
                 (v: { variantId: string }) => v.variantId === item.variantId
-              )
+              );
               if (variant?.attributeValues) {
-                attrMap[item.id] = variant.attributeValues
+                attrMap[item.id] = variant.attributeValues;
               }
             }
           } catch {}
         })
-      )
-      if (!cancelled) setItemAttributes(attrMap)
-    }
-    fetchAttributes()
+      );
+      if (!cancelled) setItemAttributes(attrMap);
+    };
+    fetchAttributes();
     return () => {
-      cancelled = true
-    }
-  }, [order.items])
+      cancelled = true;
+    };
+  }, [order.items]);
 
   const getStatusTextColor = (status: OrderStatus) => {
     switch (status) {
       case OrderStatus.Cancelled:
       case OrderStatus.Refunded:
-        return 'bg-red-600'
+        return "bg-red-600";
       case OrderStatus.Waiting:
-        return 'bg-orange-600'
+        return "bg-orange-600";
       default:
-        return 'bg-lime-600'
+        return "bg-lime-600";
     }
-  }
+  };
 
   const cancelOrder = async () => {
     try {
-      setUpdating(true)
-      await updateOrderStatus(order.id, 5)
-      toast.success('Đã hủy đơn hàng')
-      router.refresh()
+      setUpdating(true);
+      await updateOrderStatus(order.id, 5);
+      toast.success("Đã hủy đơn hàng");
+      router.refresh();
     } catch {
-      toast.error('Không thể hủy đơn hàng')
+      toast.error("Không thể hủy đơn hàng");
     } finally {
-      setUpdating(false)
+      setUpdating(false);
     }
-  }
+  };
 
   const confirmReceived = async () => {
     try {
-      setUpdating(true)
-      await updateOrderStatus(order.id, 10)
-      toast.success('Xác nhận đã nhận hàng')
-      router.refresh()
+      setUpdating(true);
+      await updateOrderStatus(order.id, 10);
+      toast.success("Xác nhận đã nhận hàng");
+      router.refresh();
     } catch {
-      toast.error('Không thể xác nhận đơn hàng')
+      toast.error("Không thể xác nhận đơn hàng");
     } finally {
-      setUpdating(false)
+      setUpdating(false);
     }
-  }
+  };
 
   return (
     <Card className="mb-4 rounded-none p-0">
@@ -143,7 +143,7 @@ export function OrderItem({ order }: OrderItemProps) {
                 <Store size={18} />
               </div>
               <span className="font-medium text-black/80 w-full">
-                {shop?.shopName || 'Cửa hàng'}
+                {shop?.shopName || "Cửa hàng"}
               </span>
             </div>
           </div>
@@ -166,12 +166,12 @@ export function OrderItem({ order }: OrderItemProps) {
         <div className="space-y-3">
           {order.items && order.items.length > 0 ? (
             order.items.map((item) => {
-              const attrs = itemAttributes[item.id]
+              const attrs = itemAttributes[item.id];
               return (
                 <div key={item.id} className="flex gap-3">
                   <div className="w-16 h-16 relative rounded overflow-hidden bg-gray-100">
                     <Image
-                      src={item.productImageUrl || '/assets/emptyData.png'}
+                      src={item.productImageUrl || "/assets/emptyData.png"}
                       alt={item.productName}
                       fill
                       className="object-cover"
@@ -187,7 +187,7 @@ export function OrderItem({ order }: OrderItemProps) {
                           {attrs &&
                             Object.entries(attrs)
                               .map(([key, value]) => `${key}: ${value}`)
-                              .join(', ')}
+                              .join(", ")}
                         </div>
                       </div>
                       <div className="text-xs text-gray-500 mb-1">
@@ -195,11 +195,29 @@ export function OrderItem({ order }: OrderItemProps) {
                       </div>
                     </div>
                     <div className="flex items-center">
-                      <PriceTag value={item.unitPrice} className="text-sm" />
+                      <div className="col-span-4 text-right text-sm text-gray-700">
+                        {item.discountAmount && item.discountAmount > 0 ? (
+                          <>
+                            <span className="line-through text-gray-400">
+                              <PriceTag value={item.unitPrice} />
+                            </span>
+                            <span className="ml-2 text-red-500 font-semibold">
+                              <PriceTag
+                                value={
+                                  item.unitPrice -
+                                  item.discountAmount / item.quantity
+                                }
+                              />
+                            </span>
+                          </>
+                        ) : (
+                          <PriceTag value={item.unitPrice} />
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
-              )
+              );
             })
           ) : (
             <div className="text-center py-4 text-gray-500">
@@ -229,7 +247,7 @@ export function OrderItem({ order }: OrderItemProps) {
           <div className="space-y-1 text-sm text-gray-600">
             {order.actualDeliveryDate ? (
               <div>
-                Ngày giao thực tế:{' '}
+                Ngày giao thực tế:{" "}
                 <FormatDate date={order.actualDeliveryDate} />
               </div>
             ) : (
@@ -238,7 +256,7 @@ export function OrderItem({ order }: OrderItemProps) {
                   Ngày đặt: <FormatDate date={order.orderDate} />
                 </div>
                 <div>
-                  Ngày giao dự kiến:{' '}
+                  Ngày giao dự kiến:{" "}
                   <FormatDate date={order.estimatedDeliveryDate} />
                 </div>
               </>
@@ -331,8 +349,8 @@ export function OrderItem({ order }: OrderItemProps) {
               disabled={updating}
               className="bg-red-600 hover:bg-red-600/90 text-white"
               onClick={async () => {
-                await cancelOrder()
-                setCancelOpen(false)
+                await cancelOrder();
+                setCancelOpen(false);
               }}
             >
               Xác nhận hủy
@@ -358,8 +376,8 @@ export function OrderItem({ order }: OrderItemProps) {
             <AlertDialogAction
               disabled={updating}
               onClick={async () => {
-                await confirmReceived()
-                setConfirmReceiveOpen(false)
+                await confirmReceived();
+                setConfirmReceiveOpen(false);
               }}
             >
               Xác nhận
@@ -383,5 +401,5 @@ export function OrderItem({ order }: OrderItemProps) {
         orderId={order.id}
       />
     </Card>
-  )
+  );
 }

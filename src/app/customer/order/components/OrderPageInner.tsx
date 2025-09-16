@@ -25,6 +25,7 @@ import { deleteCart } from "@/services/api/cart/cart";
 import { livestreamCartClient } from "@/services/signalr/livestreamCartClient";
 import { VoucherAvailableItem } from "@/types/voucher/voucher";
 import { toast } from "sonner";
+import { AxiosError } from "axios";
 
 function OrderPageInner() {
   const searchParams = useSearchParams();
@@ -188,9 +189,14 @@ function OrderPageInner() {
       } else {
         router.push(`/payment/order?orders=${queryParam}`);
       }
-    } catch (err) {
-      toast.error("Đặt hàng thất bại!");
-      console.error(err);
+    } catch (error: unknown) {
+      console.error("Create user failed:", error);
+      const err = error as AxiosError<{ message?: string; errors?: string[] }>;
+      const message =
+        err?.response?.data?.errors?.[0] ||
+        err?.response?.data?.message ||
+        "Đặt hàng thất bại!";
+      toast.error(message);
     }
   };
 
@@ -247,7 +253,7 @@ function OrderPageInner() {
             <div className="flex w-full justify-end py-8 gap-16 text-gray-600 border-b">
               {(() => {
                 const shippingTotal = deliveryInfo?.totalAmount || 0;
-                const productsTotal = orderProduct?.subTotal || 0;
+                const productsTotal = orderProduct?.totalAmount || 0;
                 const vouchersTotal = Object.values(
                   selectedVouchersByShop
                 ).reduce((sum, v) => sum + (v?.discountAmount || 0), 0);

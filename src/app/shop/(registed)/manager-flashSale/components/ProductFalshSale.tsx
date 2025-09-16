@@ -21,7 +21,7 @@ interface Props {
       stock: number;
     }[]
   ) => void;
-  date?: Date | undefined;
+  date?: Date;
   slot?: number | null;
 }
 

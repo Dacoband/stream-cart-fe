@@ -74,6 +74,7 @@ export interface Variant {
   width: number
   height: number
   flashSalePrice: number
+  finalPrice:number
   variantImage: VariantImage
 }
 

@@ -202,7 +202,7 @@ function ProductsOrder({
                           product.priceData.originalPrice >
                           product.priceData.currentPrice
                             ? "line-through text-gray-600"
-                            : ""
+                            : "hidden"
                         }`}
                       >
                         <PriceTag value={product.priceData.originalPrice} />
