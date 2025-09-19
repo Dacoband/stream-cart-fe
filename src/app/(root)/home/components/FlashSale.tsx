@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ArrowRight, Clock, ImageIcon, Zap } from "lucide-react";
+import { ArrowRight, ImageIcon, Zap } from "lucide-react";
 import Image from "next/image";
 import { getFlashSaleCurrent } from "@/services/api/product/flashSale";
 import { FlashSaleProductHome } from "@/types/product/flashSale";
@@ -108,12 +108,19 @@ function FlashSale() {
                         </div>
 
                         <div className="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded text-xs font-bold">
-                          -{product.discountPrice}%
-                        </div>
-
-                        <div className="absolute top-44 left-2 bg-black/70 backdrop-blur-sm text-white px-2 py-1 rounded text-xs font-medium flex items-center space-x-1">
-                          <Clock className="w-3 h-3" />
-                          <span>Đang diễn ra</span>
+                          {product.discountPrice > 0 ? (
+                            <>-{product.discountPrice}%</>
+                          ) : (
+                            <>
+                              -
+                              {(
+                                ((product.basePrice - saleItem.flashSalePrice) /
+                                  product.basePrice) *
+                                100
+                              ).toFixed(0)}
+                              %
+                            </>
+                          )}
                         </div>
 
                         <div className="pt-2 px-3 flex flex-col space-y-0">

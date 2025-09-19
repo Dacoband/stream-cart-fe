@@ -262,7 +262,13 @@ export default function OperationProduct({
             <div className="flex justify-between">
               <div className="flex items-center space-x-4 mb-2">
                 <span className="text-4xl font-bold text-red-600">
-                  <PriceTag value={product.finalPrice} />
+                  <PriceTag
+                    value={
+                      selectedVariant
+                        ? selectedVariant.finalPrice
+                        : product.finalPrice
+                    }
+                  />
                 </span>
                 {selectedVariant && selectedVariant.flashSalePrice > 0 ? (
                   <span className="text-xl text-gray-500 line-through">
@@ -270,7 +276,7 @@ export default function OperationProduct({
                   </span>
                 ) : (
                   <div>
-                    {product.discountPrice > 0 && (
+                    {!selectedVariant && product.discountPrice > 0 && (
                       <span className="text-xl text-gray-500 line-through">
                         <PriceTag value={product.basePrice} />
                       </span>
