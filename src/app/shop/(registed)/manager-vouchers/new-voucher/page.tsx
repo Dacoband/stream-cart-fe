@@ -32,7 +32,10 @@ import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { AxiosError } from "axios";
 import BreadcrumNewVoucher from "../components/BreadcrumNewVoucher";
-
+function formatDateLocal(date: Date) {
+  // Returns YYYY-MM-DD using Swedish locale which matches HTML date input format
+  return date.toLocaleDateString("sv-SE");
+}
 export default function VoucherPage() {
   const { user } = useAuth();
   const router = useRouter();
@@ -48,14 +51,13 @@ export default function VoucherPage() {
       value: 0,
       maxValue: 0,
       minOrderAmount: 0,
-      startDate: new Date().toISOString().slice(0, 16),
-      endDate: new Date(Date.now() + 24 * 60 * 60 * 1000)
-        .toISOString()
-        .slice(0, 16),
+      startDate: new Date(),
+      endDate: new Date(Date.now() + 24 * 60 * 60 * 1000),
       availableQuantity: 1,
     },
   });
   const typeValue = form.watch("type");
+  const startDateValue = form.watch("startDate");
 
   const onSubmit = async (data: CreateVoucherSchema) => {
     if (!user?.shopId) {
@@ -63,11 +65,25 @@ export default function VoucherPage() {
       return;
     }
     try {
+      // Convert Date to UTC ISO start/end of day
+      const toUtcStartOfDay = (d: Date) => {
+        const y = d.getFullYear();
+        const m = d.getMonth();
+        const day = d.getDate();
+        return new Date(Date.UTC(y, m, day, 0, 0, 0)).toISOString();
+      };
+      const toUtcEndOfDay = (d: Date) => {
+        const y = d.getFullYear();
+        const m = d.getMonth();
+        const day = d.getDate();
+        return new Date(Date.UTC(y, m, day, 23, 59, 59)).toISOString();
+      };
+
       const payload = {
         ...data,
         maxValue: data.type === 1 ? data.maxValue : undefined,
-        startDate: data.startDate,
-        endDate: data.endDate,
+        startDate: toUtcStartOfDay(data.startDate as unknown as Date),
+        endDate: toUtcEndOfDay(data.endDate as unknown as Date),
       };
       await createVoucher(payload);
       toast.success("Tạo voucher thành công");
@@ -244,15 +260,27 @@ export default function VoucherPage() {
                     control={form.control}
                     name="startDate"
                     render={({ field }) => {
-                      // Calculate min value for datetime-local (current time, rounded to minutes)
-                      const now = new Date();
-                      now.setSeconds(0, 0);
-                      const min = now.toISOString().slice(0, 16);
+                      const min = formatDateLocal(new Date());
+                      const valueStr = field.value
+                        ? formatDateLocal(
+                            new Date(field.value as unknown as Date)
+                          )
+                        : "";
                       return (
                         <FormItem>
                           <FormLabel>Ngày bắt đầu</FormLabel>
                           <FormControl>
-                            <Input type="datetime-local" min={min} {...field} />
+                            <Input
+                              type="date"
+                              min={min}
+                              value={valueStr}
+                              onChange={(e) =>
+                                field.onChange(new Date(e.target.value))
+                              }
+                              onBlur={field.onBlur}
+                              name={field.name}
+                              ref={field.ref}
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -263,15 +291,37 @@ export default function VoucherPage() {
                   <FormField
                     control={form.control}
                     name="endDate"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Ngày kết thúc</FormLabel>
-                        <FormControl>
-                          <Input type="datetime-local" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
+                    render={({ field }) => {
+                      const min = startDateValue
+                        ? formatDateLocal(
+                            new Date(startDateValue as unknown as Date)
+                          )
+                        : formatDateLocal(new Date());
+                      const valueStr = field.value
+                        ? formatDateLocal(
+                            new Date(field.value as unknown as Date)
+                          )
+                        : "";
+                      return (
+                        <FormItem>
+                          <FormLabel>Ngày kết thúc</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="date"
+                              min={min}
+                              value={valueStr}
+                              onChange={(e) =>
+                                field.onChange(new Date(e.target.value))
+                              }
+                              onBlur={field.onBlur}
+                              name={field.name}
+                              ref={field.ref}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      );
+                    }}
                   />
                 </div>
                 <FormField

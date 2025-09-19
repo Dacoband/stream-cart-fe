@@ -3,10 +3,9 @@ import axios, { InternalAxiosRequestConfig, AxiosRequestHeaders, AxiosError } fr
 const rootApi = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_BASE_URL,
 });
-// Trạng thái đang refresh token
 let isRefreshing = false;
 
-// Hàng đợi các request lỗi 401 đang chờ token mới
+
 let failedQueue: {
   resolve: (token: string) => void;
   reject: (error: unknown) => void;

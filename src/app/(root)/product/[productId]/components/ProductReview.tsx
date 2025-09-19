@@ -20,7 +20,6 @@ import { toast } from "sonner";
 
 interface ProductReviewProps {
   product: ProductDetail;
-  // Notify parent about average rating and total reviews so other components (e.g., OperationProduct) can display it
   onRatingChange?: (average: number, total: number) => void;
 }
 

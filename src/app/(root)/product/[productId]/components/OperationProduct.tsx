@@ -245,9 +245,7 @@ export default function OperationProduct({
                     {averageRating.toFixed(1)}
                   </span>
                 </div>
-                {/* <span className="text-gray-600">
-                  ({product.reviews.toLocaleString()} đánh giá)
-                </span> */}
+
                 <span className="text-gray-600">
                   Đã bán {product.quantitySold}
                 </span>
@@ -263,40 +261,38 @@ export default function OperationProduct({
           <div className="bg-gradient-to-r from-red-50 to-orange-50 py-6 pl-6 pr-16 rounded-2xl border border-red-200 ">
             <div className="flex justify-between">
               <div className="flex items-center space-x-4 mb-2">
-                {selectedVariant ? (
-                  <span className="text-4xl font-bold text-red-600">
-                    <PriceTag
-                      value={
-                        selectedVariant.flashSalePrice &&
-                        selectedVariant.flashSalePrice > 0
-                          ? selectedVariant.flashSalePrice
-                          : selectedVariant.price
-                      }
-                    />
+                <span className="text-4xl font-bold text-red-600">
+                  <PriceTag value={product.finalPrice} />
+                </span>
+                {selectedVariant && selectedVariant.flashSalePrice > 0 ? (
+                  <span className="text-xl text-gray-500 line-through">
+                    <PriceTag value={selectedVariant.price} />
                   </span>
                 ) : (
-                  <span className="text-4xl font-bold text-red-600">
-                    <PriceTag value={product.finalPrice} />
-                  </span>
-                )}
-
-                {product.discountPrice > 0 && (
-                  <span className="text-xl text-gray-500 line-through">
-                    <PriceTag
-                      value={
-                        selectedVariant
-                          ? selectedVariant.price
-                          : product.basePrice
-                      }
-                    />
-                  </span>
+                  <div>
+                    {product.discountPrice > 0 && (
+                      <span className="text-xl text-gray-500 line-through">
+                        <PriceTag value={product.basePrice} />
+                      </span>
+                    )}
+                  </div>
                 )}
               </div>
-              {product.discountPrice > 0 && (
+
+              {selectedVariant && selectedVariant.flashSalePrice > 0 ? (
                 <Badge className="bg-red-500 text-white px-4 rounded-full text-sm font-bold">
-                  Giảm đến {product.discountPrice}%
+                  <span>
+                    Giảm đến{" "}
+                    {parseFloat(selectedVariant.flashSalePrice.toFixed(0))}%
+                  </span>
                 </Badge>
-              )}
+              ) : product.discountPrice > 0 ? (
+                <Badge className="bg-red-500 text-white px-4 rounded-full text-sm font-bold">
+                  <span>
+                    Giảm đến {parseFloat(product.discountPrice.toFixed(0))}%
+                  </span>
+                </Badge>
+              ) : null}
             </div>
             {product.discountPrice > 0 && (
               <p className="text-sm text-red-600 font-medium mt-3">

@@ -344,8 +344,8 @@ function ShoppingCart({ cart }: ShoppingCartProps) {
                     </span>
                   </div>
                   {product.priceData.discount > 0 && (
-                    <div className="text-xs font-medium mt-2 px-2  bg-rose-600  w-fit mx-auto text-white">
-                      Giảm đến {product.priceData.discount}%
+                    <div className="text-xs font-medium mt-2 px-2 bg-rose-600 w-fit mx-auto text-white">
+                      Giảm đến {Number(product.priceData.discount).toFixed(0)}%
                     </div>
                   )}
                 </div>

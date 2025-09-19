@@ -23,7 +23,7 @@ export default function HomeInner() {
   };
 
   return (
-    <div className="flex flex-col w-[80%] mx-auto gap-5 mb-16 mt-2">
+    <div className="flex flex-col w-[95%] sm:w-[90%] md:w-[82%] mx-auto gap-5 mb-16 mt-2">
       <Advertisement />
       <CategoryComponent />
       <LiveStreaming />

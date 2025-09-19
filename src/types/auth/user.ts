@@ -30,7 +30,7 @@ export interface UserLocal{
   role: number;
   isActive: boolean;
   isVerified: boolean;
-  shopId:string | null;
+  shopId:string;
   avatarURL:string;
   email:string;
 

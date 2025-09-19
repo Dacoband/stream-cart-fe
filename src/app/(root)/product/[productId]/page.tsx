@@ -66,13 +66,17 @@ export default function ProductPage() {
     );
 
   return (
-    <div className="flex flex-col w-[70%] mx-auto mt-1 mb-20">
+    <div className="flex flex-col w-[72%] mx-auto mt-1 mb-20">
       <div className="my-2.5">
         <BreadcrumbProduct product={product} />
       </div>
       <div className="flex flex-col gap-5 w-full">
         <div className="bg-white py-8 rounded-sm w-full mx-auto shadow">
-          <OperationProduct product={product} averageRating={averageRating} totalReviews={totalReviews} />
+          <OperationProduct
+            product={product}
+            averageRating={averageRating}
+            totalReviews={totalReviews}
+          />
         </div>
         <div className="bg-white py-5 rounded-sm w-full mx-auto shadow">
           <InforShop
