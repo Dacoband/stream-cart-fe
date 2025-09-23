@@ -3,13 +3,7 @@ import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Loader2,
-  ShoppingBag,
-  Award,
-  Edit,
-  BarChart3,
-} from "lucide-react";
+import { Loader2, ShoppingBag, Edit, BarChart3 } from "lucide-react";
 import Image from "next/image";
 import type { LivestreamProduct } from "@/types/livestream/livestream";
 import UpdateStockModal from "./UpdateStockModal";
@@ -35,9 +29,12 @@ export default function TabProducts({
   productsLoading,
   onProductsUpdate,
 }: TabProductsProps) {
-  const [selectedProduct, setSelectedProduct] = useState<LivestreamProduct | null>(null);
+  const [selectedProduct, setSelectedProduct] =
+    useState<LivestreamProduct | null>(null);
   const [isStockModalOpen, setIsStockModalOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<"products" | "revenue">("products");
+  const [activeTab, setActiveTab] = useState<"products" | "revenue">(
+    "products"
+  );
 
   const handleEditStock = (product: LivestreamProduct) => {
     setSelectedProduct(product);
@@ -84,8 +81,8 @@ export default function TabProducts({
       {/* Tab Content */}
       {activeTab === "products" ? (
         /* Products Tab Content */
-        <Card className="p-6 bg-gray-50 shadow-md rounded-lg">
-          <div className="flex items-center justify-between mb-6">
+        <Card className="p-6 bg-gray-100 shadow-none rounded-lg">
+          <div className="flex items-center justify-between ">
             <div className="flex items-center">
               <div className="bg-blue-100 p-3 rounded-lg mr-3">
                 <ShoppingBag className="w-6 h-6 text-blue-600" />
@@ -118,11 +115,11 @@ export default function TabProducts({
               ))}
             </div>
           ) : products.length > 0 ? (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 max-h-[600px] overflow-y-auto custom-scrollbar">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-5 max-h-[600px] overflow-y-auto custom-scrollbar">
               {products.map((product) => (
                 <Card
                   key={product.id}
-                  className="overflow-hidden hover:shadow-lg transition-shadow duration-300 bg-white shadow-sm rounded-lg"
+                  className="overflow-hidden hover:shadow-lg pt-0 pb-2 transition-shadow duration-300 bg-white shadow-sm gap-0 rounded-lg"
                 >
                   <div className="aspect-square relative">
                     {product.productImageUrl ? (
@@ -130,32 +127,22 @@ export default function TabProducts({
                         src={product.productImageUrl}
                         alt={product.productName}
                         fill
-                        className="object-cover"
+                        className="object-cover h-full w-full"
                       />
                     ) : (
                       <div className="w-full h-full bg-gray-100 flex items-center justify-center">
                         <ShoppingBag className="w-8 h-8 text-gray-400" />
                       </div>
                     )}
-                    {product.isPin && (
-                      <div className="absolute top-2 left-2">
-                        <Badge className="bg-yellow-500 text-white text-xs px-1 py-0">
-                          <Award className="w-2 h-2 mr-1" />
-                          Ghim
-                        </Badge>
-                      </div>
-                    )}
+
                     <div className="absolute top-2 right-2 flex gap-1">
-                      <div className="bg-black/60 backdrop-blur-sm text-white px-1.5 py-0.5 rounded text-xs">
-                        {product.stock ?? 0}
-                      </div>
                       <Button
                         size="sm"
                         variant="outline"
                         onClick={() => handleEditStock(product)}
-                        className="w-6 h-6 p-0 bg-white/90 hover:bg-white border-gray-300 shadow-sm"
+                        className="w-8 h-8 p-0 bg-black/60 hover:bg-black/30 border-gray-300  text-white shadow-sm"
                       >
-                        <Edit className="w-2.5 h-2.5 text-gray-600" />
+                        <Edit className="w-2.5 h-2.5 text-gray-white" />
                       </Button>
                     </div>
                   </div>
@@ -191,7 +178,10 @@ export default function TabProducts({
                       </div>
 
                       <div className="flex justify-between items-center">
-                        <Badge variant="outline" className="text-gray-600 text-xs px-1 py-0">
+                        <Badge
+                          variant="outline"
+                          className="text-gray-600 text-xs px-1 py-0"
+                        >
                           {"sku" in product &&
                           typeof (product as { sku?: string }).sku === "string"
                             ? (product as { sku: string }).sku
