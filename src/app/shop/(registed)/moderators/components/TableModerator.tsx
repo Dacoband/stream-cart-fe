@@ -167,7 +167,7 @@ export function TableModerator({
                 <TableCell colSpan={5}>
                   <div>
                     <Image
-                      src="/assets/emptydata.png"
+                      src="/assets/emptyData.png"
                       alt="No data"
                       width={180}
                       height={200}

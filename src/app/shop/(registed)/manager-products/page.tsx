@@ -346,7 +346,7 @@ function Page() {
                           <TableCell colSpan={7}>
                             <div>
                               <Image
-                                src="/assets/emptydata.png"
+                                src="/assets/emptyData.png"
                                 alt="No data"
                                 width={180}
                                 height={200}
@@ -367,7 +367,7 @@ function Page() {
                             <Image
                               src={
                                 product.primaryImageUrl ||
-                                "/assets/emptydata.png"
+                                "/assets/emptyData.png"
                               }
                               height={80}
                               width={80}
