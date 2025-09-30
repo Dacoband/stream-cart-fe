@@ -311,7 +311,7 @@ export const AllOrderList: React.FC<Props> = ({ filters }) => {
                           <Image
                             src={
                               firstItem.productImageUrl ||
-                              "/assets/emptydata.png"
+                              "/assets/emptyData.png"
                             }
                             alt={firstItem.productName || "Sản phẩm"}
                             width={80}

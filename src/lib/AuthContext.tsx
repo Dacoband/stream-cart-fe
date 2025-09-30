@@ -31,18 +31,19 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const refreshUser = async () => {
     try {
       const token = localStorage.getItem("token");
-      if (!token) {
+      const refreshToken = localStorage.getItem("refreshToken");
+      
+      if (!token && !refreshToken) {
         setUser(null);
         return;
       }
 
       const userData = await getMe();
-
       setUser(userData);
-
       localStorage.setItem("userData", JSON.stringify(userData));
-    } catch (error) {
-      console.error("Lỗi lấy thông tin người dùng:", error);
+    } catch {
+      setUser(null);
+      localStorage.clear();
     }
   };
 

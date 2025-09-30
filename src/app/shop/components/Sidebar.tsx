@@ -41,7 +41,7 @@ const items = [
   },
 
   {
-    title: "Livestrems",
+    title: "Livestreams",
     url: "/shop/livestreams",
     icon: Video,
   },
@@ -93,7 +93,8 @@ export function AppSidebar() {
             it.url !== "/shop/profile-shop" &&
             it.url !== "/shop/moderators" &&
             it.url !== "/shop/my-membership" &&
-            it.url !== "/shop/memberships"
+            it.url !== "/shop/memberships" &&
+            it.url !== "/shop/manager-wallet"
         )
       : items;
 

@@ -17,16 +17,12 @@ import {
   Mail,
   IdCard,
 } from "lucide-react";
-// import { useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 // import { useRouter } from 'next/navigation'
 
-import {
-  filterWalletTransactions,
-  updateWalletTransactionStatus,
-} from "@/services/api/wallet/walletTransaction";
+import { filterWalletTransactions } from "@/services/api/wallet/walletTransaction";
 import {
   WalletTransactionDTO,
-  WalletTransactionStatus,
   WalletTransactionType,
 } from "@/types/wallet/walletTransactionDTO";
 import { getAllShops, getshopById } from "@/services/api/shop/shop";
@@ -283,6 +279,7 @@ const pickSeller = (resp: UserByShopIdResponse): UserDTO => {
    PAGE
 ===================== */
 export default function AdminTransactionsPage() {
+  const router = useRouter();
   const [tab, setTab] = React.useState<"all" | "needs">("all");
 
   const [fromDate, setFromDate] = React.useState("");
@@ -521,12 +518,11 @@ export default function AdminTransactionsPage() {
   }, [fetchData]);
 
   const handleConfirm = async (id: string) => {
+    // Điều hướng sang trang rút tiền, đính kèm id giao dịch ví
     try {
-      await updateWalletTransactionStatus(id, WalletTransactionStatus.Success);
-      toast.success("Xác nhận giao dịch thành công");
-      fetchData();
+      router.push(`/manager/transaction/withdraw?id=${encodeURIComponent(id)}`);
     } catch {
-      toast.error("Xác nhận giao dịch thất bại");
+      toast.error("Không thể điều hướng đến trang rút tiền");
     }
   };
 

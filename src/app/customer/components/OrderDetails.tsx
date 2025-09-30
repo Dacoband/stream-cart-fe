@@ -190,7 +190,7 @@ function OrderDetails() {
         setReviews([]);
       }
     };
-    
+
     fetchReviews();
   }, [orderId]);
 
@@ -206,7 +206,7 @@ function OrderDetails() {
         setShop(null);
       }
     };
-    
+
     fetchShop();
   }, [order?.shopId]);
 
@@ -456,8 +456,25 @@ function OrderDetails() {
                           </div>
                         </div>
                         <div className="col-span-4 text-right text-sm text-gray-700">
-                          <PriceTag value={item.unitPrice} />
+                          {item.discountAmount && item.discountAmount > 0 ? (
+                            <>
+                              <span className="line-through text-gray-400">
+                                <PriceTag value={item.unitPrice} />
+                              </span>
+                              <span className="ml-2 text-red-500 font-semibold">
+                                <PriceTag
+                                  value={
+                                    item.unitPrice -
+                                    item.discountAmount / item.quantity
+                                  }
+                                />
+                              </span>
+                            </>
+                          ) : (
+                            <PriceTag value={item.unitPrice} />
+                          )}
                         </div>
+
                         <div className="col-span-4 text-right text-sm text-gray-700">
                           {item.quantity}
                         </div>
@@ -483,13 +500,21 @@ function OrderDetails() {
               <CardContent>
                 <div className="space-y-4">
                   {reviews.map((review) => {
-                    const orderItem = orderItems.find(item => item.productId === review.productID);
+                    const orderItem = orderItems.find(
+                      (item) => item.productId === review.productID
+                    );
                     return (
-                      <div key={review.id} className="border rounded-lg p-4 bg-gray-50">
+                      <div
+                        key={review.id}
+                        className="border rounded-lg p-4 bg-gray-50"
+                      >
                         <div className="flex gap-3 mb-3">
                           {orderItem && (
                             <Image
-                              src={orderItem.productImageUrl || "/assets/emptyData.png"}
+                              src={
+                                orderItem.productImageUrl ||
+                                "/assets/emptyData.png"
+                              }
                               alt={orderItem.productName}
                               width={48}
                               height={48}
@@ -513,7 +538,9 @@ function OrderDetails() {
                                 />
                               ))}
                               <span className="text-sm text-gray-600 ml-2">
-                                {new Date(review.createdAt).toLocaleDateString("vi-VN")}
+                                {new Date(review.createdAt).toLocaleDateString(
+                                  "vi-VN"
+                                )}
                               </span>
                             </div>
                             {review.reviewText && (
@@ -521,22 +548,32 @@ function OrderDetails() {
                                 {review.reviewText}
                               </p>
                             )}
-                            {review.imageUrls && review.imageUrls.length > 0 && (
-                              <div className="flex gap-2">
-                                {review.imageUrls
-                                  .filter((url) => url && typeof url === 'string' && url.trim() !== '')
-                                  .map((url, index) => (
-                                  <Image
-                                    key={index}
-                                    src={url.startsWith('http') ? url : `/assets/emptyData.png`}
-                                    alt={`Review image ${index + 1}`}
-                                    width={60}
-                                    height={60}
-                                    className="w-15 h-15 object-cover rounded border"
-                                  />
-                                ))}
-                              </div>
-                            )}
+                            {review.imageUrls &&
+                              review.imageUrls.length > 0 && (
+                                <div className="flex gap-2">
+                                  {review.imageUrls
+                                    .filter(
+                                      (url) =>
+                                        url &&
+                                        typeof url === "string" &&
+                                        url.trim() !== ""
+                                    )
+                                    .map((url, index) => (
+                                      <Image
+                                        key={index}
+                                        src={
+                                          url.startsWith("http")
+                                            ? url
+                                            : `/assets/emptyData.png`
+                                        }
+                                        alt={`Review image ${index + 1}`}
+                                        width={60}
+                                        height={60}
+                                        className="w-15 h-15 object-cover rounded border"
+                                      />
+                                    ))}
+                                </div>
+                              )}
                           </div>
                         </div>
                       </div>

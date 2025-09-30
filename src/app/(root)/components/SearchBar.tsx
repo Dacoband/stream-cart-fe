@@ -31,7 +31,7 @@ export default function SearchBar() {
   return (
     <Suspense fallback={null}>
       <div className="flex items-center gap-2 ml-8">
-        <div className="relative w-2xl max-w-[640px]">
+        <div className="relative w-2xl max-w-[500px]">
           <Input
             type="text"
             onFocus={() => setTyping(true)}
@@ -40,7 +40,7 @@ export default function SearchBar() {
             value={value}
             onChange={(e) => setValue(e.target.value)}
             onKeyDown={onKeyDown}
-            className="w-full pr-20 py-5 bg-white text-black text-base md:text-lg rounded-sm focus-visible:ring-1 focus-visible:ring-[#B0F847]"
+            className="w-full pr-20 py-4 bg-white text-black text-base  rounded-sm focus-visible:ring-1 focus-visible:ring-[#B0F847]"
           />
           {value && (
             <button

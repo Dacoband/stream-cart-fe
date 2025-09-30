@@ -136,7 +136,7 @@ export const getProductForFlashSale = async (date: Date, slot: number) => {
     }
 
 
-    const formattedDate = date.toISOString().split("T")[0];
+    const formattedDate = date.toLocaleDateString("sv-SE")
 
     const response = await rootApi.get(`/flashsales/products/available`, {
       headers: {

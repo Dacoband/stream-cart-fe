@@ -77,6 +77,7 @@ function ProductsLivestream({ onChange }: Props) {
               length: 0,
               width: 0,
               height: 0,
+              finalPrice: product.finalPrice,
               flashSalePrice: 0,
               variantImage: { imageId: "", url: "", altText: "" },
             },

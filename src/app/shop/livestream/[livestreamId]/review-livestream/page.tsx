@@ -248,9 +248,7 @@ export default function Page() {
           })}
         </div>
         <div className="mt-6">
-          <label className="block text-sm mb-2 text-gray-700">
-            Nhận xét (không bắt buộc)
-          </label>
+          <label className="block text-sm mb-2 text-red-700">*Nhận xét</label>
           <Textarea
             placeholder="Chia sẻ trải nghiệm của bạn..."
             value={reviewText}
@@ -272,7 +270,7 @@ export default function Page() {
               </Button>
               <Button
                 className="bg-[#B0F847] hover:bg-[#B0F847]/80 text-black"
-                disabled={submitting}
+                disabled={submitting || !reviewText.trim()}
                 onClick={onSubmit}
               >
                 {submitting ? "Đang gửi..." : "Gửi đánh giá"}

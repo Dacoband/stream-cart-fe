@@ -221,7 +221,7 @@ function LiveStreamPage() {
                     <TableCell colSpan={7}>
                       <div>
                         <Image
-                          src="/assets/emptydata.png"
+                          src="/assets/emptyData.png"
                           alt="No data"
                           width={180}
                           height={200}
@@ -244,7 +244,7 @@ function LiveStreamPage() {
                               livestream.thumbnailUrl.startsWith("http") &&
                               !livestream.thumbnailUrl.endsWith("/create")
                                 ? livestream.thumbnailUrl
-                                : "/assets/emptydata.png"
+                                : "/assets/emptyData.png"
                             }
                             height={80}
                             width={80}

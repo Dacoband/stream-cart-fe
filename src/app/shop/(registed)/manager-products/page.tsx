@@ -303,7 +303,7 @@ function Page() {
                       Sản phẩm
                     </TableHead>
                     <TableHead className="font-semibold ">Danh mục</TableHead>
-                    <TableHead className="font-semibold ">Doanh thu</TableHead>
+                    <TableHead className="font-semibold ">Đã bán</TableHead>
 
                     <TableHead className="font-semibold">Giá</TableHead>
                     <TableHead className="font-semibold">Kho hàng</TableHead>
@@ -346,7 +346,7 @@ function Page() {
                           <TableCell colSpan={7}>
                             <div>
                               <Image
-                                src="/assets/emptydata.png"
+                                src="/assets/emptyData.png"
                                 alt="No data"
                                 width={180}
                                 height={200}
@@ -367,7 +367,7 @@ function Page() {
                             <Image
                               src={
                                 product.primaryImageUrl ||
-                                "/assets/emptydata.png"
+                                "/assets/emptyData.png"
                               }
                               height={80}
                               width={80}

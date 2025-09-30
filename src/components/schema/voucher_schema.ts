@@ -8,8 +8,8 @@ export const createVoucherSchema = z.object({
 
   maxValue: z.coerce.number().nonnegative().optional(),
   minOrderAmount: z.coerce.number().nonnegative().optional(),
-  startDate: z.string(),
-  endDate: z.string(),
+  startDate: z.coerce.date(),  // ép string -> Date
+  endDate: z.coerce.date(), 
   availableQuantity: z.coerce.number().int().positive('Số lượng phải lớn hơn 0'),
   
 }).refine(
@@ -38,8 +38,8 @@ export const updateVoucherSchema = z
     maxValue: z.coerce.number().nonnegative().optional(),
     minOrderAmount: z.coerce.number().nonnegative().optional(),
 
-    startDate: z.string(),
-    endDate: z.string(),
+ startDate: z.coerce.date(),  // ép string -> Date
+  endDate: z.coerce.date(), 
 
     availableQuantity: z.coerce
       .number()

@@ -1,13 +1,11 @@
-import { refreshToken } from './api/auth/authentication';
 import axios, { InternalAxiosRequestConfig, AxiosRequestHeaders, AxiosError } from 'axios'
 
 const rootApi = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_BASE_URL,
 });
-// Trạng thái đang refresh token
 let isRefreshing = false;
 
-// Hàng đợi các request lỗi 401 đang chờ token mới
+
 let failedQueue: {
   resolve: (token: string) => void;
   reject: (error: unknown) => void;
@@ -54,7 +52,6 @@ rootApi.interceptors.response.use(
   async (error: AxiosError) => {
     const originalRequest = (error.config ?? {}) as InternalAxiosRequestConfig & { _retry?: boolean };
 
-    // log server error body when explicitly enabled for debugging
     if (typeof window !== 'undefined' && process.env.NEXT_PUBLIC_DEBUG_API === 'true') {
       try {
         console.debug('[rootApi] response error body', error.response?.data);
@@ -80,32 +77,52 @@ rootApi.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        const response = await refreshToken();
-        const newToken = response.data?.data?.token;
+        const refresh = localStorage.getItem("refreshToken");
+        if (!refresh) {
+          throw new Error("No refresh token");
+        }
+
+        const response = await rootApi.post("auth/refresh-token", {
+          refreshToken: refresh,
+        });
+
+        const data = response.data?.data;
+        if (!data || !data.token) {
+          throw new Error("Invalid refresh response");
+        }
+
+        const newToken = data.token;
+        localStorage.setItem("token", newToken);
+        localStorage.setItem("refreshToken", data.refreshToken);
+        
+        if (data.account) {
+          const userData = {
+            id: data.account.id,
+            username: data.account.username,
+            role: data.account.role,
+            isActive: data.account.isActive,
+            isVerified: data.account.isVerified,
+            shopId: data.account.shopId || null,
+            avatarURL: data.account.avatarURL,
+            fullname: data.account.fullname,
+            phoneNumber: data.account.phoneNumber,
+            email: data.account.email,
+          };
+          localStorage.setItem("userData", JSON.stringify(userData));
+        }
+
         processQueue(null, newToken);
 
-  if (!originalRequest.headers) originalRequest.headers = {} as AxiosRequestHeaders;
-  (originalRequest.headers as AxiosRequestHeaders).Authorization = `Bearer ${newToken}`;
-        localStorage.setItem("token", newToken);
-
-        // Lấy lại thông tin user sau khi refresh
-        try {
-          const userDataRes = await rootApi.get("auth/me", {
-            headers: { Authorization: `Bearer ${newToken}` },
-          });
-          localStorage.setItem("userData", JSON.stringify(userDataRes.data.data));
-        } catch (err) {
-          // Nếu lấy user thất bại, xóa token và chuyển về login
-          localStorage.clear();
-          // window.location.href = "/authentication/login";
-          return Promise.reject(err);
-        }
+        if (!originalRequest.headers) originalRequest.headers = {} as AxiosRequestHeaders;
+        (originalRequest.headers as AxiosRequestHeaders).Authorization = `Bearer ${newToken}`;
 
         return rootApi(originalRequest);
       } catch (err) {
         processQueue(err, null);
         localStorage.clear();
-        // window.location.href = "/authentication/login";
+        if (typeof window !== 'undefined') {
+          window.location.href = "/authentication/login";
+        }
         return Promise.reject(err);
       } finally {
         isRefreshing = false;

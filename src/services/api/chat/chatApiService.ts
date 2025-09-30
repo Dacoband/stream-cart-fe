@@ -41,7 +41,6 @@ const chatApi = {
           if (shopId) params.shopId = String(shopId);
         }
       } catch {
-        // ignore parse errors
       }
     }
     return await this._safe(async () => {

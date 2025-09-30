@@ -162,8 +162,8 @@ export const getProductReviews = async (
   }
 ) => {
   try {
-    const token = localStorage.getItem('token');
-    if (!token) throw new Error('Not found token.');
+    // const token = localStorage.getItem('token');
+    // if (!token) throw new Error('Not found token.');
     if (!productId) throw new Error('Missing productId');
 
     const query: Record<string, string | number | boolean> = {};
@@ -179,7 +179,7 @@ export const getProductReviews = async (
 
     const response = await rootApi.get(`reviews/products/${productId}`, {
       params: query,
-      headers: { Authorization: `Bearer ${token}` }
+      // headers: { Authorization: `Bearer ${token}` }
     });
     return response.data;
   } catch (error) {
