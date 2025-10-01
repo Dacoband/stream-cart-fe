@@ -15,7 +15,6 @@ export function ViewerCount({ livestreamId }: ViewerCountProps) {
   React.useEffect(() => {
     if (!livestreamId) return;
     let mounted = true;
-    let pollTimer: ReturnType<typeof setInterval> | null = null;
 
     (async () => {
       try {
@@ -27,12 +26,6 @@ export function ViewerCount({ livestreamId }: ViewerCountProps) {
           await chatHubService.joinLivestream(livestreamId);
         } catch {}
 
-        // Yêu cầu server phát lại thống kê ngay khi kết nối
-        // Ask the server to push current stats (if supported)
-        try {
-          await chatHubService.requestViewerStats(livestreamId);
-        } catch {}
-
         chatHubService.onViewerStats((payload) => {
           if (!mounted) return;
           if (
@@ -41,34 +34,11 @@ export function ViewerCount({ livestreamId }: ViewerCountProps) {
             setStats(payload);
           }
         });
-
-        // Optional: listen to ViewingStarted confirmation to know we're grouped
-        chatHubService.onViewingStarted((p) => {
-          if (!mounted) return;
-          if (p?.message) console.log("[SignalR] ViewingStarted:", p.message);
-        });
-
-        // Light fallback (seldom) to refresh if an event is missed
-        pollTimer = setInterval(() => {
-          chatHubService.requestViewerStats(livestreamId).catch(() => {});
-        }, 3000);
-
-        // When users join/leave chat room, ask for a fresh stat (server may or may not implement RequestViewerStats)
-        chatHubService.onUserJoined(() => {
-          chatHubService.requestViewerStats(livestreamId).catch(() => {});
-        });
-        chatHubService.onUserLeft(() => {
-          chatHubService.requestViewerStats(livestreamId).catch(() => {});
-        });
-      } catch {
-        // ignore errors
-      }
+      } catch {}
     })();
 
     return () => {
       mounted = false;
-      if (pollTimer) clearInterval(pollTimer);
-      // Rời nhóm viewers để tránh rò rỉ sự kiện
       try {
         chatHubService.stopViewingLivestream(livestreamId);
       } catch {}

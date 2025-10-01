@@ -13,6 +13,7 @@ export interface LivestreamMessagePayload {
 export interface UserPresencePayload {
   userId: string;
   timestamp: string; // ISO string
+  role?: string; // optional: 'Customer' | 'Seller' if server provides
 }
 
 export interface ViewerStatsPayload {
@@ -181,7 +182,7 @@ class ChatHubService {
   }
 
   async ensureStarted() {
-    return this.waitForConnected(8000);
+    return this.waitForConnected(5000);
   }
 
   // ---------- helpers ----------
@@ -256,20 +257,7 @@ class ChatHubService {
   async sendLivestreamMessage(livestreamId: string, message: string) {
     await this.invokeWhenConnected('SendMessageToLivestream', livestreamId, message);
   }
-
-  // Explicitly request the server to broadcast current viewer stats for a livestream.
-  // Tries a couple of common method names, and swallows errors if not implemented on the server.
-  async requestViewerStats(livestreamId: string): Promise<unknown | undefined> {
-    try {
-      // Some servers expose a public method that wraps the private broadcaster
-      return await this.invokeWhenConnected('BroadcastViewerStats', livestreamId);
-    } catch {}
-    try {
-      // Or a dedicated request method
-      return await this.invokeWhenConnected('RequestViewerStats', livestreamId);
-    } catch {}
-    return undefined;
-  }
+ 
 
   onReceiveLivestreamMessage(cb: (payload: LivestreamMessagePayload) => void) {
   this.connection?.off('ReceiveLivestreamMessage');
@@ -302,11 +290,12 @@ class ChatHubService {
   onUserJoined(cb: (payload: UserPresencePayload) => void) {
     this.connection?.off('UserJoined');
     this.connection?.off('userjoined' as unknown as string);
-    type RawPresence = { userId?: string; UserId?: string; timestamp?: string; Timestamp?: string };
+    type RawPresence = { userId?: string; UserId?: string; timestamp?: string; Timestamp?: string; role?: string; Role?: string };
     const handler = (raw: RawPresence) => {
       const payload: UserPresencePayload = {
         userId: this.toStr(raw?.userId ?? raw?.UserId) ?? '',
         timestamp: this.toStr(raw?.timestamp ?? raw?.Timestamp) ?? new Date().toISOString(),
+        role: this.toStr(raw?.role ?? raw?.Role),
       };
       cb(payload);
     };
@@ -317,11 +306,12 @@ class ChatHubService {
   onUserLeft(cb: (payload: UserPresencePayload) => void) {
     this.connection?.off('UserLeft');
     this.connection?.off('userleft' as unknown as string);
-    type RawPresence = { userId?: string; UserId?: string; timestamp?: string; Timestamp?: string };
+    type RawPresence = { userId?: string; UserId?: string; timestamp?: string; Timestamp?: string; role?: string; Role?: string };
     const handler = (raw: RawPresence) => {
       const payload: UserPresencePayload = {
         userId: this.toStr(raw?.userId ?? raw?.UserId) ?? '',
         timestamp: this.toStr(raw?.timestamp ?? raw?.Timestamp) ?? new Date().toISOString(),
+        role: this.toStr(raw?.role ?? raw?.Role),
       };
       cb(payload);
     };
@@ -330,7 +320,17 @@ class ChatHubService {
   }
 
   onViewerStats(cb: (payload: ViewerStatsPayload) => void) {
-    this.connection?.off('ReceiveViewerStats');
+  this.connection?.off("ReceiveViewerStats");
+ this.connection?.on("ReceiveViewerStats", (raw: Record<string, unknown>) => {
+  const payload: ViewerStatsPayload = {
+    livestreamId: (raw.livestreamId ?? raw.LivestreamId ?? "") as string,
+    totalViewers: Number(raw.totalViewers ?? raw.TotalViewers ?? 0),
+    customerViewers: Number(raw.customerViewers ?? raw.CustomerViewers ?? 0),
+    viewersByRole: (raw.viewersByRole ?? raw.ViewersByRole ?? {}) as Record<string, number>,
+    timestamp: (raw.timestamp ?? raw.Timestamp ?? new Date().toISOString()) as string,
+  };
+  cb(payload);
+});
     try { this.connection?.off('receiveviewerstats' as unknown as string); } catch {}
     type RawStats = {
       livestreamId?: string; LivestreamId?: string;
