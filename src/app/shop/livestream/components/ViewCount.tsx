@@ -12,20 +12,6 @@ interface ViewerCountProps {
 export function ViewerCount({ livestreamId }: ViewerCountProps) {
   const [stats, setStats] = React.useState<ViewerStatsPayload | null>(null);
 
-  const viewerCount = React.useMemo(() => {
-    if (!stats) return 0;
-
-    if (
-      typeof stats.totalViewers === "number" &&
-      Number.isFinite(stats.totalViewers)
-    ) {
-      return stats.totalViewers;
-    }
-
-    const roleMap: Record<string, number> = stats.viewersByRole || {};
-    return Object.values(roleMap).reduce((sum, v) => sum + (Number(v) || 0), 0);
-  }, [stats]);
-
   React.useEffect(() => {
     if (!livestreamId) return;
     let mounted = true;
@@ -42,6 +28,7 @@ export function ViewerCount({ livestreamId }: ViewerCountProps) {
         } catch {}
 
         // Yêu cầu server phát lại thống kê ngay khi kết nối
+        // Ask the server to push current stats (if supported)
         try {
           await chatHubService.requestViewerStats(livestreamId);
         } catch {}
@@ -55,10 +42,24 @@ export function ViewerCount({ livestreamId }: ViewerCountProps) {
           }
         });
 
-        // Fallback polling nhẹ để làm tươi nếu thiếu sự kiện (tùy chọn)
+        // Optional: listen to ViewingStarted confirmation to know we're grouped
+        chatHubService.onViewingStarted((p) => {
+          if (!mounted) return;
+          if (p?.message) console.log("[SignalR] ViewingStarted:", p.message);
+        });
+
+        // Light fallback (seldom) to refresh if an event is missed
         pollTimer = setInterval(() => {
           chatHubService.requestViewerStats(livestreamId).catch(() => {});
-        }, 10000);
+        }, 3000);
+
+        // When users join/leave chat room, ask for a fresh stat (server may or may not implement RequestViewerStats)
+        chatHubService.onUserJoined(() => {
+          chatHubService.requestViewerStats(livestreamId).catch(() => {});
+        });
+        chatHubService.onUserLeft(() => {
+          chatHubService.requestViewerStats(livestreamId).catch(() => {});
+        });
       } catch {
         // ignore errors
       }
@@ -78,7 +79,7 @@ export function ViewerCount({ livestreamId }: ViewerCountProps) {
   }, [livestreamId]);
 
   return (
-    <div className="flex ml-2">
+    <div className="flex ml-2 items-center gap-2">
       <Button className="bg-rose-600 text-white rounded-none hover:bg-rose-600 flex items-center relative overflow-visible">
         <span className="relative mr-2 flex items-center justify-center">
           <span className="absolute h-4 w-4 rounded-full bg-white opacity-75 animate-ping" />
@@ -89,7 +90,10 @@ export function ViewerCount({ livestreamId }: ViewerCountProps) {
 
       <Button className="rounded-none flex items-center gap-1">
         <UserRound className="w-4 h-4" />
-        {viewerCount}
+        {typeof stats?.customerViewers === "number" &&
+          Number.isFinite(stats.customerViewers) && (
+            <span className="">{stats.customerViewers}</span>
+          )}
       </Button>
     </div>
   );
