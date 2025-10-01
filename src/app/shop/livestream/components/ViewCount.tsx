@@ -11,6 +11,16 @@ interface ViewerCountProps {
 
 export function ViewerCount({ livestreamId }: ViewerCountProps) {
   const [stats, setStats] = React.useState<ViewerStatsPayload | null>(null);
+  const unsubscribeRef = React.useRef<void | (() => void)>(undefined);
+  const customerCount = React.useMemo(() => {
+    // Prefer viewersByRole["Customer"]. If missing, show 0 (ignore customerViewers field).
+    const roleMap = stats?.viewersByRole;
+    const value =
+      roleMap && typeof roleMap["Customer"] === "number"
+        ? roleMap["Customer"]
+        : undefined;
+    return typeof value === "number" && Number.isFinite(value) ? value : 0;
+  }, [stats]);
 
   React.useEffect(() => {
     if (!livestreamId) return;
@@ -19,26 +29,36 @@ export function ViewerCount({ livestreamId }: ViewerCountProps) {
     (async () => {
       try {
         await chatHubService.ensureStarted();
+
+        // Subscribe BEFORE starting/joining to capture immediate ReceiveViewerStats
+        unsubscribeRef.current = chatHubService.onViewerStats((payload) => {
+          if (!mounted) return;
+          if (
+            payload.livestreamId?.toLowerCase?.() === livestreamId.toLowerCase()
+          ) {
+            console.log("[UI] ReceiveViewerStats ->", payload);
+            setStats(payload);
+          }
+        });
+
+        // Now trigger viewing/joining which may immediately broadcast stats
         try {
           await chatHubService.startViewingLivestream(livestreamId);
         } catch {}
         try {
           await chatHubService.joinLivestream(livestreamId);
         } catch {}
-
-        chatHubService.onViewerStats((payload) => {
-          if (!mounted) return;
-          if (
-            payload.livestreamId?.toLowerCase?.() === livestreamId.toLowerCase()
-          ) {
-            setStats(payload);
-          }
-        });
       } catch {}
     })();
 
     return () => {
       mounted = false;
+      // Remove only this component's stats listener first to avoid stale updates
+      try {
+        const fn = unsubscribeRef.current;
+        if (typeof fn === 'function') fn();
+        unsubscribeRef.current = undefined;
+      } catch {}
       try {
         chatHubService.stopViewingLivestream(livestreamId);
       } catch {}
@@ -60,10 +80,7 @@ export function ViewerCount({ livestreamId }: ViewerCountProps) {
 
       <Button className="rounded-none flex items-center gap-1">
         <UserRound className="w-4 h-4" />
-        {typeof stats?.customerViewers === "number" &&
-          Number.isFinite(stats.customerViewers) && (
-            <span className="">{stats.customerViewers}</span>
-          )}
+        <span className="">{customerCount}</span>
       </Button>
     </div>
   );

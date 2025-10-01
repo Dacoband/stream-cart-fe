@@ -13,7 +13,6 @@ export interface LivestreamMessagePayload {
 export interface UserPresencePayload {
   userId: string;
   timestamp: string; // ISO string
-  role?: string; // optional: 'Customer' | 'Seller' if server provides
 }
 
 export interface ViewerStatsPayload {
@@ -295,7 +294,6 @@ class ChatHubService {
       const payload: UserPresencePayload = {
         userId: this.toStr(raw?.userId ?? raw?.UserId) ?? '',
         timestamp: this.toStr(raw?.timestamp ?? raw?.Timestamp) ?? new Date().toISOString(),
-        role: this.toStr(raw?.role ?? raw?.Role),
       };
       cb(payload);
     };
@@ -311,7 +309,7 @@ class ChatHubService {
       const payload: UserPresencePayload = {
         userId: this.toStr(raw?.userId ?? raw?.UserId) ?? '',
         timestamp: this.toStr(raw?.timestamp ?? raw?.Timestamp) ?? new Date().toISOString(),
-        role: this.toStr(raw?.role ?? raw?.Role),
+        
       };
       cb(payload);
     };
@@ -319,19 +317,9 @@ class ChatHubService {
     this.connection?.on('userleft' as unknown as string, handler as unknown as (...args: never[]) => void);
   }
 
-  onViewerStats(cb: (payload: ViewerStatsPayload) => void) {
-  this.connection?.off("ReceiveViewerStats");
- this.connection?.on("ReceiveViewerStats", (raw: Record<string, unknown>) => {
-  const payload: ViewerStatsPayload = {
-    livestreamId: (raw.livestreamId ?? raw.LivestreamId ?? "") as string,
-    totalViewers: Number(raw.totalViewers ?? raw.TotalViewers ?? 0),
-    customerViewers: Number(raw.customerViewers ?? raw.CustomerViewers ?? 0),
-    viewersByRole: (raw.viewersByRole ?? raw.ViewersByRole ?? {}) as Record<string, number>,
-    timestamp: (raw.timestamp ?? raw.Timestamp ?? new Date().toISOString()) as string,
-  };
-  cb(payload);
-});
-    try { this.connection?.off('receiveviewerstats' as unknown as string); } catch {}
+  onViewerStats(cb: (payload: ViewerStatsPayload) => void): (() => void) | void {
+    const conn = this.connection;
+    if (!conn) return;
     type RawStats = {
       livestreamId?: string; LivestreamId?: string;
       totalViewers?: number; TotalViewers?: number;
@@ -341,7 +329,7 @@ class ChatHubService {
       maxCustomerViewer?: number; MaxCustomerViewer?: number;
       isNewRecord?: boolean; IsNewRecord?: boolean;
     };
-    const handler = (raw: RawStats) => {
+  const handler = (raw: RawStats) => {
       // Normalize server casing (LivestreamId, TotalViewers, ViewersByRole, Timestamp) -> camelCase
       const normalized: ViewerStatsPayload = {
         livestreamId: (raw?.livestreamId ?? raw?.LivestreamId ?? '').toString(),
@@ -366,8 +354,15 @@ class ChatHubService {
       }
       cb(normalized);
     };
-    this.connection?.on('ReceiveViewerStats', handler as unknown as (...args: never[]) => void);
-    this.connection?.on('receiveviewerstats' as unknown as string, handler as unknown as (...args: never[]) => void);
+  const handlerFn = handler as unknown as (...args: unknown[]) => void;
+  conn.on('ReceiveViewerStats', handlerFn);
+  conn.on('receiveviewerstats' as unknown as string, handlerFn);
+
+    // Return an unsubscribe to remove only this handler
+    return () => {
+      try { conn.off('ReceiveViewerStats', handlerFn); } catch {}
+      try { conn.off('receiveviewerstats' as unknown as string, handlerFn); } catch {}
+    };
   }
 
   // Optional convenience: listen to the ViewingStarted event emitted to the caller
