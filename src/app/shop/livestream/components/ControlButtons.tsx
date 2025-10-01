@@ -5,8 +5,8 @@ import { Mic, MicOff, Video, VideoOff } from "lucide-react";
 
 export function ControlButtons() {
   const { localParticipant } = useLocalParticipant();
-  const [isCameraOn, setIsCameraOn] = useState(false);
-  const [isMicOn, setIsMicOn] = useState(false);
+  const [isCameraOn, setIsCameraOn] = useState(true);
+  const [isMicOn, setIsMicOn] = useState(true);
 
   useEffect(() => {
     const camStored = localStorage.getItem("live_cam_on");
