@@ -234,7 +234,7 @@ export default function TableFlashSale() {
                 <TableCell colSpan={7}>
                   <div>
                     <Image
-                      src="/assets/emptydata.png"
+                      src="/assets/emptyData.png"
                       alt="No data"
                       width={180}
                       height={200}

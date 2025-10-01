@@ -23,9 +23,6 @@ const parseStatusesFromTab = (tab: TabValue): number[] | undefined => {
   return tab.split(",").map((s) => Number(s.trim()));
 };
 
-// Header will adapt style; when tab is "Hoàn hàng" ("8,9"), copy the green
-// header styling approach from RefundRequestTable
-
 function TableOrder() {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<TabValue>("all");
@@ -388,7 +385,7 @@ function TableOrder() {
             refunds.length === 0 ? (
               <div>
                 <Image
-                  src="/assets/emptydata.png"
+                  src="/assets/emptyData.png"
                   alt="No data"
                   width={180}
                   height={200}

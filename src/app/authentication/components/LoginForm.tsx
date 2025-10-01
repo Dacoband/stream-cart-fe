@@ -86,7 +86,7 @@ export default function LoginForm() {
           router.push("/manager/dashboard");
           break;
         case 6:
-          router.push("/admin/dashboard");
+          router.push("/admin/accounts");
           break;
         default:
           console.log("Role không hợp lệ");
