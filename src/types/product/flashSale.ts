@@ -23,9 +23,16 @@ export interface FlashSaleProductHome{
     stock:number;
 
 }
+export interface FlashSaleVariantMap {
+  [variantId: string]: {
+    price: number;
+    quantity: number;
+  };
+}
+
 export interface FlashSaleProduct {
   productId: string;
-  variantIds: string[];
+  variantMap: FlashSaleVariantMap;
   flashSalePrice: number;
   quantityAvailable: number;
 }
