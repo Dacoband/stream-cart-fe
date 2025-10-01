@@ -11,10 +11,14 @@ export function ControlButtons() {
   useEffect(() => {
     const camStored = localStorage.getItem("live_cam_on");
     const micStored = localStorage.getItem("live_mic_on");
-    const cam = camStored ? camStored === "true" : false;
-    const mic = micStored ? micStored === "true" : false;
+
+    // Nếu chưa có trong localStorage thì mặc định là true
+    const cam = camStored ? camStored === "true" : true;
+    const mic = micStored ? micStored === "true" : true;
+
     setIsCameraOn(cam);
     setIsMicOn(mic);
+
     (async () => {
       try {
         await localParticipant.setCameraEnabled(cam);
