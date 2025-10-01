@@ -9,14 +9,10 @@ import { ChatMessage, ChatRoom } from "@/types/chat/chat";
 import {
   ArrowLeft,
   ImageIcon,
-  Info,
-  MoreVertical,
   Paperclip,
-  Phone,
   Search,
   Send,
   Smile,
-  Video,
 } from "lucide-react";
 import Image from "next/image";
 import React, { useEffect, useRef, useState } from "react";
@@ -390,23 +386,23 @@ export default function ShopChatPage() {
     if (!selectedRoom || !text.trim()) return;
     const content = text.trim();
     // optimistic
-    const optimistic: ChatMessage = {
-      id: `temp-${Date.now()}`,
-      chatRoomId: selectedRoom.id,
-      // use currentUserId if available, fallback to 'shop' string for display only
-      senderUserId: currentUserId ?? "shop",
-      content,
-      sentAt: new Date().toISOString(),
-      isRead: true,
-      isEdited: false,
-      messageType: "Text",
-      attachmentUrl: "",
-      editedAt: "",
-      senderName: "Shop",
-      senderAvatarUrl: "",
-      isMine: true,
-    };
-    setMessages((prev) => [...prev, optimistic]);
+    // const optimistic: ChatMessage = {
+    //   id: `temp-${Date.now()}`,
+    //   chatRoomId: selectedRoom.id,
+    //   // use currentUserId if available, fallback to 'shop' string for display only
+    //   senderUserId: currentUserId ?? "shop",
+    //   content,
+    //   sentAt: new Date().toISOString(),
+    //   isRead: true,
+    //   isEdited: false,
+    //   messageType: "Text",
+    //   attachmentUrl: "",
+    //   editedAt: "",
+    //   senderName: "Shop",
+    //   senderAvatarUrl: "",
+    //   isMine: true,
+    // };
+    // setMessages((prev) => [...prev, optimistic]);
     setText("");
 
     try {
@@ -576,41 +572,10 @@ export default function ShopChatPage() {
                         selectedRoom.shopName ||
                         "Không tên"}
                     </h2>
-                    <p className="text-sm text-gray-500">
+                    {/* <p className="text-sm text-gray-500">
                       ID phòng: {selectedRoom.id}
-                    </p>
+                    </p> */}
                   </div>
-                </div>
-
-                <div className="flex cursor-pointer items-center space-x-2">
-                  <button
-                    type="button"
-                    title="Phone"
-                    className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-                  >
-                    <Phone className="w-5 h-5 text-gray-600" />
-                  </button>
-                  <button
-                    type="button"
-                    title="Video"
-                    className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-                  >
-                    <Video className="w-5 h-5 text-gray-600" />
-                  </button>
-                  <button
-                    type="button"
-                    title="Info"
-                    className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-                  >
-                    <Info className="w-5 h-5 text-gray-600" />
-                  </button>
-                  <button
-                    type="button"
-                    title="MoreVertical"
-                    className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-                  >
-                    <MoreVertical className="w-5 h-5 text-gray-600" />
-                  </button>
                 </div>
               </div>
             </div>
