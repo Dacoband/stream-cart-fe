@@ -109,7 +109,7 @@ function FlashSale() {
 
                         <div className="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded text-xs font-bold">
                           {product.discountPrice > 0 ? (
-                            <>-{product.discountPrice}%</>
+                            <>-{product.discountPrice.toFixed(0)}%</>
                           ) : (
                             <>
                               -
