@@ -9,6 +9,15 @@ export const getVarriantByProductId = async (productId:string) => {
     throw error;
   }
 };
+export const getVarriantById = async (variantId:string) => {
+  try {
+    const response = await rootApi.get(`/product-variants${variantId}`);
+    return response.data.data;
+  } catch (error) {
+    console.error("Error fetching variant detail:", error);
+    throw error;
+  }
+};
 
 export const updateStockProductVariant = async (productVarrianId: string, data: { quantity: number }) => {
   try {

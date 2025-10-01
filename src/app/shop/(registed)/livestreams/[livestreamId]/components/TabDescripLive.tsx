@@ -305,16 +305,17 @@ export default function TabDescripLive(props: TabDescripLiveProps) {
                 >
                   {getActionLabel(livestream)}
                 </Button>
-                
-                {/* Nút cập nhật cho livestream đã kết thúc hoặc chưa bắt đầu */}
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="text-green-600 border-green-600 cursor-pointer hover:text-green-400 hover:border-green-400 hover:bg-white bg-white"
-                  onClick={() => setShowUpdateModal(true)}
-                >
-                  Cập nhật
-                </Button>
+
+                {!livestream?.actualEndTime && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="text-green-600 border-green-600 cursor-pointer hover:text-green-400 hover:border-green-400 hover:bg-white bg-white"
+                    onClick={() => setShowUpdateModal(true)}
+                  >
+                    Cập nhật
+                  </Button>
+                )}
               </div>
             );
           })()}
@@ -326,7 +327,7 @@ export default function TabDescripLive(props: TabDescripLiveProps) {
           onCancel={() => setConfirmDeleteLivestream(null)}
           onConfirm={handleConfirmDelete}
         />
-        
+
         <UpdateLivestreamModal
           open={showUpdateModal}
           livestream={livestream}

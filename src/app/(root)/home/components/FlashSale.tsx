@@ -11,12 +11,18 @@ import { getProductById } from "@/services/api/product/product";
 import LoadingCard from "./LoadingCard";
 import PriceTag from "@/components/common/PriceTag";
 import Link from "next/link";
+import { getCombinatonByVariantId } from "@/services/api/product/productCombination";
+import { ProductCombination } from "@/types/product/productCombination";
 
+type FlashSaleWithVariant = FlashSaleProductHome & { variantId?: string };
 function FlashSale() {
   const [flashSaleList, setFlashSaleList] = useState<FlashSaleProductHome[]>(
     []
   );
   const [productList, setProductList] = useState<Product[]>([]);
+  const [combinationList, setCombinationList] = useState<
+    ProductCombination[][]
+  >([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -32,6 +38,25 @@ function FlashSale() {
           })
         );
         setProductList(products);
+
+        // Fetch variant combinations (valueName) when variantId exists
+        const combos = await Promise.all(
+          flashSales.map(async (item: FlashSaleProductHome) => {
+            try {
+              const vId = (item as FlashSaleWithVariant).variantId;
+              if (vId) {
+                const list = (await getCombinatonByVariantId(
+                  vId
+                )) as ProductCombination[];
+                return Array.isArray(list) ? list : [];
+              }
+            } catch {
+              // ignore this item's error, keep list empty
+            }
+            return [] as ProductCombination[];
+          })
+        );
+        setCombinationList(combos);
       } catch (err) {
         console.error("Lỗi khi tải flash sale hoặc sản phẩm:", err);
       } finally {
@@ -77,6 +102,11 @@ function FlashSale() {
           <div className="grid grid-cols-6 gap-x-5 gap-y-10 pt-2 mb-5">
             {flashSaleList.slice(0, 6).map((saleItem, index) => {
               const product = productList[index];
+              const combos = combinationList[index] || [];
+              const variantLabel = combos
+                .map((c) => c?.valueName)
+                .filter(Boolean)
+                .join(", ");
               if (!product) return null;
 
               return (
@@ -127,6 +157,12 @@ function FlashSale() {
                           <h4 className="font-medium text-gray-900 mb-2  line-clamp-2 min-h-[48px] ">
                             {product.productName}
                           </h4>
+
+                          {variantLabel && (
+                            <div className="text-xs text-gray-500 mb-2">
+                              Phân loại: {variantLabel}
+                            </div>
+                          )}
 
                           <div className="mb-2 flex gap-5 items-center">
                             <span className="text-lg font-semibold text-red-600">
