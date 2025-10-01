@@ -316,7 +316,7 @@ class ChatHubService {
 
   onViewerStats(cb: (payload: ViewerStatsPayload) => void) {
   this.connection?.off('ReceiveViewerStats');
-  this.connection?.off('receiveviewerstats' as unknown as string);
+  // this.connection?.off('receiveviewerstats' as unknown as string);
     type RawStats = {
       livestreamId?: string; LivestreamId?: string;
       totalViewers?: number; TotalViewers?: number;
@@ -352,7 +352,7 @@ class ChatHubService {
       cb(normalized);
   };
   this.connection?.on('ReceiveViewerStats', handler as unknown as (...args: never[]) => void);
-  this.connection?.on('receiveviewerstats' as unknown as string, handler as unknown as (...args: never[]) => void);
+  // this.connection?.on('receiveviewerstats' as unknown as string, handler as unknown as (...args: never[]) => void);
   }
 
   // ---------- Product: invoke hub methods ----------
