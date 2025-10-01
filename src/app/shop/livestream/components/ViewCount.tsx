@@ -12,44 +12,38 @@ interface ViewerCountProps {
 export function ViewerCount({ livestreamId }: ViewerCountProps) {
   const [stats, setStats] = React.useState<ViewerStatsPayload | null>(null);
 
-  // Chỉ tính Customer viewers
   const viewerCount = React.useMemo(() => {
     if (!stats) return 0;
 
-    // Nếu server trả trực tiếp customerViewers thì dùng luôn
     if (
-      typeof stats.customerViewers === "number" &&
-      Number.isFinite(stats.customerViewers)
+      typeof stats.totalViewers === "number" &&
+      Number.isFinite(stats.totalViewers)
     ) {
-      return stats.customerViewers;
+      return stats.totalViewers;
     }
 
-    // // Nếu không, fallback sang ViewersByRole
-    // const roleMap = stats.viewersByRole || {};
-    // for (const [role, count] of Object.entries(roleMap)) {
-    //   if (String(role).toLowerCase() === "customer") {
-    //     return Number(count) || 0;
-    //   }
-    // }
-
-    return 0;
+    const roleMap: Record<string, number> = stats.viewersByRole || {};
+    return Object.values(roleMap).reduce((sum, v) => sum + (Number(v) || 0), 0);
   }, [stats]);
 
-  // Lắng nghe viewer stats từ SignalR
   React.useEffect(() => {
     if (!livestreamId) return;
     let mounted = true;
+    let pollTimer: ReturnType<typeof setInterval> | null = null;
 
     (async () => {
       try {
         await chatHubService.ensureStarted();
-        // Tham gia nhóm viewers để nhận thống kê chính xác
         try {
           await chatHubService.startViewingLivestream(livestreamId);
         } catch {}
-        // Optional: cũng join phòng chat nếu server phát cùng nhóm
         try {
           await chatHubService.joinLivestream(livestreamId);
+        } catch {}
+
+        // Yêu cầu server phát lại thống kê ngay khi kết nối
+        try {
+          await chatHubService.requestViewerStats(livestreamId);
         } catch {}
 
         chatHubService.onViewerStats((payload) => {
@@ -60,6 +54,11 @@ export function ViewerCount({ livestreamId }: ViewerCountProps) {
             setStats(payload);
           }
         });
+
+        // Fallback polling nhẹ để làm tươi nếu thiếu sự kiện (tùy chọn)
+        pollTimer = setInterval(() => {
+          chatHubService.requestViewerStats(livestreamId).catch(() => {});
+        }, 10000);
       } catch {
         // ignore errors
       }
@@ -67,6 +66,7 @@ export function ViewerCount({ livestreamId }: ViewerCountProps) {
 
     return () => {
       mounted = false;
+      if (pollTimer) clearInterval(pollTimer);
       // Rời nhóm viewers để tránh rò rỉ sự kiện
       try {
         chatHubService.stopViewingLivestream(livestreamId);

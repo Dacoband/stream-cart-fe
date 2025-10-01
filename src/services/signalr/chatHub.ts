@@ -257,6 +257,22 @@ class ChatHubService {
     await this.invokeWhenConnected('SendMessageToLivestream', livestreamId, message);
   }
 
+  // Explicitly request the server to broadcast current viewer stats for a livestream.
+  // Tries several common method names to be compatible with server implementations.
+  async requestViewerStats(livestreamId: string) {
+    try {
+      return await this.invokeWhenConnected('RequestViewerStats', livestreamId);
+    } catch {}
+    try {
+      // If server exposes the private method via a public hub method name
+      return await this.invokeWhenConnected('BroadcastViewerStats', livestreamId);
+    } catch {}
+    try {
+      return await this.invokeWhenConnected('GetViewerStats', livestreamId);
+    } catch {}
+    return undefined;
+  }
+
   onReceiveLivestreamMessage(cb: (payload: LivestreamMessagePayload) => void) {
   this.connection?.off('ReceiveLivestreamMessage');
   this.connection?.off('receivelivestreammessage' as unknown as string);
