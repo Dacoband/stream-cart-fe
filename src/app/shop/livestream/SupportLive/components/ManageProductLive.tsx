@@ -354,7 +354,7 @@ function ManageProductLive({
                     return;
                   }
 
-                  // Giới hạn trong khoảng 0 -> productStock
+             
                   if (editing?.productStock !== undefined) {
                     v = Math.max(0, v);
                     setNewStock(v);

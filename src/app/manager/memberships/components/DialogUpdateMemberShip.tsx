@@ -97,8 +97,9 @@ export default function DialogUpdateMemberShip({
           return 0;
         })(),
         description: initial.description || "",
+
         price: initial.price,
-        duration: initial.duration,
+        duration: 30,
         maxLivestream: initial.maxLivestream,
         commission: initial.commission,
       });
@@ -118,6 +119,7 @@ export default function DialogUpdateMemberShip({
 
   const onSubmit = async (values: MembershipFormValues) => {
     setSubmitting(true);
+
     try {
       if (mode === "create") {
         await createMembership(values);
@@ -161,7 +163,13 @@ export default function DialogUpdateMemberShip({
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form
+            onSubmit={form.handleSubmit(onSubmit, (errors) => {
+              console.log("❌ Validation fail:", errors);
+              console.log("👉 Current raw values:", form.getValues());
+            })}
+            className="space-y-4"
+          >
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
                 control={form.control}

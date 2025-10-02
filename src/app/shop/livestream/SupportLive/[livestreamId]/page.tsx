@@ -15,8 +15,13 @@ import {
   getJoinLivestream,
   getLivestreamById,
 } from "@/services/api/livestream/livestream";
+import { getLivestreamProducts } from "@/services/api/livestream/livestream";
+
 import type { ProductLiveStream } from "@/types/livestream/productLivestream";
-import type { Livestream } from "@/types/livestream/livestream";
+import type {
+  Livestream,
+  LivestreamProduct,
+} from "@/types/livestream/livestream";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import LoadingScreen from "@/components/common/LoadingScreen";
@@ -34,7 +39,6 @@ import {
   CircleCheck,
   CirclePlay,
   Clock,
-  Eye,
   UserCircle,
 } from "lucide-react";
 import { formatFullDateTimeVN } from "@/components/common/formatFullDateTimeVN";
@@ -215,6 +219,7 @@ const CustomerVideoDisplay: React.FC<CustomerVideoDisplayProps> = ({
 
 export default function SupportLive() {
   const { livestreamId } = useParams<{ livestreamId: string }>();
+  const [products, setProducts] = useState<LivestreamProduct[]>([]);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -228,13 +233,13 @@ export default function SupportLive() {
   const [refreshPin] = useState(false);
 
   const fetchLivestreamData = useCallback(async () => {
+    const datap = await getLivestreamProducts(livestreamId);
+    setProducts(datap || []);
     try {
       setLoading(true);
-      // 1) Always load livestream details
       const response = await getLivestreamById(livestreamId);
       setLivestream(response);
 
-      // 2) Try to get a join token, but don't fail the whole page if join isn't ready yet
       try {
         const joinResponse = await getJoinLivestream(livestreamId);
         setViewerToken(joinResponse.joinToken);
@@ -534,37 +539,11 @@ export default function SupportLive() {
                     <div className="flex items-center">
                       <CircleCheck className="w-4 h-4 text-green-600 mr-2" />
                       <span className="font-medium text-sm">
-                        Thời gian kết thúc:
+                        Số lượng sản phẩm:
                       </span>
                     </div>
                     <span className="ml-1 text-green-800 mt-0.5 font-medium">
-                      {livestream.actualEndTime
-                        ? formatFullDateTimeVN(livestream.actualEndTime)
-                        : "__ __"}
-                    </span>
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4 pt-4 ">
-                  <div className="flex flex-col items-center text-orange-600 bg-orange-100 py-2.5 rounded-sm">
-                    <div className="flex items-center">
-                      <Calendar className="w-4 h-4 text-orange-600 mr-2" />
-                      <span className="font-medium text-sm">Đơn hàng:</span>
-                    </div>
-                    <span className="ml-1 text-orange-800 mt-0.5 font-medium">
-                      {livestream.scheduledStartTime
-                        ? formatFullDateTimeVN(livestream.scheduledStartTime)
-                        : "__ __"}
-                    </span>
-                  </div>
-                  <div className="flex flex-col items-center text-yellow-600 bg-yellow-100 py-2.5 rounded-sm">
-                    <div className="flex items-center">
-                      <Eye className="w-4 h-4 text-yellow-600 mr-2" />
-                      <span className="font-medium text-sm">Lượt xem:</span>
-                    </div>
-                    <span className="ml-1 text-yellow-800 mt-0.5 font-medium">
-                      {livestream.scheduledStartTime
-                        ? formatFullDateTimeVN(livestream.scheduledStartTime)
-                        : "__ __"}
+                      {products ? products.length : 0}
                     </span>
                   </div>
                 </div>

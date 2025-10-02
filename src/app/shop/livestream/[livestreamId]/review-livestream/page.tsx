@@ -1,13 +1,14 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { getLivestreamById } from "@/services/api/livestream/livestream";
-import { Livestream } from "@/types/livestream/livestream";
+import { Livestream, LivestreamProduct } from "@/types/livestream/livestream";
 import { createReview } from "@/services/api/review/review";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
+import { getLivestreamProducts } from "@/services/api/livestream/livestream";
 import {
   Calendar,
   CircleCheck,
@@ -34,12 +35,15 @@ export default function Page() {
   const [reviewText, setReviewText] = React.useState("");
   const [submitting, setSubmitting] = React.useState(false);
   const [submitted, setSubmitted] = React.useState(false);
+  const [products, setProducts] = useState<LivestreamProduct[]>([]);
 
   React.useEffect(() => {
     let mounted = true;
     (async () => {
       try {
         setLoading(true);
+        const datap = await getLivestreamProducts(livestreamId);
+        setProducts(datap || []);
         const data = await getLivestreamById(livestreamId);
         if (mounted) setLive(data as Livestream);
       } catch (err) {
@@ -191,13 +195,13 @@ export default function Page() {
               <div className="grid grid-cols-2 gap-4 pt-4 ">
                 <div className="flex flex-col items-center text-orange-600 bg-orange-100 py-2.5 rounded-sm">
                   <div className="flex items-center">
-                    <Calendar className="w-4 h-4 text-orange-600 mr-2" />
-                    <span className="font-medium text-sm">Đơn hàng:</span>
+                    <CircleCheck className="w-4 h-4 text-orange-600 mr-2" />
+                    <span className="font-medium text-sm">
+                      Số lượng sản phẩm:
+                    </span>
                   </div>
                   <span className="ml-1 text-orange-800 mt-0.5 font-medium">
-                    {live.scheduledStartTime
-                      ? formatFullDateTimeVN(live.scheduledStartTime)
-                      : "__ __"}
+                    {products ? products.length : 0}
                   </span>
                 </div>
                 <div className="flex flex-col items-center text-yellow-600 bg-yellow-100 py-2.5 rounded-sm">
