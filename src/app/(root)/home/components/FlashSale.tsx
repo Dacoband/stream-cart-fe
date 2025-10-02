@@ -39,7 +39,6 @@ function FlashSale() {
         );
         setProductList(products);
 
-        // Fetch variant combinations (valueName) when variantId exists
         const combos = await Promise.all(
           flashSales.map(async (item: FlashSaleProductHome) => {
             try {
@@ -50,9 +49,7 @@ function FlashSale() {
                 )) as ProductCombination[];
                 return Array.isArray(list) ? list : [];
               }
-            } catch {
-              // ignore this item's error, keep list empty
-            }
+            } catch {}
             return [] as ProductCombination[];
           })
         );
@@ -113,9 +110,9 @@ function FlashSale() {
                 <Link href={`/product/${saleItem.productId}`} key={saleItem.id}>
                   <Card
                     key={saleItem.id}
-                    className="group py-0 hover:shadow-xl rounded-none transition-all duration-300 border-0 bg-white overflow-hidden hover:-translate-y-1 cursor-pointer"
+                    className="group py-0 hover:shadow-xl rounded-none transition-all duration-300 border-0 bg-white overflow-hidden hover:-translate-y-1 cursor-pointer h-full flex flex-col"
                   >
-                    <CardContent className="p-0">
+                    <CardContent className="p-0 flex flex-col h-full">
                       <div className="relative overflow-hidden">
                         <div className="aspect-square w-full relative overflow-hidden">
                           {product.primaryImageUrl ? (
@@ -133,10 +130,12 @@ function FlashSale() {
                           )}
                         </div>
 
+                        {/* FLASH badge */}
                         <div className="absolute top-2 left-2 bg-gradient-to-r from-red-500 to-orange-500 text-white px-2 py-1 rounded text-xs font-bold animate-pulse">
                           FLASH
                         </div>
 
+                        {/* % giảm */}
                         <div className="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded text-xs font-bold">
                           {product.discountPrice > 0 ? (
                             <>-{product.discountPrice.toFixed(0)}%</>
@@ -152,19 +151,25 @@ function FlashSale() {
                             </>
                           )}
                         </div>
+                      </div>
 
-                        <div className="pt-2 px-3 flex flex-col space-y-0">
-                          <h4 className="font-medium text-gray-900 mb-2  line-clamp-2 min-h-[48px] ">
+                      {/* Nội dung */}
+                      <div className=" flex flex-col flex-grow">
+                        <div className="px-3 ">
+                          <h4 className="font-medium text-gray-900  line-clamp-1 min-h-[24px]">
                             {product.productName}
                           </h4>
-
                           {variantLabel && (
-                            <div className="text-xs text-gray-500 mb-2">
-                              Phân loại: {variantLabel}
+                            <div className="flex gap-2   items-center">
+                              <p className="text-gray-600 text-sm">
+                                Phân loại:
+                              </p>
+                              <div className="  w-fit text-gray-600 font-medium px-2 py-1 rounded text-xs  whitespace-nowrap">
+                                {variantLabel}
+                              </div>
                             </div>
                           )}
-
-                          <div className="mb-2 flex gap-5 items-center">
+                          <div className="my-2 flex gap-5 items-center justify-between">
                             <span className="text-lg font-semibold text-red-600">
                               <PriceTag value={saleItem.flashSalePrice} />
                             </span>
@@ -174,12 +179,11 @@ function FlashSale() {
                           </div>
                         </div>
 
+                        {/* Button đẩy xuống cuối */}
                         <Button
-                          className="w-full rounded-none cursor-pointer bg-gradient-to-r from-red-500 to-orange-500 hover:from-orange-500 hover:to-red-500 text-white font-medium shadow-md hover:shadow-lg transition-all duration-300"
+                          className="w-full mt-auto rounded-none cursor-pointer bg-gradient-to-r from-red-500 to-orange-500 hover:from-orange-500 hover:to-red-500 text-white font-medium shadow-md hover:shadow-lg transition-all duration-300"
                           size="sm"
                         >
-                          {/* <ShoppingCart className="w-3 h-3 mr-1" />
-                        Mua ngay */}
                           Đã bán {saleItem.quantitySold}/
                           {saleItem.quantityAvailable}
                         </Button>
