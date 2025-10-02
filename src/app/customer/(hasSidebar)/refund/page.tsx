@@ -47,7 +47,7 @@ export default function ManageShopRefundsPage() {
   const [tab, setTab] = useState<TabValue>("created");
 
   return (
-    <div className="container mx-auto px-4 py-6 h-[calc(100vh-9rem)] flex flex-col">
+    <div className="container mx-auto px-4  h-[calc(100vh-9rem)] flex flex-col">
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900">
           Quản lý yêu cầu hoàn hàng
