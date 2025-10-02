@@ -22,14 +22,38 @@ function Statistical() {
   const [totalOrders, setTotalOrders] = React.useState<number>(0)
 
   // Helper: lấy tổng count từ nhiều cấu trúc payload khác nhau
-  const extractTotalCount = (payload: any): number => {
-    const d = payload?.data ?? payload
+  const extractTotalCount = (payload: unknown): number => {
+    const isObj = (v: unknown): v is Record<string, unknown> =>
+      typeof v === 'object' && v !== null
+
+    const get = (obj: unknown, path: string[]): unknown => {
+      let cur: unknown = obj
+      for (const key of path) {
+        if (!isObj(cur)) return undefined
+        cur = cur[key]
+      }
+      return cur
+    }
+
+    const asNum = (v: unknown): number | undefined =>
+      typeof v === 'number' && Number.isFinite(v) ? v : undefined
+
+    const arrLen = (v: unknown): number | undefined =>
+      Array.isArray(v) ? v.length : undefined
+
+    // nếu response bọc trong { data: ... } thì lấy ra
+    const d =
+      isObj(payload) && 'data' in payload
+        ? (payload as Record<string, unknown>).data
+        : payload
+
     return (
-      d?.totalCount ??
-      d?.data?.totalCount ??
-      d?.paging?.total ??
-      d?.items?.length ??
-      d?.data?.items?.length ??
+      asNum(get(d, ['totalCount'])) ??
+      asNum(get(d, ['data', 'totalCount'])) ??
+      asNum(get(d, ['paging', 'total'])) ??
+      arrLen(get(d, ['items'])) ??
+      arrLen(get(d, ['data', 'items'])) ??
+      arrLen(d) ??
       0
     )
   }
@@ -54,7 +78,7 @@ function Statistical() {
         ])
         console.log('user', usersArr)
         // Chuẩn hóa DTO thống kê hệ thống
-        const sys: any = (sysRes as any)?.data ?? sysRes
+        const sys = sysRes.data ?? sysRes
         setTotalRevenue(Number(sys?.totalRevenue ?? 0))
         setTotalOrders(Number(sys?.totalOrders ?? 0))
 
@@ -63,9 +87,9 @@ function Statistical() {
         console.log(shopsRes)
         // TẠM: tổng số buổi livestream = tổng shop (nếu có endpoint livestreams hệ thống, thay tại đây)
         setTotalLivestreams(extractTotalCount(shopsRes))
-      } catch (err: any) {
+      } catch (err) {
         console.error('Error fetching statistics:', err)
-        setError(err?.message || 'Không thể tải thống kê')
+        setError('Không thể tải thống kê')
       } finally {
         setLoading(false)
       }
