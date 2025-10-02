@@ -119,7 +119,7 @@ export default function RefundDetailPage() {
 
   const [orderCode, setOrderCode] = useState<string | null>(null);
   const [requestedByName, setRequestedByName] = useState<string | null>(null);
-  const [processedByName, setProcessedByName] = useState<string | null>(null);
+  // const [processedByName, setProcessedByName] = useState<string | null>(null)
   const [items, setItems] = useState<OrderItemResponse[]>([]);
   const [enrichedDetails, setEnrichedDetails] = useState<
     Record<string, EnrichedDetail>
@@ -166,10 +166,7 @@ export default function RefundDetailPage() {
         if (r?.lastModifiedBy && !isEmptyGuid(r.lastModifiedBy)) {
           try {
             const u = await getUserById(r.lastModifiedBy);
-            setProcessedByName(
-              u?.fullname || u?.fullName || u?.username || null
-            );
-
+            // processedByName is not used, so we skip setting it
             console.log("Processed by user:", u);
           } catch {}
         }
@@ -415,14 +412,7 @@ export default function RefundDetailPage() {
                 <span>Người yêu cầu:</span>
                 <span className="font-medium">{requestedByName || "—"}</span>
               </div>
-              <div className="flex justify-between">
-                <span>Người xử lý:</span>
-                <span className="font-medium">
-                  {isEmptyGuid(refund.lastModifiedBy)
-                    ? "—"
-                    : processedByName || "—"}
-                </span>
-              </div>
+
               <div className="flex justify-between">
                 <span>Thời gian xử lý:</span>
                 <span>
@@ -576,9 +566,11 @@ export default function RefundDetailPage() {
                 </span>
               </div>
               <div className="flex justify-between">
-                <span>Phí vận chuyển hoàn:</span>
+                <span>Mã giao dịch:</span>
                 <span>
-                  <PriceTag value={refund.shippingFee} />
+                  {refund.status === RefundStatus.Refunded
+                    ? refund.transactionId ?? "Chưa có giao dịch"
+                    : "Chưa có giao dịch"}
                 </span>
               </div>
               <hr />

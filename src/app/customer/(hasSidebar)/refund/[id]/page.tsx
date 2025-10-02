@@ -1,24 +1,24 @@
-"use client";
+'use client'
 
-import React, { useEffect, useState } from "react";
-import Link from "next/link";
-import Image from "next/image";
-import { useParams } from "next/navigation";
-import { toast } from "sonner";
+import React, { useEffect, useState } from 'react'
+import Link from 'next/link'
+import Image from 'next/image'
+import { useParams } from 'next/navigation'
+import { toast } from 'sonner'
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Skeleton } from "@/components/ui/skeleton";
-import PriceTag from "@/components/common/PriceTag";
-import { formatFullDateTimeVN } from "@/components/common/formatFullDateTimeVN";
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { Skeleton } from '@/components/ui/skeleton'
+import PriceTag from '@/components/common/PriceTag'
+import { formatFullDateTimeVN } from '@/components/common/formatFullDateTimeVN'
 
-import { getRefundById } from "@/services/api/refund/refund";
-import { getOrderById } from "@/services/api/order/order";
-import { getOrderProductByOrderId } from "@/services/api/order/ordersItem";
-import { getUserById } from "@/services/api/auth/account";
+import { getRefundById } from '@/services/api/refund/refund'
+import { getOrderById } from '@/services/api/order/order'
+import { getOrderProductByOrderId } from '@/services/api/order/ordersItem'
+import { getUserById } from '@/services/api/auth/account'
 
-import { RefundRequestDto, RefundStatus } from "@/types/refund/refund";
-import { OrderItemResponse } from "@/types/order/order";
+import { RefundRequestDto, RefundStatus } from '@/types/refund/refund'
+import { OrderItemResponse } from '@/types/order/order'
 
 import {
   Breadcrumb,
@@ -27,7 +27,7 @@ import {
   BreadcrumbList,
   BreadcrumbPage,
   BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
+} from '@/components/ui/breadcrumb'
 
 import {
   Receipt,
@@ -35,15 +35,15 @@ import {
   ClipboardList,
   Clock,
   ShieldCheck,
-} from "lucide-react";
+} from 'lucide-react'
 
 /* ===== Helpers ===== */
 const isEmptyGuid = (id?: string | null) =>
-  !id || id === "00000000-0000-0000-0000-000000000000";
+  !id || id === '00000000-0000-0000-0000-000000000000'
 
 const StatusBadge: React.FC<{ status: RefundStatus }> = ({ status }) => {
   const base =
-    "inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ring-1";
+    'inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ring-1'
   switch (status) {
     case RefundStatus.Created:
       return (
@@ -52,7 +52,7 @@ const StatusBadge: React.FC<{ status: RefundStatus }> = ({ status }) => {
         >
           Gửi yêu cầu
         </span>
-      );
+      )
     case RefundStatus.Confirmed:
     case RefundStatus.Packed:
     case RefundStatus.OnDelivery:
@@ -61,13 +61,13 @@ const StatusBadge: React.FC<{ status: RefundStatus }> = ({ status }) => {
         <span className={`${base} bg-blue-50 text-blue-800 ring-blue-200`}>
           Đang xử lý
         </span>
-      );
+      )
     case RefundStatus.Completed:
       return (
         <span className={`${base} bg-green-50 text-green-800 ring-green-200`}>
           Hoàn hàng thành công
         </span>
-      );
+      )
     case RefundStatus.Refunded:
       return (
         <span
@@ -75,106 +75,106 @@ const StatusBadge: React.FC<{ status: RefundStatus }> = ({ status }) => {
         >
           Hoàn tiền thành công
         </span>
-      );
+      )
     case RefundStatus.Rejected:
       return (
         <span className={`${base} bg-red-50 text-red-700 ring-red-200`}>
           Bị từ chối
         </span>
-      );
+      )
     default:
       return (
         <span className={`${base} bg-gray-50 text-gray-700 ring-gray-200`}>
           Không xác định
         </span>
-      );
+      )
   }
-};
+}
 
 type EnrichedDetail = {
-  productName?: string;
-  productImageUrl?: string;
-  quantity?: number;
-  totalPrice?: number;
-  reason?: string;
-  unitPrice?: number;
-  evidenceUrl?: string | null;
-};
+  productName?: string
+  productImageUrl?: string
+  quantity?: number
+  totalPrice?: number
+  reason?: string
+  unitPrice?: number
+  evidenceUrl?: string | null
+}
 
 /* ===== Page ===== */
 export default function CustomerRefundDetailPage() {
-  const params = useParams();
-  const id = params.id as string;
+  const params = useParams()
+  const id = params.id as string
 
-  const [loading, setLoading] = useState(true);
-  const [refund, setRefund] = useState<RefundRequestDto | null>(null);
+  const [loading, setLoading] = useState(true)
+  const [refund, setRefund] = useState<RefundRequestDto | null>(null)
 
-  const [orderCode, setOrderCode] = useState<string | null>(null);
-  const [requestedByName, setRequestedByName] = useState<string | null>(null);
-  const [processedByName, setProcessedByName] = useState<string | null>(null);
-  const [items, setItems] = useState<OrderItemResponse[]>([]);
+  const [orderCode, setOrderCode] = useState<string | null>(null)
+  const [requestedByName, setRequestedByName] = useState<string | null>(null)
+  const [processedByName, setProcessedByName] = useState<string | null>(null)
+  const [items, setItems] = useState<OrderItemResponse[]>([])
   const [enrichedDetails, setEnrichedDetails] = useState<
     Record<string, EnrichedDetail>
-  >({});
+  >({})
 
   useEffect(() => {
     const fetchAll = async () => {
-      if (!id) return;
-      setLoading(true);
+      if (!id) return
+      setLoading(true)
       try {
-        const r = await getRefundById(id);
-        setRefund(r);
+        const r = await getRefundById(id)
+        setRefund(r)
 
         if (r?.orderId) {
           try {
-            const ord = await getOrderById(r.orderId);
+            const ord = await getOrderById(r.orderId)
             const code =
               ord?.data?.data?.orderCode ??
               ord?.data?.orderCode ??
-              ord?.orderCode;
-            if (code) setOrderCode(code);
+              ord?.orderCode
+            if (code) setOrderCode(code)
 
-            const itemsPayload = await getOrderProductByOrderId(r.orderId);
-            let orderItems: OrderItemResponse[] = [];
-            if (Array.isArray(itemsPayload)) orderItems = itemsPayload;
-            else if (itemsPayload?.items) orderItems = itemsPayload.items;
+            const itemsPayload = await getOrderProductByOrderId(r.orderId)
+            let orderItems: OrderItemResponse[] = []
+            if (Array.isArray(itemsPayload)) orderItems = itemsPayload
+            else if (itemsPayload?.items) orderItems = itemsPayload.items
             else if (itemsPayload?.data?.items)
-              orderItems = itemsPayload.data.items;
-            setItems(orderItems);
+              orderItems = itemsPayload.data.items
+            setItems(orderItems)
           } catch {}
         }
 
         if (r?.requestedByUserId) {
           try {
-            const u = await getUserById(r.requestedByUserId);
+            const u = await getUserById(r.requestedByUserId)
             setRequestedByName(
               u?.fullname || u?.fullName || u?.username || null
-            );
+            )
           } catch {}
         }
         if (r?.lastModifiedBy && !isEmptyGuid(r.lastModifiedBy)) {
           try {
-            const u = await getUserById(r.lastModifiedBy);
+            const u = await getUserById(r.lastModifiedBy)
             setProcessedByName(
               u?.fullname || u?.fullName || u?.username || null
-            );
+            )
           } catch {}
         }
       } catch (error) {
-        console.log(error);
-        toast.error("Không thể tải chi tiết yêu cầu hoàn hàng");
+        console.log(error)
+        toast.error('Không thể tải chi tiết yêu cầu hoàn hàng')
       } finally {
-        setLoading(false);
+        setLoading(false)
       }
-    };
-    fetchAll();
-  }, [id]);
+    }
+    fetchAll()
+  }, [id])
 
   useEffect(() => {
-    if (!refund?.refundDetails || items.length === 0) return;
-    const map: Record<string, EnrichedDetail> = {};
+    if (!refund?.refundDetails || items.length === 0) return
+    const map: Record<string, EnrichedDetail> = {}
     for (const d of refund.refundDetails) {
-      const oi = items.find((i) => i.id === d.orderItemId);
+      const oi = items.find((i) => i.id === d.orderItemId)
       map[d.id] = {
         productName: oi?.productName,
         productImageUrl: oi?.productImageUrl,
@@ -183,10 +183,10 @@ export default function CustomerRefundDetailPage() {
         reason: d.reason,
         unitPrice: d.unitPrice,
         evidenceUrl: d.imageUrl ?? null,
-      };
+      }
     }
-    setEnrichedDetails(map);
-  }, [refund, items]);
+    setEnrichedDetails(map)
+  }, [refund, items])
 
   if (loading) {
     return (
@@ -200,7 +200,7 @@ export default function CustomerRefundDetailPage() {
           <Skeleton className="h-32 w-full" />
         </div>
       </div>
-    );
+    )
   }
 
   if (!refund) {
@@ -218,10 +218,10 @@ export default function CustomerRefundDetailPage() {
           </Link>
         </div>
       </div>
-    );
+    )
   }
 
-  const totalRefundOnlyItems = refund.refundAmount;
+  const totalRefundOnlyItems = refund.refundAmount
 
   return (
     <div className="min-h-screen w-full overflow-x-hidden bg-gray-50 ">
@@ -236,7 +236,7 @@ export default function CustomerRefundDetailPage() {
             </BreadcrumbItem>
             <BreadcrumbSeparator />
             <BreadcrumbItem>
-              <BreadcrumbPage>{orderCode || "—"}</BreadcrumbPage>
+              <BreadcrumbPage>{orderCode || '—'}</BreadcrumbPage>
             </BreadcrumbItem>
           </BreadcrumbList>
         </Breadcrumb>
@@ -257,7 +257,7 @@ export default function CustomerRefundDetailPage() {
               <div className="flex justify-between gap-2">
                 <span>Mã đơn hàng:</span>
                 <span className="font-semibold break-words text-right">
-                  {orderCode || "—"}
+                  {orderCode || '—'}
                 </span>
               </div>
               <div className="flex justify-between gap-2">
@@ -295,15 +295,15 @@ export default function CustomerRefundDetailPage() {
               <div className="flex justify-between gap-2">
                 <span>Người yêu cầu:</span>
                 <span className="font-medium break-words text-right">
-                  {requestedByName || "—"}
+                  {requestedByName || '—'}
                 </span>
               </div>
               <div className="flex justify-between gap-2">
                 <span>Người xử lý:</span>
                 <span className="font-medium break-words text-right">
                   {isEmptyGuid(refund.lastModifiedBy)
-                    ? "—"
-                    : processedByName || "—"}
+                    ? '—'
+                    : processedByName || '—'}
                 </span>
               </div>
               <div className="flex justify-between gap-2">
@@ -311,7 +311,7 @@ export default function CustomerRefundDetailPage() {
                 <span className="text-right">
                   {refund.lastModifiedAt
                     ? formatFullDateTimeVN(refund.lastModifiedAt)
-                    : "—"}
+                    : '—'}
                 </span>
               </div>
               {refund.transactionId && (
@@ -359,7 +359,7 @@ export default function CustomerRefundDetailPage() {
                   <div className="col-span-4 text-right">Thành tiền</div>
                 </div>
                 {refund.refundDetails.map((d, idx) => {
-                  const info = enrichedDetails[d.id] || {};
+                  const info = enrichedDetails[d.id] || {}
                   return (
                     <div
                       key={d.id}
@@ -370,17 +370,17 @@ export default function CustomerRefundDetailPage() {
                       </div>
                       <div className="col-span-9 flex gap-3">
                         <Image
-                          src={info.productImageUrl || "/assets/emptydata.png"}
-                          alt={info.productName || "product"}
+                          src={info.productImageUrl || '/assets/emptydata.png'}
+                          alt={info.productName || 'product'}
                           width={64}
                           height={64}
                           className="w-16 h-16 object-cover rounded"
                         />
                         <div className="flex-1 min-w-0">
                           <div className="font-medium text-gray-900 break-words whitespace-normal leading-snug">
-                            {info.productName || "—"}
+                            {info.productName || '—'}
                           </div>
-                          {typeof info.quantity === "number" && (
+                          {typeof info.quantity === 'number' && (
                             <div className="text-xs text-gray-600 mt-0.5">
                               x{info.quantity}
                             </div>
@@ -392,7 +392,7 @@ export default function CustomerRefundDetailPage() {
                       </div>
                       <div className="col-span-3 text-sm text-gray-700">
                         <div className="whitespace-pre-wrap break-words leading-snug">
-                          {d.reason || info.reason || "—"}
+                          {d.reason || info.reason || '—'}
                         </div>
                         {(d.imageUrl || info.evidenceUrl) && (
                           <a
@@ -408,7 +408,7 @@ export default function CustomerRefundDetailPage() {
                         <PriceTag value={info.totalPrice ?? d.unitPrice} />
                       </div>
                     </div>
-                  );
+                  )
                 })}
               </div>
             ) : (
@@ -436,7 +436,7 @@ export default function CustomerRefundDetailPage() {
                   <span className="font-medium">
                     {refund.createdAt
                       ? formatFullDateTimeVN(refund.createdAt)
-                      : "—"}
+                      : '—'}
                   </span>
                 </div>
                 <div className="text-sm text-gray-700">
@@ -444,7 +444,7 @@ export default function CustomerRefundDetailPage() {
                   <span className="font-medium">
                     {refund.lastModifiedAt
                       ? formatFullDateTimeVN(refund.lastModifiedAt)
-                      : "—"}
+                      : '—'}
                   </span>
                 </div>
               </div>
@@ -475,14 +475,11 @@ export default function CustomerRefundDetailPage() {
                 </span>
               </div>
               <div className="flex justify-between">
-                <span>Phí vận chuyển hoàn:</span>
-                <PriceTag value={refund.shippingFee} />
-              </div>
-              <hr />
-              <div className="flex justify-between font-medium text-base">
-                <span>Tổng hoàn lại:</span>
-                <span className="text-rose-600">
-                  <PriceTag value={totalRefundOnlyItems} />
+                <span>Mã giao dịch:</span>
+                <span>
+                  {refund.status === RefundStatus.Refunded
+                    ? refund.transactionId ?? 'Chưa có giao dịch'
+                    : 'Chưa có giao dịch'}
                 </span>
               </div>
             </div>
@@ -490,5 +487,5 @@ export default function CustomerRefundDetailPage() {
         </Card>
       </div>
     </div>
-  );
+  )
 }

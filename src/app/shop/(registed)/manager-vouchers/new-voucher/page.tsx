@@ -236,7 +236,9 @@ export default function VoucherPage() {
                     name="maxValue"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Giá trị tối đa (nếu có)</FormLabel>
+                        <FormLabel>
+                          Giá trị giảm tối đa (giảm theo phần trăm)
+                        </FormLabel>
                         <FormControl>
                           <div className="relative">
                             <Input
