@@ -83,7 +83,7 @@ export default function LoginForm() {
           router.push("/shop/dashboard");
           break;
         case 5:
-          router.push("/manager/dashboard");
+          router.push("/manager/refund");
           break;
         case 6:
           router.push("/admin/accounts");

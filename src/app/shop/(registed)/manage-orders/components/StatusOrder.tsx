@@ -341,14 +341,19 @@ export default function StatusOrder({ order, onStatusUpdated }: Props) {
               </div>
             </div>
 
-            {deadlineMessage && (
-              <div className="flex flex-col items-center">
-                <p className="text-xs text-gray-500 mb-2 ">Hạn xử lí</p>
-                <p className={`font-medium ${currentConfig.textColor} mb-2`}>
-                  {formatFullDateTimeVN(order.timeForShop)}
-                </p>
-              </div>
-            )}
+            {deadlineMessage &&
+              (order.orderStatus === 0 ||
+              order.orderStatus === 1 ||
+              order.orderStatus === 2 ? (
+                <div className="flex flex-col items-center">
+                  <p className="text-xs text-gray-500 mb-2 ">Hạn xử lí</p>
+                  <p className={`font-medium ${currentConfig.textColor} mb-2`}>
+                    {formatFullDateTimeVN(order.timeForShop)}
+                  </p>
+                </div>
+              ) : (
+                <div></div>
+              ))}
           </div>
         </div>
         {/* Action Button */}
