@@ -1,7 +1,7 @@
-"use client";
+'use client'
 
-import { Card } from "@/components/ui/card";
-import React from "react";
+import { Card } from '@/components/ui/card'
+import React from 'react'
 import {
   LineChart,
   Line,
@@ -10,59 +10,92 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-} from "recharts";
+} from 'recharts'
+import { getSystemOrderTimeSeries } from '@/services/api/statistics/statistics'
 
 interface RevenueDataItem {
-  day: string;
-  revenue: number;
-  date: string;
+  day: string // Nhãn thứ trong tuần (T2..CN)
+  revenue: number
+  date: string // dd/MM
 }
 
 interface TooltipProps {
-  active?: boolean;
+  active?: boolean
   payload?: Array<{
-    value: number;
-    dataKey: string;
-  }>;
-  label?: string;
+    value: number
+    dataKey: string
+  }>
+  label?: string
 }
 
 function RevenueChart() {
-  const [loading, setLoading] = React.useState(true);
-  const [revenueData, setRevenueData] = React.useState<RevenueDataItem[]>([]);
+  const [loading, setLoading] = React.useState(true)
+  const [error, setError] = React.useState<string | null>(null)
+  const [revenueData, setRevenueData] = React.useState<RevenueDataItem[]>([])
 
   React.useEffect(() => {
     const fetchRevenueData = async () => {
-      setLoading(true);
+      setLoading(true)
+      setError(null)
       try {
-        // TODO: Gọi API thực tế
-        // Hiện tại sử dụng dữ liệu demo cho 7 ngày gần nhất
-        const demoData = [
-          { day: "T2", revenue: 12500000, date: "20/08" },
-          { day: "T3", revenue: 15800000, date: "21/08" },
-          { day: "T4", revenue: 11200000, date: "22/08" },
-          { day: "T5", revenue: 18900000, date: "23/08" },
-          { day: "T6", revenue: 22300000, date: "24/08" },
-          { day: "T7", revenue: 19700000, date: "25/08" },
-          { day: "CN", revenue: 16500000, date: "26/08" },
-        ];
-        
-        setTimeout(() => {
-          setRevenueData(demoData);
-          setLoading(false);
-        }, 800);
-      } catch (err) {
-        console.error('Error fetching revenue data:', err);
-        setLoading(false);
+        // Lấy 7 ngày gần nhất (bao gồm hôm nay)
+        const to = new Date()
+        const from = new Date(to.getTime() - 6 * 24 * 60 * 60 * 1000)
+
+        // Gọi API hệ thống (period=daily)
+        const res = await getSystemOrderTimeSeries({
+          fromDate: from,
+          toDate: to,
+          period: 'daily',
+        })
+
+        // Service đang trả: response.data?.data ?? response.data
+        // nên ở đây res đã là DTO hoặc ApiResponse<DTO>. Xử lý an toàn:
+        const dto: any = (res as any)?.data ?? res
+
+        const points = dto?.dataPoints ?? []
+
+        // Map về dữ liệu chart
+        const viDays = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7']
+        const fmtDDMM = (d: Date) =>
+          `${String(d.getUTCDate()).padStart(2, '0')}/${String(
+            d.getUTCMonth() + 1
+          ).padStart(2, '0')}`
+
+        const data: RevenueDataItem[] = points.map((p: any) => {
+          const d = new Date(p.date)
+          const day = viDays[d.getUTCDay()]
+          return {
+            day,
+            revenue: Number(p.revenue ?? 0),
+            date: fmtDDMM(d),
+          }
+        })
+
+        // Đảm bảo đúng 7 điểm, sort theo ngày tăng dần
+        data.sort((a, b) => {
+          const [da, ma] = a.date.split('/').map(Number)
+          const [db, mb] = b.date.split('/').map(Number)
+          if (ma !== mb) return ma - mb
+          return da - db
+        })
+
+        setRevenueData(data)
+      } catch (err: any) {
+        console.error('Error fetching revenue data:', err)
+        setError(err?.message || 'Không thể tải dữ liệu doanh thu')
+      } finally {
+        setLoading(false)
       }
-    };
+    }
 
-    fetchRevenueData();
-  }, []);
+    fetchRevenueData()
+  }, [])
 
-  const formatCurrency = (value: number) => {
-    return `${(value / 1000000).toFixed(1)}M`;
-  };
+  const formatCurrencyAxis = (value: number) => {
+    // Hiển thị theo triệu: 12.3M
+    return `${(value / 1_000_000).toFixed(1)}M`
+  }
 
   const CustomTooltip = ({ active, payload, label }: TooltipProps) => {
     if (active && payload && payload.length) {
@@ -73,10 +106,21 @@ function RevenueChart() {
             {`Doanh thu: ${payload[0].value.toLocaleString()}đ`}
           </p>
         </div>
-      );
+      )
     }
-    return null;
-  };
+    return null
+  }
+
+  const avg =
+    revenueData.length > 0
+      ? revenueData.reduce((s, i) => s + i.revenue, 0) / revenueData.length
+      : 0
+
+  const maxVal =
+    revenueData.length > 0 ? Math.max(...revenueData.map((i) => i.revenue)) : 0
+
+  const minVal =
+    revenueData.length > 0 ? Math.min(...revenueData.map((i) => i.revenue)) : 0
 
   return (
     <Card className="p-6 h-full">
@@ -91,29 +135,32 @@ function RevenueChart() {
         <div className="h-80 flex items-center justify-center">
           <div className="animate-pulse text-gray-500">Đang tải dữ liệu...</div>
         </div>
+      ) : error ? (
+        <div className="h-80 flex items-center justify-center">
+          <div className="text-red-600">{error}</div>
+        </div>
       ) : (
         <div className="h-80">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={revenueData}>
               <CartesianGrid strokeDasharray="3 3" />
-              <XAxis 
-                dataKey="day" 
+              <XAxis dataKey="day" tick={{ fontSize: 12 }} axisLine={false} />
+              <YAxis
+                tickFormatter={formatCurrencyAxis}
                 tick={{ fontSize: 12 }}
                 axisLine={false}
               />
-              <YAxis 
-                tickFormatter={formatCurrency}
-                tick={{ fontSize: 12 }}
-                axisLine={false}
+              <Tooltip
+                labelFormatter={(_, payload) => payload?.[0]?.payload?.date}
+                content={<CustomTooltip />}
               />
-              <Tooltip content={<CustomTooltip />} />
               <Line
                 type="monotone"
                 dataKey="revenue"
                 stroke="#3B82F6"
                 strokeWidth={3}
-                dot={{ fill: "#3B82F6", strokeWidth: 2, r: 4 }}
-                activeDot={{ r: 6, stroke: "#3B82F6", strokeWidth: 2 }}
+                dot={{ fill: '#3B82F6', strokeWidth: 2, r: 4 }}
+                activeDot={{ r: 6, stroke: '#3B82F6', strokeWidth: 2 }}
               />
             </LineChart>
           </ResponsiveContainer>
@@ -124,24 +171,24 @@ function RevenueChart() {
         <div className="text-center">
           <div className="text-gray-500">Trung bình/ngày</div>
           <div className="font-semibold text-blue-600">
-            {loading ? "..." : `${(revenueData.reduce((sum, item) => sum + item.revenue, 0) / revenueData.length).toLocaleString()}đ`}
+            {loading ? '...' : `${Math.round(avg).toLocaleString()}đ`}
           </div>
         </div>
         <div className="text-center">
           <div className="text-gray-500">Cao nhất</div>
           <div className="font-semibold text-green-600">
-            {loading ? "..." : `${Math.max(...revenueData.map(item => item.revenue)).toLocaleString()}đ`}
+            {loading ? '...' : `${maxVal.toLocaleString()}đ`}
           </div>
         </div>
         <div className="text-center">
           <div className="text-gray-500">Thấp nhất</div>
           <div className="font-semibold text-red-600">
-            {loading ? "..." : `${Math.min(...revenueData.map(item => item.revenue)).toLocaleString()}đ`}
+            {loading ? '...' : `${minVal.toLocaleString()}đ`}
           </div>
         </div>
       </div>
     </Card>
-  );
+  )
 }
 
-export default RevenueChart;
+export default RevenueChart

@@ -26,27 +26,25 @@ export interface RegisterShop {
   description: string
   logoURL: string
   coverImageURL: string
-  street:string
-  ward:string
-  district:string
-  city:string
-  country:string
-  postalCode:string;
-  phoneNumber:string;
-  bankName: string,
-  bankNumber: string,
+  street: string
+  ward: string
+  district: string
+  city: string
+  country: string
+  postalCode: string
+  phoneNumber: string
+  bankName: string
+  bankNumber: string
   tax: string
 }
 
-
-
 export interface FilterShop {
-  pageNumber: number
+  pageNumber?: number
   pageSize: number
-  status: string
-  approvalStatus: string
-  searchTerm: string
-  sortBy: string
+  status?: string
+  approvalStatus?: string
+  searchTerm?: string
+  sortBy?: string
   ascending: boolean
 }
 

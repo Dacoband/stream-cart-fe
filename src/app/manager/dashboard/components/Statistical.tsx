@@ -1,36 +1,81 @@
-"use client";
+'use client'
 
-import { CircleDollarSign, Eye, ShoppingCart, UserRound } from "lucide-react";
-import React from "react";
+import { CircleDollarSign, Eye, ShoppingCart, UserRound } from 'lucide-react'
+import React from 'react'
+import { getSystemOrderStatistics } from '@/services/api/statistics/statistics'
+// Đổi path cho đúng dự án của bạn
+import {
+  getAllUsersForAdmin,
+  getCurrentUser,
+} from '@/services/api/auth/account'
+import { getAllShops } from '@/services/api/shop/shop'
+import { FilterShop } from '@/types/shop/shop'
 
 function Statistical() {
-  const [loading, setLoading] = React.useState(true);
+  const [loading, setLoading] = React.useState(true)
+  const [error, setError] = React.useState<string | null>(null)
 
   // State cho các thống kê
-  const [totalRevenue, setTotalRevenue] = React.useState<number>(0);
-  const [totalUsers, setTotalUsers] = React.useState<number>(0);
-  const [totalLivestreams, setTotalLivestreams] = React.useState<number>(0);
-  const [totalOrders, setTotalOrders] = React.useState<number>(0);
+  const [totalRevenue, setTotalRevenue] = React.useState<number>(0)
+  const [totalUsers, setTotalUsers] = React.useState<number>(0)
+  const [totalLivestreams, setTotalLivestreams] = React.useState<number>(0) // tạm dùng tổng shop
+  const [totalOrders, setTotalOrders] = React.useState<number>(0)
+
+  // Helper: lấy tổng count từ nhiều cấu trúc payload khác nhau
+  const extractTotalCount = (payload: any): number => {
+    const d = payload?.data ?? payload
+    return (
+      d?.totalCount ??
+      d?.data?.totalCount ??
+      d?.paging?.total ??
+      d?.items?.length ??
+      d?.data?.items?.length ??
+      0
+    )
+  }
 
   React.useEffect(() => {
     const fetchStatistics = async () => {
-      setLoading(true);
+      setLoading(true)
+      setError(null)
       try {
-        setTimeout(() => {
-          setTotalRevenue(452000);
-          setTotalUsers(6);
-          setTotalLivestreams(8);
-          setTotalOrders(9);
-          setLoading(false);
-        }, 1000);
-      } catch (err) {
-        console.error("Error fetching statistics:", err);
-        setLoading(false);
-      }
-    };
+        // 30 ngày gần nhất
+        const to = new Date()
+        const from = new Date(to.getTime() - 30 * 24 * 60 * 60 * 1000)
+        const EMPTY_FILTER_SHOP: FilterShop = {
+          pageNumber: 1,
+          pageSize: 1000,
+          ascending: true,
+        }
+        const [sysRes, usersArr, shopsRes] = await Promise.all([
+          getSystemOrderStatistics({ fromDate: from, toDate: to }),
+          getCurrentUser(), // trả về mảng users
+          getAllShops(EMPTY_FILTER_SHOP),
+        ])
+        console.log('user', usersArr)
+        // Chuẩn hóa DTO thống kê hệ thống
+        const sys: any = (sysRes as any)?.data ?? sysRes
+        setTotalRevenue(Number(sys?.totalRevenue ?? 0))
+        setTotalOrders(Number(sys?.totalOrders ?? 0))
 
-    fetchStatistics();
-  }, []);
+        // Tổng người dùng (đã gộp role 1,2,3,5)
+        setTotalUsers(Array.isArray(usersArr) ? usersArr.length - 1 : 0)
+        console.log(shopsRes)
+        // TẠM: tổng số buổi livestream = tổng shop (nếu có endpoint livestreams hệ thống, thay tại đây)
+        setTotalLivestreams(extractTotalCount(shopsRes))
+      } catch (err: any) {
+        console.error('Error fetching statistics:', err)
+        setError(err?.message || 'Không thể tải thống kê')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchStatistics()
+  }, [])
+
+  const renderValue = (val: number, suffix?: string) =>
+    loading ? '...' : `${val.toLocaleString()}${suffix ?? ''}`
 
   return (
     <div className="rounded-sm">
@@ -43,7 +88,7 @@ function Statistical() {
           <div className="flex items-center justify-between">
             <div className="flex">
               <span className="text-3xl font-bold text-black">
-                {loading ? "..." : totalRevenue.toLocaleString()}
+                {renderValue(totalRevenue)}
               </span>
               <span className="text-lg font-semibold text-black mb-0.5">đ</span>
             </div>
@@ -51,7 +96,7 @@ function Statistical() {
               <CircleDollarSign className="text-yellow-500" size={28} />
             </span>
           </div>
-          <div className="flex items-center gap-2 mt-2"></div>
+          {error && <div className="text-xs text-red-600 mt-2">{error}</div>}
         </div>
 
         {/* Tổng số người dùng */}
@@ -61,29 +106,31 @@ function Statistical() {
           </div>
           <div className="flex items-center justify-between">
             <span className="text-3xl font-bold text-black">
-              {loading ? "..." : totalUsers.toLocaleString()}
+              {renderValue(totalUsers)}
             </span>
             <span className="bg-blue-100 rounded-xl p-2">
               <UserRound className="text-blue-500" size={28} />
             </span>
           </div>
-          <div className="flex items-center gap-2 mt-2"></div>
         </div>
 
-        {/* Số buổi livestream */}
+        {/* Số buổi livestream (tạm = tổng shop) */}
         <div className="bg-white rounded-lg p-5 min-w-[220px] border-t-purple-500 border-t-4 shadow">
           <div className="text-gray-500 text-sm font-semibold mb-1">
-            Số buổi livestream
+            Tổng số cửa hàng
           </div>
           <div className="flex items-center justify-between">
             <span className="text-3xl font-bold text-black">
-              {loading ? "..." : totalLivestreams}
+              {renderValue(totalLivestreams)}
             </span>
             <span className="bg-purple-100 rounded-xl p-2">
               <Eye className="text-purple-500" size={28} />
             </span>
           </div>
-          <div className="flex items-center gap-2 mt-2"></div>
+          {/* Khi có endpoint livestreams hệ thống:
+              const lsCount = await getAllLivestreamsCount();
+              setTotalLivestreams(lsCount);
+          */}
         </div>
 
         {/* Tổng số đơn hàng */}
@@ -93,17 +140,16 @@ function Statistical() {
           </div>
           <div className="flex items-center justify-between">
             <span className="text-3xl font-bold text-black">
-              {loading ? "..." : totalOrders.toLocaleString()}
+              {renderValue(totalOrders)}
             </span>
             <span className="bg-orange-100 rounded-xl p-2">
               <ShoppingCart className="text-orange-500" size={28} />
             </span>
           </div>
-          <div className="flex items-center gap-2 mt-2"></div>
         </div>
       </div>
     </div>
-  );
+  )
 }
 
-export default Statistical;
+export default Statistical

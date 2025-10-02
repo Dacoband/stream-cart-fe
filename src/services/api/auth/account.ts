@@ -120,3 +120,24 @@ export const getAllUsersForAdmin = async () => {
     throw new Error('Xảy ra lỗi trong quá trình tải danh sách người dùng.')
   }
 }
+
+export const getCurrentUser = async () => {
+  try {
+    const token = localStorage.getItem('token')
+    if (!token) {
+      throw new Error('Not found token.')
+    }
+    const response = await rootApi.get('accounts', {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
+    console.log('current user', response)
+    return response.data?.data || null
+  } catch (error) {
+    console.error('Error fetching current user:', error)
+    throw new Error(
+      'Xảy ra lỗi trong quá trình tải thông tin người dùng hiện tại.'
+    )
+  }
+}
