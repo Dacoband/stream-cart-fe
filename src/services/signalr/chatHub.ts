@@ -181,7 +181,7 @@ class ChatHubService {
   }
 
   async ensureStarted() {
-    return this.waitForConnected(8000);
+    return this.waitForConnected(5000);
   }
 
   // ---------- helpers ----------
@@ -256,6 +256,7 @@ class ChatHubService {
   async sendLivestreamMessage(livestreamId: string, message: string) {
     await this.invokeWhenConnected('SendMessageToLivestream', livestreamId, message);
   }
+ 
 
   onReceiveLivestreamMessage(cb: (payload: LivestreamMessagePayload) => void) {
   this.connection?.off('ReceiveLivestreamMessage');
@@ -286,21 +287,39 @@ class ChatHubService {
   }
 
   onUserJoined(cb: (payload: UserPresencePayload) => void) {
-  this.connection?.off('UserJoined');
-  this.connection?.off('userjoined' as unknown as string);
-  const handler = (payload: UserPresencePayload) => cb(payload);
-  this.connection?.on('UserJoined', handler as unknown as (...args: never[]) => void);
-  this.connection?.on('userjoined' as unknown as string, handler as unknown as (...args: never[]) => void);
+    this.connection?.off('UserJoined');
+    this.connection?.off('userjoined' as unknown as string);
+    type RawPresence = { userId?: string; UserId?: string; timestamp?: string; Timestamp?: string; role?: string; Role?: string };
+    const handler = (raw: RawPresence) => {
+      const payload: UserPresencePayload = {
+        userId: this.toStr(raw?.userId ?? raw?.UserId) ?? '',
+        timestamp: this.toStr(raw?.timestamp ?? raw?.Timestamp) ?? new Date().toISOString(),
+      };
+      cb(payload);
+    };
+    this.connection?.on('UserJoined', handler as unknown as (...args: never[]) => void);
+    this.connection?.on('userjoined' as unknown as string, handler as unknown as (...args: never[]) => void);
   }
 
   onUserLeft(cb: (payload: UserPresencePayload) => void) {
     this.connection?.off('UserLeft');
-    this.connection?.on('UserLeft', cb);
+    this.connection?.off('userleft' as unknown as string);
+    type RawPresence = { userId?: string; UserId?: string; timestamp?: string; Timestamp?: string; role?: string; Role?: string };
+    const handler = (raw: RawPresence) => {
+      const payload: UserPresencePayload = {
+        userId: this.toStr(raw?.userId ?? raw?.UserId) ?? '',
+        timestamp: this.toStr(raw?.timestamp ?? raw?.Timestamp) ?? new Date().toISOString(),
+        
+      };
+      cb(payload);
+    };
+    this.connection?.on('UserLeft', handler as unknown as (...args: never[]) => void);
+    this.connection?.on('userleft' as unknown as string, handler as unknown as (...args: never[]) => void);
   }
 
-  onViewerStats(cb: (payload: ViewerStatsPayload) => void) {
-  this.connection?.off('ReceiveViewerStats');
-  this.connection?.off('receiveviewerstats' as unknown as string);
+  onViewerStats(cb: (payload: ViewerStatsPayload) => void): (() => void) | void {
+    const conn = this.connection;
+    if (!conn) return;
     type RawStats = {
       livestreamId?: string; LivestreamId?: string;
       totalViewers?: number; TotalViewers?: number;
@@ -334,9 +353,42 @@ class ChatHubService {
         this.peakCustomerByLive.set(normalized.livestreamId, nextPeak);
       }
       cb(normalized);
-  };
-  this.connection?.on('ReceiveViewerStats', handler as unknown as (...args: never[]) => void);
-  this.connection?.on('receiveviewerstats' as unknown as string, handler as unknown as (...args: never[]) => void);
+    };
+  const handlerFn = handler as unknown as (...args: unknown[]) => void;
+  conn.on('ReceiveViewerStats', handlerFn);
+  conn.on('receiveviewerstats' as unknown as string, handlerFn);
+
+    // Return an unsubscribe to remove only this handler
+    return () => {
+      try { conn.off('ReceiveViewerStats', handlerFn); } catch {}
+      try { conn.off('receiveviewerstats' as unknown as string, handlerFn); } catch {}
+    };
+  }
+
+  // Optional convenience: listen to the ViewingStarted event emitted to the caller
+  onViewingStarted(cb: (payload: { livestreamId: string; userId: string; role?: string; groupName?: string; connectionId?: string; message?: string; timestamp?: string }) => void) {
+    this.connection?.off('ViewingStarted');
+    type RawViewingStarted = {
+      livestreamId?: string; LivestreamId?: string;
+      userId?: string; UserId?: string;
+      role?: string; Role?: string;
+      groupName?: string; GroupName?: string;
+      connectionId?: string; ConnectionId?: string;
+      message?: string; Message?: string;
+      timestamp?: string; Timestamp?: string;
+    };
+    const handler = (raw: RawViewingStarted) => {
+      cb({
+        livestreamId: this.toStr(raw?.livestreamId ?? raw?.LivestreamId) ?? '',
+        userId: this.toStr(raw?.userId ?? raw?.UserId) ?? '',
+        role: this.toStr(raw?.role ?? raw?.Role),
+        groupName: this.toStr(raw?.groupName ?? raw?.GroupName),
+        connectionId: this.toStr(raw?.connectionId ?? raw?.ConnectionId),
+        message: this.toStr(raw?.message ?? raw?.Message),
+        timestamp: this.toStr(raw?.timestamp ?? raw?.Timestamp) ?? new Date().toISOString(),
+      });
+    };
+    this.connection?.on('ViewingStarted', handler as unknown as (...args: never[]) => void);
   }
 
   // ---------- Product: invoke hub methods ----------

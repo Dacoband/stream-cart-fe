@@ -94,7 +94,7 @@ function RecommendedProducts() {
                     {/* Discount */}
                     {item.discountPrice > 0 && (
                       <div className="absolute top-2 right-2 bg-[#B7F560] text-black px-2 py-1 rounded text-xs font-bold">
-                        -{item.discountPrice}%
+                        -{item.discountPrice.toFixed(0)}%
                       </div>
                     )}
                   </div>

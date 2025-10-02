@@ -149,8 +149,8 @@ export default function SellerLiveStream() {
               onError={(error) => {
                 console.error("LiveKit error:", error);
               }}
-              audio={false}
-              video={false}
+              audio={localStorage.getItem("live_mic_on") !== "false"}
+              video={localStorage.getItem("live_cam_on") !== "false"}
             >
               <div className="flex w-full bg-black  h-full">
                 {!isFullscreen && (

@@ -11,12 +11,18 @@ import { getProductById } from "@/services/api/product/product";
 import LoadingCard from "./LoadingCard";
 import PriceTag from "@/components/common/PriceTag";
 import Link from "next/link";
+import { getCombinatonByVariantId } from "@/services/api/product/productCombination";
+import { ProductCombination } from "@/types/product/productCombination";
 
+type FlashSaleWithVariant = FlashSaleProductHome & { variantId?: string };
 function FlashSale() {
   const [flashSaleList, setFlashSaleList] = useState<FlashSaleProductHome[]>(
     []
   );
   const [productList, setProductList] = useState<Product[]>([]);
+  const [combinationList, setCombinationList] = useState<
+    ProductCombination[][]
+  >([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -32,6 +38,22 @@ function FlashSale() {
           })
         );
         setProductList(products);
+
+        const combos = await Promise.all(
+          flashSales.map(async (item: FlashSaleProductHome) => {
+            try {
+              const vId = (item as FlashSaleWithVariant).variantId;
+              if (vId) {
+                const list = (await getCombinatonByVariantId(
+                  vId
+                )) as ProductCombination[];
+                return Array.isArray(list) ? list : [];
+              }
+            } catch {}
+            return [] as ProductCombination[];
+          })
+        );
+        setCombinationList(combos);
       } catch (err) {
         console.error("Lỗi khi tải flash sale hoặc sản phẩm:", err);
       } finally {
@@ -77,15 +99,20 @@ function FlashSale() {
           <div className="grid grid-cols-6 gap-x-5 gap-y-10 pt-2 mb-5">
             {flashSaleList.slice(0, 6).map((saleItem, index) => {
               const product = productList[index];
+              const combos = combinationList[index] || [];
+              const variantLabel = combos
+                .map((c) => c?.valueName)
+                .filter(Boolean)
+                .join(", ");
               if (!product) return null;
 
               return (
                 <Link href={`/product/${saleItem.productId}`} key={saleItem.id}>
                   <Card
                     key={saleItem.id}
-                    className="group py-0 hover:shadow-xl rounded-none transition-all duration-300 border-0 bg-white overflow-hidden hover:-translate-y-1 cursor-pointer"
+                    className="group py-0 hover:shadow-xl rounded-none transition-all duration-300 border-0 bg-white overflow-hidden hover:-translate-y-1 cursor-pointer h-full flex flex-col"
                   >
-                    <CardContent className="p-0">
+                    <CardContent className="p-0 flex flex-col h-full">
                       <div className="relative overflow-hidden">
                         <div className="aspect-square w-full relative overflow-hidden">
                           {product.primaryImageUrl ? (
@@ -103,13 +130,15 @@ function FlashSale() {
                           )}
                         </div>
 
+                        {/* FLASH badge */}
                         <div className="absolute top-2 left-2 bg-gradient-to-r from-red-500 to-orange-500 text-white px-2 py-1 rounded text-xs font-bold animate-pulse">
                           FLASH
                         </div>
 
+                        {/* % giảm */}
                         <div className="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded text-xs font-bold">
                           {product.discountPrice > 0 ? (
-                            <>-{product.discountPrice}%</>
+                            <>-{product.discountPrice.toFixed(0)}%</>
                           ) : (
                             <>
                               -
@@ -122,13 +151,25 @@ function FlashSale() {
                             </>
                           )}
                         </div>
+                      </div>
 
-                        <div className="pt-2 px-3 flex flex-col space-y-0">
-                          <h4 className="font-medium text-gray-900 mb-2  line-clamp-2 min-h-[48px] ">
+                      {/* Nội dung */}
+                      <div className=" flex flex-col flex-grow">
+                        <div className="px-3 ">
+                          <h4 className="font-medium text-gray-900  line-clamp-1 min-h-[24px]">
                             {product.productName}
                           </h4>
-
-                          <div className="mb-2 flex gap-5 items-center">
+                          {variantLabel && (
+                            <div className="flex gap-2   items-center">
+                              <p className="text-gray-600 text-sm">
+                                Phân loại:
+                              </p>
+                              <div className="  w-fit text-gray-600 font-medium px-2 py-1 rounded text-xs  whitespace-nowrap">
+                                {variantLabel}
+                              </div>
+                            </div>
+                          )}
+                          <div className="my-2 flex gap-5 items-center justify-between">
                             <span className="text-lg font-semibold text-red-600">
                               <PriceTag value={saleItem.flashSalePrice} />
                             </span>
@@ -138,12 +179,11 @@ function FlashSale() {
                           </div>
                         </div>
 
+                        {/* Button đẩy xuống cuối */}
                         <Button
-                          className="w-full rounded-none cursor-pointer bg-gradient-to-r from-red-500 to-orange-500 hover:from-orange-500 hover:to-red-500 text-white font-medium shadow-md hover:shadow-lg transition-all duration-300"
+                          className="w-full mt-auto rounded-none cursor-pointer bg-gradient-to-r from-red-500 to-orange-500 hover:from-orange-500 hover:to-red-500 text-white font-medium shadow-md hover:shadow-lg transition-all duration-300"
                           size="sm"
                         >
-                          {/* <ShoppingCart className="w-3 h-3 mr-1" />
-                        Mua ngay */}
                           Đã bán {saleItem.quantitySold}/
                           {saleItem.quantityAvailable}
                         </Button>

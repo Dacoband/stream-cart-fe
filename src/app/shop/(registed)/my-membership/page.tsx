@@ -92,9 +92,6 @@ const StatusIcon = ({ status }: { status: string }) => {
   }
 };
 
-/* ===========================
-   Page
-=========================== */
 export default function MyMembershipPage() {
   const { user, loading: authLoading = false } = useAuth();
 
@@ -161,7 +158,6 @@ export default function MyMembershipPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mounted, authLoading, user?.shopId]);
 
-  // fetch khi đổi tab
   useEffect(() => {
     if (!mounted || authLoading || !user?.shopId) return;
     fetchMemberships();
@@ -214,16 +210,17 @@ export default function MyMembershipPage() {
               className={`py-1.5 px-5 ${statusAccent(m.status)} text-white`}
             >
               <div className="flex items-center justify-between">
-                <CardTitle className="text-lg flex items-center gap-2">
+                <CardTitle className="text-lg flex  items-center gap-2">
                   <StatusIcon status={m.status} />
                   Gói thành viên
                 </CardTitle>
                 <StatusBadge status={m.status} />
               </div>
             </CardHeader>
-            <CardContent className="flex h-full flex-col gap-4 pt-4">
+            <CardContent className="flex h-full flex-col gap-4 ">
               {/* Dates */}
-              <div className="grid grid-cols-2 gap-4 text-sm">
+
+              {/* <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
                   <p className="text-gray-600">Ngày bắt đầu</p>
                   <p className="font-medium">{fmtDate(m.startDate)}</p>
@@ -232,20 +229,36 @@ export default function MyMembershipPage() {
                   <p className="text-gray-600">Ngày kết thúc</p>
                   <p className="font-medium">{fmtDate(m.endDate)}</p>
                 </div>
-              </div>
+              </div> */}
               {/* Features */}
-              <div className="grid grid-cols-1 gap-2 text-sm">
-                <div className="flex items-center gap-2">
-                  <Video className="h-4 w-4 text-gray-500" />
-                  <span>
-                    Thời gian live còn lại: {m.remainingLivestream} phút
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between items-center border-b pb-1">
+                  <span className="flex items-center gap-2 text-gray-600">
+                    <Clock className="h-4 w-4" />
+                    Ngày bắt đầu
+                  </span>
+                  <span className="font-medium">{fmtDate(m.startDate)}</span>
+                </div>
+
+                <div className="flex justify-between items-center border-b pb-1">
+                  <span className="flex items-center gap-2 text-gray-600">
+                    <Video className="h-4 w-4" />
+                    Thời gian live còn lại
+                  </span>
+                  <span className="font-medium text-red-500">
+                    {m.remainingLivestream} phút
                   </span>
                 </div>
 
                 {!!m.commission && (
-                  <div className="flex items-center gap-2">
-                    <Box className="h-4 w-4 text-gray-500" />
-                    <span>Hoa hồng trong 1 đơn hàng: {m.commission}%</span>
+                  <div className="flex justify-between items-center">
+                    <span className="flex items-center gap-2 text-gray-600">
+                      <Box className="h-4 w-4" />
+                      Hoa hồng / đơn
+                    </span>
+                    <span className="font-medium text-green-600">
+                      {m.commission}%
+                    </span>
                   </div>
                 )}
               </div>
@@ -332,7 +345,7 @@ export default function MyMembershipPage() {
               onClick={() => {
                 setFromDate("");
                 setToDate("");
-                lastParamsKey.current = ""; // clear để lần fetch sau không bị block
+                lastParamsKey.current = ""; // clear để lần fetch
               }}
               className="border-emerald-300 text-emerald-700 hover:bg-emerald-50"
             >
@@ -340,7 +353,7 @@ export default function MyMembershipPage() {
             </Button>
             <Button
               onClick={() => {
-                lastParamsKey.current = ""; // thay đổi filter -> ép fetch
+                lastParamsKey.current = ""; // thay đổi filter
                 fetchMemberships();
               }}
               disabled={loading || authLoading}
@@ -357,7 +370,7 @@ export default function MyMembershipPage() {
         value={activeTab}
         onValueChange={(v) => {
           setActiveTab(v);
-          lastParamsKey.current = ""; // đổi tab -> cho phép fetch
+          lastParamsKey.current = ""; // đổi tab
         }}
         className="space-y-6"
       >

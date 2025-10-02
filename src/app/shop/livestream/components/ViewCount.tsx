@@ -11,31 +11,17 @@ interface ViewerCountProps {
 
 export function ViewerCount({ livestreamId }: ViewerCountProps) {
   const [stats, setStats] = React.useState<ViewerStatsPayload | null>(null);
-
-  // Chỉ tính Customer viewers
-  const viewerCount = React.useMemo(() => {
-    if (!stats) return 0;
-
-    // Nếu server trả trực tiếp customerViewers thì dùng luôn
-    if (
-      typeof stats.customerViewers === "number" &&
-      Number.isFinite(stats.customerViewers)
-    ) {
-      return stats.customerViewers;
-    }
-
-    // // Nếu không, fallback sang ViewersByRole
-    // const roleMap = stats.viewersByRole || {};
-    // for (const [role, count] of Object.entries(roleMap)) {
-    //   if (String(role).toLowerCase() === "customer") {
-    //     return Number(count) || 0;
-    //   }
-    // }
-
-    return 0;
+  const unsubscribeRef = React.useRef<void | (() => void)>(undefined);
+  const customerCount = React.useMemo(() => {
+    // Prefer viewersByRole["Customer"]. If missing, show 0 (ignore customerViewers field).
+    const roleMap = stats?.viewersByRole;
+    const value =
+      roleMap && typeof roleMap["Customer"] === "number"
+        ? roleMap["Customer"]
+        : undefined;
+    return typeof value === "number" && Number.isFinite(value) ? value : 0;
   }, [stats]);
 
-  // Lắng nghe viewer stats từ SignalR
   React.useEffect(() => {
     if (!livestreamId) return;
     let mounted = true;
@@ -43,31 +29,36 @@ export function ViewerCount({ livestreamId }: ViewerCountProps) {
     (async () => {
       try {
         await chatHubService.ensureStarted();
-        // Tham gia nhóm viewers để nhận thống kê chính xác
-        try {
-          await chatHubService.startViewingLivestream(livestreamId);
-        } catch {}
-        // Optional: cũng join phòng chat nếu server phát cùng nhóm
-        try {
-          await chatHubService.joinLivestream(livestreamId);
-        } catch {}
 
-        chatHubService.onViewerStats((payload) => {
+        // Subscribe BEFORE starting/joining to capture immediate ReceiveViewerStats
+        unsubscribeRef.current = chatHubService.onViewerStats((payload) => {
           if (!mounted) return;
           if (
             payload.livestreamId?.toLowerCase?.() === livestreamId.toLowerCase()
           ) {
+            console.log("[UI] ReceiveViewerStats ->", payload);
             setStats(payload);
           }
         });
-      } catch {
-        // ignore errors
-      }
+
+        // Now trigger viewing/joining which may immediately broadcast stats
+        try {
+          await chatHubService.startViewingLivestream(livestreamId);
+        } catch {}
+        try {
+          await chatHubService.joinLivestream(livestreamId);
+        } catch {}
+      } catch {}
     })();
 
     return () => {
       mounted = false;
-      // Rời nhóm viewers để tránh rò rỉ sự kiện
+      // Remove only this component's stats listener first to avoid stale updates
+      try {
+        const fn = unsubscribeRef.current;
+        if (typeof fn === 'function') fn();
+        unsubscribeRef.current = undefined;
+      } catch {}
       try {
         chatHubService.stopViewingLivestream(livestreamId);
       } catch {}
@@ -78,7 +69,7 @@ export function ViewerCount({ livestreamId }: ViewerCountProps) {
   }, [livestreamId]);
 
   return (
-    <div className="flex ml-2">
+    <div className="flex ml-2 items-center gap-2">
       <Button className="bg-rose-600 text-white rounded-none hover:bg-rose-600 flex items-center relative overflow-visible">
         <span className="relative mr-2 flex items-center justify-center">
           <span className="absolute h-4 w-4 rounded-full bg-white opacity-75 animate-ping" />
@@ -89,7 +80,7 @@ export function ViewerCount({ livestreamId }: ViewerCountProps) {
 
       <Button className="rounded-none flex items-center gap-1">
         <UserRound className="w-4 h-4" />
-        {viewerCount}
+        <span className="">{customerCount}</span>
       </Button>
     </div>
   );

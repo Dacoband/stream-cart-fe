@@ -79,12 +79,35 @@ function Newpage() {
       }
 
       const products = Array.from(byProduct.entries()).map(([productId, g]) => {
-        const ids = Array.from(g.variantIds);
+        const variantMap: Record<string, { price: number; quantity: number }> = {};
+        
+        // Nếu có variants thì tạo variantMap
+        if (g.variantIds.size > 0) {
+          for (const variantId of g.variantIds) {
+            // Tìm row tương ứng với variant này để lấy price và quantity
+            const variantRow = rows.find(r => r.productId === productId && r.variantId === variantId);
+            if (variantRow) {
+              variantMap[variantId] = {
+                price: variantRow.price,
+                quantity: variantRow.stock
+              };
+            }
+          }
+        } else if (g.hasNullVariant) {
+          // Nếu không có variant (null variant), tạo entry với productId
+          const nullVariantRow = rows.find(r => r.productId === productId && r.variantId === null);
+          if (nullVariantRow) {
+            variantMap[productId] = {
+              price: nullVariantRow.price,
+              quantity: nullVariantRow.stock
+            };
+          }
+        }
+        
         return {
           productId,
-          variantIds: ids,
-          flashSalePrice:
-            g.minPrice === Number.POSITIVE_INFINITY ? 0 : g.minPrice,
+          variantMap,
+          flashSalePrice: g.minPrice === Number.POSITIVE_INFINITY ? 0 : g.minPrice,
           quantityAvailable: g.totalQty,
         };
       });

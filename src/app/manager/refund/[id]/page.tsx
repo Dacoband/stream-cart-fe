@@ -303,7 +303,7 @@ export default function RefundDetailPage() {
     );
   }
 
-  // ✅ Không cộng phí vận chuyển vào Tổng hoàn lại
+  //  Không cộng phí vận chuyển vào Tổng hoàn lại
   const totalRefundOnlyItems = refund.refundAmount;
 
   return (
@@ -314,7 +314,7 @@ export default function RefundDetailPage() {
           <BreadcrumbList>
             <BreadcrumbItem className="font-medium text-lg cursor-pointer">
               <BreadcrumbLink asChild>
-                <Link href="/refunds">Yêu cầu hoàn hàng</Link>
+                <Link href="manager/refunds">Yêu cầu hoàn hàng</Link>
               </BreadcrumbLink>
             </BreadcrumbItem>
             <BreadcrumbSeparator />
