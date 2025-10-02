@@ -46,11 +46,18 @@ function DescriptionProduct({ product }: DescriptionProductProps) {
             </div>
             <div className="space-y-4">
               {[
-                { label: "Khối lượng", value: product.weight },
+                {
+                  label: "Khối lượng",
+                  value: product.weight > 0 ? product.weight : "__",
+                },
                 {
                   label: "Kích thước",
                   value:
-                    product.height + "x" + product.width + "x" + product.length,
+                    product.height > 0 &&
+                    product.width > 0 &&
+                    product.length > 0
+                      ? `${product.height}x${product.width}x${product.length}`
+                      : "__",
                 },
               ].map((spec, index) => (
                 <div
