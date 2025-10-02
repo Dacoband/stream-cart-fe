@@ -14,21 +14,21 @@ function page() {
           Tổng quan và thống kê toàn hệ thống StreamCart
         </h2>
       </div>
-      
+
       <div className="flex flex-col gap-5 mx-5 mb-10">
         {/* Thống kê tổng quan - 4 khối */}
         <Statistical />
-        
+
         {/* Biểu đồ doanh thu 7 ngày */}
         <RevenueChart />
-        
+
         {/* Grid 3 cột cho các thống kê chi tiết */}
         <div className="grid grid-cols-3 gap-6 h-[600px]">
           {/* Cột 1: Livestream đang hoạt động */}
           <div className="col-span-1 h-full">
             <ActiveLivestreams />
           </div>
-          
+
           {/* Cột 2: Phân bố người dùng theo role */}
           <div className="col-span-1 h-full">
             <UserRoleChart />

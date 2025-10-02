@@ -14,13 +14,9 @@ const ORDER_TABS = [
   { label: "Chờ thanh toán", value: "0", count: 0 },
   { label: "Chờ xác nhận", value: "1", count: 0 },
   { label: "Chờ đóng gói", value: "2", count: 0 },
-  // combined tab for 3 and 7
   { label: "Chờ giao hàng", value: "3-7", count: 0 },
-  // combined tab for 4 and 10
   { label: "Thành công", value: "4-10", count: 0 },
   { label: "Hủy đơn", value: "5", count: 0 },
-  // returns/refunds combined 8,9 (optional)
-  // { label: "Trả hàng/Hoàn tiền", value: "8-9", count: 0 },
 ];
 
 function ManageOrders() {
@@ -45,7 +41,6 @@ function ManageOrders() {
         });
         counts["all"] = allOrdersResponse.totalCount;
 
-        // Fetch counts for each specific status tab
         for (const orderTab of ORDER_TABS) {
           if (orderTab.value !== "all") {
             const statuses = getStatusesForTab(orderTab.value as OrderTabValue);
@@ -90,7 +85,7 @@ function ManageOrders() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-6 h-[calc(100vh-9rem)] overflow-y-auto ">
+    <div className="container mx-auto px-4 pt-2 pb-6 h-[calc(100vh-9rem)] overflow-y-auto ">
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900">Quản lý đơn hàng</h1>
         <p className="text-gray-600 mt-1">

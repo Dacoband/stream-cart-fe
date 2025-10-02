@@ -72,15 +72,10 @@ function OrderDetailPage() {
         try {
           const itemsData = await getOrderProductByOrderId(orderId);
 
-          let items = [];
+          let items: OrderItemResponse[] = [];
+
           if (Array.isArray(itemsData)) {
             items = itemsData;
-          } else if (itemsData?.items) {
-            items = itemsData.items;
-          } else if (itemsData?.data?.items) {
-            items = itemsData.data.items;
-          } else if (itemsData?.data) {
-            items = Array.isArray(itemsData.data) ? itemsData.data : [];
           }
 
           setOrderItems(items);
@@ -135,7 +130,25 @@ function OrderDetailPage() {
   }, [orderItems]);
 
   const handleStatusUpdated = (newStatus: number) => {
-    setOrder((prev) => (prev ? { ...prev, orderStatus: newStatus } : prev));
+    if (newStatus === 3) {
+      (async () => {
+        try {
+          const orderData = await getOrderById(orderId);
+          const orderInfo =
+            orderData && typeof orderData === "object" && "data" in orderData
+              ? (orderData as { data: Order }).data
+              : (orderData as Order);
+          setOrder(orderInfo);
+        } catch (error) {
+          console.error("Refetch order after status=3 failed:", error);
+          setOrder((prev) =>
+            prev ? { ...prev, orderStatus: newStatus } : prev
+          );
+        }
+      })();
+    } else {
+      setOrder((prev) => (prev ? { ...prev, orderStatus: newStatus } : prev));
+    }
   };
 
   if (loading) {

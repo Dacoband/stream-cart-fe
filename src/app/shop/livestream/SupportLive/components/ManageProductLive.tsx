@@ -13,7 +13,8 @@ import {
   ImageIcon,
   Pin,
   PinOff,
-  Trash2,
+  Info,
+  // Trash2,
 } from "lucide-react";
 import type { ProductLiveStream } from "@/types/livestream/productLivestream";
 import { useLivestreamRealtime } from "@/services/signalr/useLivestreamRealtime";
@@ -64,7 +65,6 @@ function ManageProductLive({
   // realtime hub api
   const realtime = useLivestreamRealtime(livestreamId);
 
-  // Keep in sync with real-time product stock updates and deletions
   React.useEffect(() => {
     let off1: (() => void) | undefined;
     let off2: (() => void) | undefined;
@@ -161,7 +161,12 @@ function ManageProductLive({
     }
     try {
       setSaving(true);
-      console.log("[DEBUG Support] Calling updateStockById with id:", editing.id, "value:", value);
+      console.log(
+        "[DEBUG Support] Calling updateStockById with id:",
+        editing.id,
+        "value:",
+        value
+      );
       // hub only
       await realtime.updateStockById(editing.id, value);
       console.log("[DEBUG Support] updateStockById completed successfully");
@@ -178,9 +183,9 @@ function ManageProductLive({
     }
   };
 
-  const requestDelete = (product: ProductLiveStream) => {
-    setConfirmDelete(product);
-  };
+  // const requestDelete = (product: ProductLiveStream) => {
+  //   setConfirmDelete(product);
+  // };
 
   const handleConfirmDelete = async () => {
     if (!confirmDelete) return;
@@ -198,7 +203,6 @@ function ManageProductLive({
     }
   };
 
-  // Lọc sản phẩm theo tên
   const filteredProducts = products.filter((p) =>
     p.productName?.toLowerCase().includes(search.toLowerCase())
   );
@@ -209,7 +213,6 @@ function ManageProductLive({
         <CirclePlay className="text-red-600 " /> Sản phẩm trong LiveStream
       </div>
 
-      {/* Thanh tìm kiếm */}
       <div className="px-4 py-2 border-b flex items-center gap-2 sticky top-0 bg-white z-10">
         <Search className="text-gray-500 w-4 h-4" />
         <Input
@@ -220,7 +223,6 @@ function ManageProductLive({
         />
       </div>
 
-      {/* Danh sách sản phẩm */}
       <div className="overflow-y-auto custom-scroll flex-1 mt-5 px-2 space-y-3">
         {filteredProducts.length > 0 ? (
           filteredProducts.map((product) => (
@@ -299,12 +301,12 @@ function ManageProductLive({
                   >
                     <Edit /> Số lượng
                   </Button>
-                  <Button
+                  {/* <Button
                     onClick={() => requestDelete(product)}
                     className=" text-red-500 bg-white rounded-none cursor-pointer shadow-none hover:bg-white hover:text-red-400"
                   >
                     <Trash2 /> Xóa
-                  </Button>
+                  </Button> */}
                 </div>
               </div>
             </Card>
@@ -316,7 +318,6 @@ function ManageProductLive({
         )}
       </div>
 
-      {/* Edit Stock Dialog */}
       <Dialog open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>
         <DialogContent className="w-[40vw]">
           <DialogHeader>
@@ -330,6 +331,7 @@ function ManageProductLive({
               </div>
             )}
           </DialogHeader>
+
           <div className="grid gap-3 py-2">
             <div className="space-y-2">
               <Label htmlFor="stock">Số lượng trong livestream</Label>
@@ -352,23 +354,34 @@ function ManageProductLive({
                     return;
                   }
 
+                  // Giới hạn trong khoảng 0 -> productStock
                   if (editing?.productStock !== undefined) {
-                    v = Math.max(0, Math.min(v, editing.productStock));
+                    v = Math.max(0, v);
+                    setNewStock(v);
                   } else {
                     v = Math.max(0, v);
+                    setNewStock(v);
                   }
-
-                  setNewStock(v);
                 }}
               />
+              {newStock !== null &&
+                editing?.productStock !== undefined &&
+                newStock > editing.productStock && (
+                  <p className="text-red-500 text-sm mt-1">
+                    Số lượng không được vượt quá tồn kho ({editing.productStock}
+                    )
+                  </p>
+                )}
             </div>
           </div>
-          <DialogDescription>
-            Sản phẩm trong kho:
+
+          <DialogDescription className="text-blue-500 flex items-center gap-2">
+            <Info className="w-5 h-5" /> <p>Tối đa nhập:</p>
             <span className="font-semibold ml-1">
               {editing?.productStock ?? 0}
             </span>
           </DialogDescription>
+
           <DialogFooter>
             <Button
               variant="outline"
@@ -377,7 +390,15 @@ function ManageProductLive({
             >
               Hủy
             </Button>
-            <Button onClick={handleSaveStock} disabled={saving}>
+            <Button
+              onClick={handleSaveStock}
+              disabled={
+                saving ||
+                newStock === null ||
+                (editing?.productStock !== undefined &&
+                  newStock > editing.productStock)
+              }
+            >
               Lưu
             </Button>
           </DialogFooter>

@@ -14,12 +14,12 @@ export interface LivestreamRealtimeState {
 }
 
 export interface LivestreamRealtimeApi extends LivestreamRealtimeState {
-  // actions (basic)
+
   pinProduct: (productId: string, variantId: string | null, isPin: boolean) => Promise<unknown>;
   updateProductStock: (productId: string, variantId: string | null, newStock: number) => Promise<unknown>;
   addProduct: (productId: string, variantId: string | null, price: number, stock: number, isPin?: boolean) => Promise<unknown>;
   removeProduct: (productId: string, variantId: string | null) => Promise<unknown>;
-  // actions (by id)
+ 
   updateById: (id: string, price: number, stock: number, isPin: boolean) => Promise<unknown>;
   pinById: (id: string, isPin: boolean) => Promise<unknown>;
   updateStockById: (id: string, newStock: number) => Promise<unknown>;
