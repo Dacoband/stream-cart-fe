@@ -1,66 +1,66 @@
-import React, { useEffect, useMemo, useState } from "react";
-import { Card, CardContent, CardTitle } from "@/components/ui/card";
-import { useAuth } from "@/lib/AuthContext";
-import { getOrdersByShop } from "@/services/api/order/order";
-import { type Order } from "@/types/order/order";
-import { Skeleton } from "@/components/ui/skeleton";
-import Image from "next/image";
-import { getUserById } from "@/services/api/auth/account";
-import { PackageSearch, UserRound } from "lucide-react";
-import * as TabsPrimitive from "@radix-ui/react-tabs";
-import { getProductDetailById } from "@/services/api/product/product";
-import PriceTag from "@/components/common/PriceTag";
-import Link from "next/link";
-import { formatFullDateTimeVN } from "@/components/common/formatFullDateTimeVN";
-import { getShopRefunds } from "@/services/api/refund/refund";
-import { RefundRequestDto, RefundStatus } from "@/types/refund/refund";
-import { getOrderById } from "@/services/api/order/order";
-import { updateRefundStatus } from "@/services/api/refund/refund";
-type TabValue = "all" | "1,2" | "3" | "7" | "4,10" | "5" | "8,9";
+import React, { useEffect, useMemo, useState } from 'react'
+import { Card, CardContent, CardTitle } from '@/components/ui/card'
+import { useAuth } from '@/lib/AuthContext'
+import { getOrdersByShop } from '@/services/api/order/order'
+import { type Order } from '@/types/order/order'
+import { Skeleton } from '@/components/ui/skeleton'
+import Image from 'next/image'
+import { getUserById } from '@/services/api/auth/account'
+import { PackageSearch, UserRound } from 'lucide-react'
+import * as TabsPrimitive from '@radix-ui/react-tabs'
+import { getProductDetailById } from '@/services/api/product/product'
+import PriceTag from '@/components/common/PriceTag'
+import Link from 'next/link'
+import { formatFullDateTimeVN } from '@/components/common/formatFullDateTimeVN'
+import { getShopRefunds } from '@/services/api/refund/refund'
+import { RefundRequestDto, RefundStatus } from '@/types/refund/refund'
+import { getOrderById } from '@/services/api/order/order'
+import { updateRefundStatus } from '@/services/api/refund/refund'
+type TabValue = 'all' | '1,2' | '3' | '7' | '4,10' | '5' | '8,9'
 
 const parseStatusesFromTab = (tab: TabValue): number[] | undefined => {
-  if (tab === "all") return undefined;
-  return tab.split(",").map((s) => Number(s.trim()));
-};
+  if (tab === 'all') return undefined
+  return tab.split(',').map((s) => Number(s.trim()))
+}
 
 function TableOrder() {
-  const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState<TabValue>("all");
-  const [loading, setLoading] = useState(true);
-  const [orders, setOrders] = useState<Order[]>([]);
+  const { user } = useAuth()
+  const [activeTab, setActiveTab] = useState<TabValue>('all')
+  const [loading, setLoading] = useState(true)
+  const [orders, setOrders] = useState<Order[]>([])
   const [accountMap, setAccountMap] = useState<
     Record<string, { username: string; avatarURL: string | null }>
-  >({});
+  >({})
   const [itemAttributes, setItemAttributes] = useState<
     Record<string, Record<string, string>>
-  >({});
+  >({})
   const [refunds, setRefunds] = useState<
     (RefundRequestDto & { orderCode?: string; processedByName?: string })[]
-  >([]);
+  >([])
   const [completingIds, setCompletingIds] = useState<Record<string, boolean>>(
     {}
-  );
-  const EMPTY_GUID = "00000000-0000-0000-0000-000000000000";
+  )
+  const EMPTY_GUID = '00000000-0000-0000-0000-000000000000'
 
-  const shopId = user?.shopId;
-  const statuses = useMemo(() => parseStatusesFromTab(activeTab), [activeTab]);
+  const shopId = user?.shopId
+  const statuses = useMemo(() => parseStatusesFromTab(activeTab), [activeTab])
 
   // Build header: switch to refund header when tab is "Hoàn hàng" ("8,9")
   const header = (
     <Card
       className={
-        activeTab === "8,9"
-          ? "rounded-md border-none bg-[#B0F847] text-gray-800 shadow-sm grid items-center px-5 py-2 mb-5 font-semibold"
-          : "rounded-none border-none bg-gray-100 text-gray-700 shadow-none grid items-center px-5 py-2 mb-5"
+        activeTab === '8,9'
+          ? 'rounded-md border-none bg-[#B0F847] text-gray-800 shadow-sm grid items-center px-5 py-2 mb-5 font-semibold'
+          : 'rounded-none border-none bg-gray-100 text-gray-700 shadow-none grid items-center px-5 py-2 mb-5'
       }
       style={{
         gridTemplateColumns:
-          activeTab === "8,9"
-            ? "1.3fr 1.1fr 1.1fr 1.6fr 1.3fr 1fr"
-            : "3.5fr 2fr 2fr 2fr 1fr",
+          activeTab === '8,9'
+            ? '1.3fr 1.1fr 1.1fr 1.6fr 1.3fr 1fr'
+            : '3.5fr 2fr 2fr 2fr 1fr',
       }}
     >
-      {activeTab === "8,9" ? (
+      {activeTab === '8,9' ? (
         <>
           <div>Mã đơn hàng</div>
           <div>Số tiền hoàn</div>
@@ -79,51 +79,55 @@ function TableOrder() {
         </>
       )}
     </Card>
-  );
+  )
 
   const renderRefundStatus = (status: RefundStatus) => {
     return (
       <span
         className={
-          "inline-flex items-center rounded-full px-3 py-1 text-xs font-medium " +
+          'inline-flex items-center rounded-full px-3 py-1 text-xs font-medium ' +
           (status === RefundStatus.Created
-            ? "bg-yellow-100 text-yellow-800 ring-1 ring-yellow-200"
+            ? 'bg-yellow-100 text-yellow-800 ring-1 ring-yellow-200'
             : status === RefundStatus.Completed
-            ? "bg-green-100 text-green-800 ring-1 ring-green-200"
+            ? 'bg-green-100 text-green-800 ring-1 ring-green-200'
             : status === RefundStatus.Refunded
-            ? "bg-emerald-100 text-emerald-800 ring-1 ring-emerald-200"
+            ? 'bg-emerald-100 text-emerald-800 ring-1 ring-emerald-200'
             : status === RefundStatus.Rejected
-            ? "bg-red-100 text-red-700 ring-1 ring-red-200"
-            : "bg-blue-100 text-blue-800 ring-1 ring-blue-200")
+            ? 'bg-red-100 text-red-700 ring-1 ring-red-200'
+            : status === RefundStatus.Delivered
+            ? 'bg-purple-100 text-purple-800 ring-1 ring-purple-200'
+            : 'bg-blue-100 text-blue-800 ring-1 ring-blue-200')
         }
       >
         {status === RefundStatus.Created
-          ? "Gửi yêu cầu"
+          ? 'Gửi yêu cầu'
           : status === RefundStatus.Completed
-          ? "Hoàn hàng thành công"
+          ? 'Hoàn hàng thành công'
           : status === RefundStatus.Refunded
-          ? "Hoàn tiền thành công"
+          ? 'Hoàn tiền thành công'
           : status === RefundStatus.Rejected
-          ? "Bị từ chối"
-          : "Đang xử lý"}
+          ? 'Bị từ chối'
+          : status === RefundStatus.Delivered
+          ? 'Đã giao hàng'
+          : 'Đang xử lý'}
       </span>
-    );
-  };
+    )
+  }
 
   useEffect(() => {
-    let cancelled = false;
+    let cancelled = false
     const fetchOrders = async () => {
-      if (!shopId) return;
-      setLoading(true);
+      if (!shopId) return
+      setLoading(true)
       try {
-        let result: Order[] = [];
+        let result: Order[] = []
         if (!statuses) {
           const res = await getOrdersByShop(shopId, {
             PageIndex: 1,
             PageSize: 10,
-          });
-          const items = (res?.data?.items ?? res?.items ?? res) as Order[];
-          result = Array.isArray(items) ? items : [];
+          })
+          const items = (res?.data?.items ?? res?.items ?? res) as Order[]
+          result = Array.isArray(items) ? items : []
         } else {
           const calls = await Promise.all(
             statuses.map((st) =>
@@ -133,30 +137,30 @@ function TableOrder() {
                 Status: st,
               })
             )
-          );
+          )
           const merged = calls.flatMap(
             (res) => (res?.data?.items ?? res?.items ?? res) as Order[]
-          );
+          )
 
-          const map = new Map<string, Order>();
-          for (const o of merged) map.set(o.id, o);
-          result = Array.from(map.values());
+          const map = new Map<string, Order>()
+          for (const o of merged) map.set(o.id, o)
+          result = Array.from(map.values())
         }
         // For "all" tab, exclude status 0 as requested
         if (!statuses) {
-          result = result.filter((o) => o.orderStatus !== 0);
+          result = result.filter((o) => o.orderStatus !== 0)
         }
-        if (!cancelled) setOrders(result);
+        if (!cancelled) setOrders(result)
 
         // Khi tab "Hoàn hàng" được chọn, gọi thêm API getShopRefunds và lưu kết quả
-        if (activeTab === "8,9") {
+        if (activeTab === '8,9') {
           try {
-            const res = await getShopRefunds({ pageNumber: 1, pageSize: 10 });
+            const res = await getShopRefunds({ pageNumber: 1, pageSize: 10 })
             const list = (res?.items ?? res ?? []) as (RefundRequestDto & {
-              orderCode?: string;
-              processedByName?: string;
-            })[];
-            if (!cancelled) setRefunds(Array.isArray(list) ? list : []);
+              orderCode?: string
+              processedByName?: string
+            })[]
+            if (!cancelled) setRefunds(Array.isArray(list) ? list : [])
           } catch {
             // noop
           }
@@ -165,95 +169,95 @@ function TableOrder() {
         // load thêm thông tin account
         const uniqueAccountIds = Array.from(
           new Set(result.map((o) => o.accountId))
-        ).filter(Boolean);
-        const missing = uniqueAccountIds.filter((id) => !(id in accountMap));
+        ).filter(Boolean)
+        const missing = uniqueAccountIds.filter((id) => !(id in accountMap))
         if (missing.length > 0) {
           const fetched = await Promise.all(
             missing.map(async (id) => {
               try {
-                const u = await getUserById(id);
+                const u = await getUserById(id)
                 return [
                   id,
                   {
-                    username: u?.username ?? "",
+                    username: u?.username ?? '',
                     avatarURL: u?.avatarURL ?? null,
                   },
-                ] as const;
+                ] as const
               } catch {
-                return [id, { username: "", avatarURL: null }] as const;
+                return [id, { username: '', avatarURL: null }] as const
               }
             })
-          );
+          )
           if (!cancelled) {
             setAccountMap((prev) => {
               const next = { ...prev } as Record<
                 string,
                 { username: string; avatarURL: string | null }
-              >;
-              for (const [id, info] of fetched) next[id] = info;
-              return next;
-            });
+              >
+              for (const [id, info] of fetched) next[id] = info
+              return next
+            })
           }
         }
       } catch {
-        if (!cancelled) setOrders([]);
+        if (!cancelled) setOrders([])
       } finally {
-        if (!cancelled) setLoading(false);
+        if (!cancelled) setLoading(false)
       }
-    };
-    fetchOrders();
+    }
+    fetchOrders()
     return () => {
-      cancelled = true;
-    };
-  }, [shopId, statuses, accountMap, activeTab]);
+      cancelled = true
+    }
+  }, [shopId, statuses, accountMap, activeTab])
 
   // Fetch refunds like manager/refund/page.tsx when tab "Hoàn hàng" active
   useEffect(() => {
-    if (activeTab !== "8,9") return;
-    let cancelled = false;
+    if (activeTab !== '8,9') return
+    let cancelled = false
 
-    const API_PAGE_SIZE = 200;
-    const MAX_API_PAGES = 200;
+    const API_PAGE_SIZE = 200
+    const MAX_API_PAGES = 200
 
     const fetchRefunds = async () => {
-      setLoading(true);
+      setLoading(true)
       try {
-        const aggregated: RefundRequestDto[] = [];
+        const aggregated: RefundRequestDto[] = []
         for (let pageNumber = 1; pageNumber <= MAX_API_PAGES; pageNumber++) {
           const res = await getShopRefunds({
             pageNumber,
             pageSize: API_PAGE_SIZE,
-          });
-          const items = (res?.items ?? []) as RefundRequestDto[];
-          aggregated.push(...items);
-          if (items.length < API_PAGE_SIZE) break;
+          })
+          const items = (res?.items ?? []) as RefundRequestDto[]
+          aggregated.push(...items)
+          if (items.length < API_PAGE_SIZE) break
         }
 
         // Enrich orderCode and processedByName
-        const orderCodeCache = new Map<string, string>();
-        const userNameCache = new Map<string, string>();
+        const orderCodeCache = new Map<string, string>()
+        const userNameCache = new Map<string, string>()
 
         const enriched: (RefundRequestDto & {
-          orderCode?: string;
-          processedByName?: string;
-        })[] = [];
+          orderCode?: string
+          processedByName?: string
+        })[] = []
         for (const r of aggregated) {
           let orderCode: string | undefined = (
             r as Partial<RefundRequestDto> & { orderCode?: string }
-          ).orderCode;
+          ).orderCode
           if (!orderCode && r.orderId) {
             if (orderCodeCache.has(r.orderId)) {
-              orderCode = orderCodeCache.get(r.orderId)!;
+              orderCode = orderCodeCache.get(r.orderId)!
             } else {
               try {
-                const ord = await getOrderById(r.orderId);
+                const ord = await getOrderById(r.orderId)
                 const code =
                   ord?.data?.data?.orderCode ??
                   ord?.data?.orderCode ??
-                  ord?.orderCode;
+                  ord?.orderCode
                 if (code) {
-                  orderCode = code;
-                  orderCodeCache.set(r.orderId, code);
+                  orderCode = code
+                  orderCodeCache.set(r.orderId, code)
                 }
               } catch {
                 // ignore
@@ -261,65 +265,65 @@ function TableOrder() {
             }
           }
 
-          let processedByName: string | undefined = undefined;
-          const emptyGuid = "00000000-0000-0000-0000-000000000000";
+          let processedByName: string | undefined = undefined
+          const emptyGuid = '00000000-0000-0000-0000-000000000000'
           if (r.lastModifiedBy && r.lastModifiedBy !== emptyGuid) {
             if (userNameCache.has(r.lastModifiedBy)) {
-              processedByName = userNameCache.get(r.lastModifiedBy)!;
+              processedByName = userNameCache.get(r.lastModifiedBy)!
             } else {
               try {
-                const u = await getUserById(r.lastModifiedBy);
+                const u = await getUserById(r.lastModifiedBy)
                 const name =
                   u?.fullname ||
                   u?.fullName ||
                   u?.username ||
                   u?.email ||
-                  r.lastModifiedBy;
-                processedByName = name;
-                userNameCache.set(r.lastModifiedBy, name);
+                  r.lastModifiedBy
+                processedByName = name
+                userNameCache.set(r.lastModifiedBy, name)
               } catch {
-                processedByName = r.lastModifiedBy;
+                processedByName = r.lastModifiedBy
               }
             }
           }
 
-          enriched.push({ ...r, orderCode, processedByName });
+          enriched.push({ ...r, orderCode, processedByName })
         }
 
-        if (!cancelled) setRefunds(enriched);
+        if (!cancelled) setRefunds(enriched)
       } finally {
-        if (!cancelled) setLoading(false);
+        if (!cancelled) setLoading(false)
       }
-    };
+    }
 
-    fetchRefunds();
+    fetchRefunds()
     return () => {
-      cancelled = true;
-    };
-  }, [activeTab]);
+      cancelled = true
+    }
+  }, [activeTab])
 
   useEffect(() => {
     const fetchAttributes = async () => {
-      const attrMap: Record<string, Record<string, string>> = {};
+      const attrMap: Record<string, Record<string, string>> = {}
       for (const order of orders) {
         for (const item of order.items || []) {
           if (item.productId && item.variantId) {
             try {
-              const detail = await getProductDetailById(item.productId);
+              const detail = await getProductDetailById(item.productId)
               const variant = detail?.variants?.find(
                 (v: { variantId: string }) => v.variantId === item.variantId
-              );
+              )
               if (variant) {
-                attrMap[item.id] = variant.attributeValues;
+                attrMap[item.id] = variant.attributeValues
               }
             } catch {}
           }
         }
       }
-      setItemAttributes(attrMap);
-    };
-    if (orders.length > 0) fetchAttributes();
-  }, [orders]);
+      setItemAttributes(attrMap)
+    }
+    if (orders.length > 0) fetchAttributes()
+  }, [orders])
 
   return (
     <Card className="bg-white py-5 px-8 min-h-[75vh]">
@@ -330,13 +334,13 @@ function TableOrder() {
         <div className="sticky top-16 z-0 bg-white">
           <TabsPrimitive.List className="flex gap-2 mb-4 border-b">
             {[
-              { value: "all", label: "Tất Cả" },
-              { value: "1,2", label: "Chờ xác nhận" },
-              { value: "3", label: "Chờ lấy hàng" },
-              { value: "7", label: "Đang giao" },
-              { value: "4,10", label: "Đã giao" },
-              { value: "5", label: "Đã hủy" },
-              { value: "8,9", label: "Hoàn hàng" },
+              { value: 'all', label: 'Tất Cả' },
+              { value: '1,2', label: 'Chờ xác nhận' },
+              { value: '3', label: 'Chờ lấy hàng' },
+              { value: '7', label: 'Đang giao' },
+              { value: '4,10', label: 'Đã giao' },
+              { value: '5', label: 'Đã hủy' },
+              { value: '8,9', label: 'Hoàn hàng' },
             ].map((tab) => (
               <TabsPrimitive.Trigger
                 key={tab.value}
@@ -362,9 +366,9 @@ function TableOrder() {
                   className="rounded-none shadow-none px-5 py-3 mb-2 grid items-center"
                   style={{
                     gridTemplateColumns:
-                      activeTab === "8,9"
-                        ? "1.3fr 1.1fr 1.1fr 1.6fr 1.3fr 1fr"
-                        : "3.5fr 2fr 2fr 2fr 1fr",
+                      activeTab === '8,9'
+                        ? '1.3fr 1.1fr 1.1fr 1.6fr 1.3fr 1fr'
+                        : '3.5fr 2fr 2fr 2fr 1fr',
                   }}
                 >
                   <div className="flex items-center gap-3">
@@ -381,7 +385,7 @@ function TableOrder() {
                 </Card>
               ))}
             </>
-          ) : activeTab === "8,9" ? (
+          ) : activeTab === '8,9' ? (
             refunds.length === 0 ? (
               <div>
                 <Image
@@ -408,7 +412,7 @@ function TableOrder() {
                           Mã yêu cầu: {refund.id}
                         </span>
                         <div className="ml-2 pl-4 border-l-2 border-gray-500">
-                          Ngày yêu cầu:{" "}
+                          Ngày yêu cầu:{' '}
                           {formatFullDateTimeVN(refund.requestedAt)}
                         </div>
                       </span>
@@ -417,13 +421,13 @@ function TableOrder() {
                   <CardContent
                     className="rounded-none shadow-none px-5 py-3  grid "
                     style={{
-                      gridTemplateColumns: "1.3fr 1.1fr 1.1fr 1.6fr 1.3fr 1fr",
+                      gridTemplateColumns: '1.3fr 1.1fr 1.1fr 1.6fr 1.3fr 1fr',
                     }}
                   >
                     <div className="flex gap-3 min-w-0">
                       <div className="flex flex-1 flex-col justify-start mr-8">
                         <p className="text-base truncate pr-2 line-clamp-2 font-medium text-gray-700">
-                          {refund.orderCode ?? "—"}
+                          {refund.orderCode ?? '—'}
                         </p>
                       </div>
                     </div>
@@ -442,7 +446,7 @@ function TableOrder() {
                           <span className="font-medium text-gray-800">
                             {refund.processedByName ??
                               refund.lastModifiedBy ??
-                              "—"}
+                              '—'}
                           </span>
                           <span className="text-xs text-gray-500">
                             {formatFullDateTimeVN(refund.lastModifiedAt)}
@@ -452,8 +456,8 @@ function TableOrder() {
                     </div>
                     <div className="text-xs md:text-sm text-gray-800 font-mono truncate">
                       {refund.status === RefundStatus.Refunded
-                        ? refund.transactionId ?? "—"
-                        : "—"}
+                        ? refund.transactionId ?? '—'
+                        : '—'}
                     </div>
                     <div className="justify-self-end flex flex-col items-end gap-2">
                       <Link href={`/shop/manage-orders/order/${refund.id}`}>
@@ -461,7 +465,7 @@ function TableOrder() {
                           <PackageSearch size={16} /> Chi tiết
                         </button>
                       </Link>
-                      {refund.status !== RefundStatus.Completed && (
+                      {refund.status === RefundStatus.Delivered && (
                         <button
                           disabled={!!completingIds[refund.id]}
                           onClick={async () => {
@@ -469,30 +473,30 @@ function TableOrder() {
                               setCompletingIds((m) => ({
                                 ...m,
                                 [refund.id]: true,
-                              }));
+                              }))
                               await updateRefundStatus({
                                 refundRequestId: refund.id,
                                 newStatus: RefundStatus.Completed,
-                              });
+                              })
                               setRefunds((prev) =>
                                 prev.map((r) =>
                                   r.id === refund.id
                                     ? { ...r, status: RefundStatus.Completed }
                                     : r
                                 )
-                              );
+                              )
                             } finally {
                               setCompletingIds((m) => ({
                                 ...m,
                                 [refund.id]: false,
-                              }));
+                              }))
                             }
                           }}
                           className="px-3 py-1.5 border rounded-lg text-sm shadow-sm text-green-700 border-green-200 hover:bg-green-50 whitespace-nowrap disabled:opacity-50"
                         >
                           {completingIds[refund.id]
-                            ? "Đang nhận…"
-                            : "Nhận hàng"}
+                            ? 'Đang nhận…'
+                            : 'Nhận hàng'}
                         </button>
                       )}
                     </div>
@@ -515,9 +519,9 @@ function TableOrder() {
             </div>
           ) : (
             orders.map((order) => {
-              const firstItem = order.items?.[0];
-              const acc = accountMap[order.accountId];
-              const attrs = itemAttributes[firstItem?.id];
+              const firstItem = order.items?.[0]
+              const acc = accountMap[order.accountId]
+              const attrs = itemAttributes[firstItem?.id]
               return (
                 <Card
                   key={order.id}
@@ -529,7 +533,7 @@ function TableOrder() {
                         {acc?.avatarURL ? (
                           <Image
                             src={acc.avatarURL}
-                            alt={acc.username || "user"}
+                            alt={acc.username || 'user'}
                             width={20}
                             height={20}
                             className="w-7 h-7 rounded-full object-cover"
@@ -538,27 +542,27 @@ function TableOrder() {
                           <UserRound size={16} className="text-gray-500" />
                         )}
                         <span className="truncate max-w-[140px]">
-                          {acc?.username || "—"}
+                          {acc?.username || '—'}
                         </span>
                         <div className="ml-2 pl-4 border-l-2 border-gray-500">
-                          {" "}
+                          {' '}
                           Thời gian đặt: {formatFullDateTimeVN(order.orderDate)}
                         </div>
-                      </span>{" "}
+                      </span>{' '}
                       <span>Mã đơn: {order.orderCode}</span>
                     </div>
                   </CardTitle>
                   <CardContent
                     className="rounded-none shadow-none px-5 py-3  grid "
-                    style={{ gridTemplateColumns: "3.5fr 2fr 2fr 2fr 1fr" }}
+                    style={{ gridTemplateColumns: '3.5fr 2fr 2fr 2fr 1fr' }}
                   >
                     <div className="flex gap-3 min-w-0">
                       {firstItem ? (
                         <Image
                           src={
-                            firstItem.productImageUrl || "/assets/emptydata.png"
+                            firstItem.productImageUrl || '/assets/emptydata.png'
                           }
-                          alt={firstItem.productName || "Sản phẩm"}
+                          alt={firstItem.productName || 'Sản phẩm'}
                           width={80}
                           height={80}
                           className="w-20 h-20 object-cover rounded-none"
@@ -569,7 +573,7 @@ function TableOrder() {
                       <div className="flex flex-1 flex-col justify-start mr-8">
                         <div className="flex justify-between gap-2 items-start min-w-0">
                           <p className="text-base pr-2 line-clamp-2 font-medium text-gray-700 flex-1 min-w-0">
-                            {firstItem?.productName || "—"}
+                            {firstItem?.productName || '—'}
                           </p>
                           <p className="flex-shrink-0 ml-2">
                             x {firstItem?.quantity}
@@ -579,7 +583,7 @@ function TableOrder() {
                           {attrs &&
                             Object.entries(attrs)
                               .map(([key, value]) => `${key}: ${value}`)
-                              .join(", ")}
+                              .join(', ')}
                         </div>
                       </div>
                     </div>
@@ -587,9 +591,9 @@ function TableOrder() {
                       <PriceTag value={order.finalAmount} />
                     </div>
                     <div>
-                      {order.paymentMethod === "COD"
-                        ? "Thanh toán COD"
-                        : "Thanh toán QR"}
+                      {order.paymentMethod === 'COD'
+                        ? 'Thanh toán COD'
+                        : 'Thanh toán QR'}
                     </div>
 
                     <div>
@@ -597,37 +601,37 @@ function TableOrder() {
                         className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium
     ${
       order.orderStatus === 1
-        ? "bg-yellow-100 text-yellow-700"
+        ? 'bg-yellow-100 text-yellow-700'
         : order.orderStatus === 2
-        ? "bg-orange-100 text-orange-700"
+        ? 'bg-orange-100 text-orange-700'
         : order.orderStatus === 3
-        ? "bg-blue-100 text-blue-700"
+        ? 'bg-blue-100 text-blue-700'
         : order.orderStatus === 7
-        ? "bg-indigo-100 text-indigo-700"
+        ? 'bg-indigo-100 text-indigo-700'
         : order.orderStatus === 4
-        ? "bg-green-100 text-green-700"
+        ? 'bg-green-100 text-green-700'
         : order.orderStatus === 5
-        ? "bg-red-100 text-red-700"
+        ? 'bg-red-100 text-red-700'
         : order.orderStatus === 10
-        ? "bg-emerald-100 text-emerald-700"
-        : "bg-gray-100 text-gray-700"
+        ? 'bg-emerald-100 text-emerald-700'
+        : 'bg-gray-100 text-gray-700'
     }`}
                       >
                         {order.orderStatus === 1
-                          ? "Chờ xác nhận"
+                          ? 'Chờ xác nhận'
                           : order.orderStatus === 2
-                          ? "Chờ đóng gói"
+                          ? 'Chờ đóng gói'
                           : order.orderStatus === 3
-                          ? "Chờ lấy hàng"
+                          ? 'Chờ lấy hàng'
                           : order.orderStatus === 7
-                          ? "Đang giao hàng"
+                          ? 'Đang giao hàng'
                           : order.orderStatus === 4
-                          ? "Giao hàng thành công"
+                          ? 'Giao hàng thành công'
                           : order.orderStatus === 5
-                          ? "Đã hủy"
+                          ? 'Đã hủy'
                           : order.orderStatus === 10
-                          ? "Thành công"
-                          : "Đang giao"}
+                          ? 'Thành công'
+                          : 'Đang giao'}
                       </span>
                     </div>
                     <div className="justify-self-end">
@@ -639,13 +643,13 @@ function TableOrder() {
                     </div>
                   </CardContent>
                 </Card>
-              );
+              )
             })
           )}
         </TabsPrimitive.Content>
       </TabsPrimitive.Root>
     </Card>
-  );
+  )
 }
 
-export default TableOrder;
+export default TableOrder

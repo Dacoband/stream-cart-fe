@@ -204,7 +204,7 @@ export const RefundRequestTable: React.FC<Props> = ({
           <div>Mã đơn hàng</div>
           <div>Số tiền hoàn</div>
           <div>Trạng thái</div>
-          <div>Được xử lý bởi</div>
+          <div>Được xử lý lúc</div>
           <div>Mã giao dịch</div>
           <div className="justify-self-end">Thao tác</div>
         </div>
@@ -275,17 +275,13 @@ export const RefundRequestTable: React.FC<Props> = ({
 
                       {/* processed by + time */}
                       <div className="text-sm text-gray-700">
-                        {isEmptyGuid(refund.lastModifiedBy) ||
-                        !refund.lastModifiedAt ? (
+                        {!refund.lastModifiedAt ? (
                           <span className="italic text-gray-500">
                             Chưa được xử lý
                           </span>
                         ) : (
                           <div className="flex flex-col leading-tight">
-                            <span className="font-medium text-gray-800">
-                              {refund.processedByName ?? refund.lastModifiedBy}
-                            </span>
-                            <span className="text-xs text-gray-500">
+                            <span>
                               {formatFullDateTimeVN(refund.lastModifiedAt!)}
                             </span>
                           </div>
