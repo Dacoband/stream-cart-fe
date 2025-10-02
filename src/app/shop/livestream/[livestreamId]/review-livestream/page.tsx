@@ -92,7 +92,7 @@ export default function Page() {
   return (
     <div className="mx-auto">
       {/* Header with back button */}
-      <div className="flex items-center justify-between mb-6">
+      {/* <div className="flex items-center justify-between mb-6">
         <Button
           variant="outline"
           onClick={handleBackToLivestream}
@@ -101,7 +101,7 @@ export default function Page() {
           <ArrowLeft className="w-4 h-4" />
           Quay lại Livestream
         </Button>
-      </div>
+      </div> */}
 
       <h1 className="text-2xl md:text-2xl mt-4 font-bold text-gray-900 text-center">
         Đánh giá buổi Livestream

@@ -214,14 +214,14 @@ export default function ProductFlashSalePage() {
                   <TableCell colSpan={5}>
                     <div>
                       <Image
-                        src="/assets/emptydata.png"
+                        src="/assets/emptyData.png"
                         alt="No data"
                         width={180}
                         height={200}
                         className="mt-14 mx-auto"
                       />
                       <div className="text-center mt-4 text-xl text-lime-700/60  font-medium">
-                        Hiện chưa có LiveStream nào
+                        Hiện chưa có sản phẩm nào
                       </div>
                     </div>
                   </TableCell>

@@ -314,7 +314,7 @@ export default function RefundDetailPage() {
           <BreadcrumbList>
             <BreadcrumbItem className="font-medium text-lg cursor-pointer">
               <BreadcrumbLink asChild>
-                <Link href="manager/refunds">Yêu cầu hoàn hàng</Link>
+                <Link href="manager/refund">Yêu cầu hoàn hàng</Link>
               </BreadcrumbLink>
             </BreadcrumbItem>
             <BreadcrumbSeparator />

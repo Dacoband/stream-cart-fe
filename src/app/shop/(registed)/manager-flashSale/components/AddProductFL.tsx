@@ -184,7 +184,9 @@ function AddProductFL({ date, slot, onCreated }: Props) {
         return {
           productId,
           variantMap,
-          flashSalePrice: 0,
+          // Send the minimal sale price across variants for this product
+          flashSalePrice:
+            g.minPrice === Number.POSITIVE_INFINITY ? 0 : g.minPrice,
           quantityAvailable: g.totalQty,
         };
       });
